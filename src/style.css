@@ -1,0 +1,68 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import './shared/styles/tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   REGLAS GLOBALES PARA MENÚS DESPLEGABLES (DROPDOWNS, SELECTS, POPOVERS)
+   Garantiza que ningún desplegable trunque o corte el texto con elipsis.
+   ========================================================================== */
+
+/* Menús de selección (<a-select>) */
+.ant-select-dropdown {
+  min-width: max-content !important;
+  width: auto !important;
+  max-width: 95vw !important;
+  box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.12), 0 3px 6px -4px rgba(0, 0, 0, 0.16) !important;
+}
+
+.ant-select-dropdown .rc-virtual-list,
+.ant-select-dropdown .rc-virtual-list-holder,
+.ant-select-dropdown .rc-virtual-list-holder-inner {
+  min-width: max-content !important;
+  width: 100% !important;
+}
+
+.ant-select-dropdown .ant-select-item {
+  min-width: max-content !important;
+  padding: 6px 14px !important;
+  font-size: 13px !important;
+}
+
+.ant-select-dropdown .ant-select-item-option-content {
+  white-space: nowrap !important;
+  text-overflow: clip !important;
+  overflow: visible !important;
+}
+
+/* Menús contextuales y dropdowns generales (<a-dropdown>) */
+.ant-dropdown,
+.ant-dropdown-menu {
+  min-width: max-content !important;
+  width: auto !important;
+  white-space: nowrap !important;
+}
+
+.ant-dropdown-menu-item {
+  white-space: nowrap !important;
+  text-overflow: clip !important;
+}
+
+/* Submenús flotantes y popups de menú */
+.ant-menu-submenu-popup,
+.ant-menu-submenu-popup .ant-menu,
+.ant-menu-submenu-popup .ant-menu-item {
+  min-width: max-content !important;
+  white-space: nowrap !important;
+}
+
+/* Tooltips y Popovers sin saltos de línea forzados que corten texto */
+.ant-popover-inner-content {
+  min-width: max-content !important;
+  white-space: nowrap !important;
+}

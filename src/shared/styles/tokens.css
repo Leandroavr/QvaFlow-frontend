@@ -1,0 +1,157 @@
+/* ==========================================================================
+   QvaFlow Design Tokens (Variables CSS)
+   Tokens para modo claro y modo oscuro (.dark) con contraste WCAG AA.
+   Fuente autoalojada Inter (100% offline, sin dependencias de red externas).
+   ========================================================================== */
+
+:root {
+  /* Marca QvaFlow */
+  --qvaflow-primary: #1E3A6B;
+  --qvaflow-primary-hover: #162E56;
+  --qvaflow-primary-active: #0F2347;
+  --qvaflow-primary-subtle: #EBF2FA;
+  --qvaflow-primary-focus: rgba(30, 58, 107, 0.25);
+
+  --qvaflow-accent: #D62839;
+  --qvaflow-accent-hover: #B81D2D;
+  --qvaflow-accent-subtle: #FDF2F3;
+
+  /* Superficies y Fondos (Modo Claro) */
+  --color-bg-app: #F8FAFC;
+  --color-bg-card: #FFFFFF;
+  --color-bg-subtle: #F1F5F9;
+  --color-bg-muted: #E2E8F0;
+  --color-bg-elevated: #FFFFFF;
+
+  /* Textos (Modo Claro) */
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748B;
+  --color-text-inverse: #FFFFFF;
+
+  /* Bordes y Anillos (Modo Claro) */
+  --color-border-subtle: #E2E8F0;
+  --color-border-default: #CBD5E1;
+  --color-border-hover: #94A3B8;
+  --color-border-focus: #1E3A6B;
+
+  /* Semántica (Modo Claro) */
+  --color-success: #15803D;
+  --color-success-bg: #F0FDF4;
+  --color-success-border: #BBF7D0;
+
+  --color-warning: #B45309;
+  --color-warning-bg: #FFFBEB;
+  --color-warning-border: #FDE68A;
+
+  --color-error: #B91C1C;
+  --color-error-bg: #FEF2F2;
+  --color-error-border: #FECACA;
+
+  --color-info: #0369A1;
+  --color-info-bg: #F0F9FF;
+  --color-info-border: #BAE6FD;
+
+  /* Degradado Marca (Login / Splash) */
+  --gradient-login-from: #0F2347;
+  --gradient-login-via: #162E56;
+  --gradient-login-to: #1E3A6B;
+
+  /* Radios */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Sombras */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 20px 25px -5px rgba(15, 35, 71, 0.15), 0 8px 10px -6px rgba(15, 35, 71, 0.1);
+}
+
+.dark {
+  /* Marca QvaFlow en Oscuro (Mayor contraste contra fondos oscuros) */
+  --qvaflow-primary: #3B82F6;
+  --qvaflow-primary-hover: #2563EB;
+  --qvaflow-primary-active: #1D4ED8;
+  --qvaflow-primary-subtle: #1E293B;
+  --qvaflow-primary-focus: rgba(59, 130, 246, 0.35);
+
+  --qvaflow-accent: #EF4444;
+  --qvaflow-accent-hover: #DC2626;
+  --qvaflow-accent-subtle: #311517;
+
+  /* Superficies y Fondos (Modo Oscuro) */
+  --color-bg-app: #0B132B;
+  --color-bg-card: #151F3A;
+  --color-bg-subtle: #1C2746;
+  --color-bg-muted: #263359;
+  --color-bg-elevated: #222E52;
+
+  /* Textos (Modo Oscuro) */
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #CBD5E1;
+  --color-text-muted: #94A3B8;
+  --color-text-inverse: #0F172A;
+
+  /* Bordes y Anillos (Modo Oscuro) */
+  --color-border-subtle: #243054;
+  --color-border-default: #334168;
+  --color-border-hover: #475569;
+  --color-border-focus: #3B82F6;
+
+  /* Semántica (Modo Oscuro) */
+  --color-success: #4ADE80;
+  --color-success-bg: #052E16;
+  --color-success-border: #14532D;
+
+  --color-warning: #FBBF24;
+  --color-warning-bg: #451A03;
+  --color-warning-border: #78350F;
+
+  --color-error: #F87171;
+  --color-error-bg: #450A0A;
+  --color-error-border: #7F1D1D;
+
+  --color-info: #38BDF8;
+  --color-info-bg: #082F49;
+  --color-info-border: #075985;
+
+  /* Degradado Marca Oscuro */
+  --gradient-login-from: #070D1E;
+  --gradient-login-via: #0B1530;
+  --gradient-login-to: #111E44;
+}
+
+/* Tipografía base Inter */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--color-bg-app);
+  color: var(--color-text-primary);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Animación de sacudida leve (Shake) para validaciones fallidas en login */
+@keyframes qvaflow-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+.animate-card-shake {
+  animation: qvaflow-shake 0.4s ease-in-out;
+}
+
+/* Respeto estricto a usuarios con reducción de movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .animate-card-shake {
+    animation: none !important;
+  }
+}

@@ -1,0 +1,306 @@
+<template>
+  <div class="space-y-4">
+    <!-- Tarjetas KPI Superiores -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Total Comprado CUP -->
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Comprado (CUP)</p>
+          <h3 class="text-2xl font-bold text-slate-800 m-0">
+            {{ formatearMoneda(purchasesStore.totalPurchasedAmountCUP, 'CUP') }}
+          </h3>
+          <span class="text-[11px] text-slate-400">Total en pesos</span>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
+          🇨🇺
+        </div>
+      </div>
+
+      <!-- Total Comprado USD -->
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Comprado (USD)</p>
+          <h3 class="text-2xl font-bold text-emerald-700 m-0">
+            ${{ purchasesStore.totalPurchasedAmountUSD.toLocaleString() }} USD
+          </h3>
+          <span class="text-[11px] text-slate-400">Total en dólares</span>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-bold">
+          💵
+        </div>
+      </div>
+
+      <!-- Facturas Pendientes de Recibir -->
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-amber-600 uppercase tracking-wider">Por Recibir</p>
+          <h3 class="text-2xl font-bold text-amber-600 m-0">{{ purchasesStore.pendingInvoicesCount }} facturas</h3>
+          <span class="text-[11px] text-amber-500 font-medium">Pendientes de confirmar</span>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold">
+          ⏳
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenedor Principal: Filtros y Tabla Histórica de Facturas -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+      <!-- Barra Superior de Controles y Filtros -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-5">
+        <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <!-- Búsqueda rápida por número de factura o nombre de proveedor -->
+          <a-input
+            v-model:value="purchasesStore.searchQuery"
+            placeholder="Buscar factura o proveedor..."
+            class="w-full sm:w-64"
+            allow-clear
+          >
+            <template #prefix>
+              <SearchOutlined class="text-slate-400" />
+            </template>
+          </a-input>
+
+          <!-- Filtro por Estado -->
+          <a-select
+            v-model:value="purchasesStore.statusFilter"
+            :popup-match-select-width="false"
+            :dropdown-match-select-width="false"
+            class="w-full sm:min-w-[190px]"
+          >
+            <a-select-option value="all">Todos los estados</a-select-option>
+            <a-select-option value="PENDIENTE">⏳ Pendientes de Entrada</a-select-option>
+            <a-select-option value="CONFIRMADA">✓ Confirmadas (En Stock)</a-select-option>
+          </a-select>
+
+          <!-- Filtro por Moneda -->
+          <a-select
+            v-model:value="purchasesStore.currencyFilter"
+            :popup-match-select-width="false"
+            :dropdown-match-select-width="false"
+            class="w-full sm:min-w-[130px]"
+          >
+            <a-select-option value="all">Todas divisas</a-select-option>
+            <a-select-option value="CUP">🇨🇺 CUP</a-select-option>
+            <a-select-option value="USD">💵 USD</a-select-option>
+          </a-select>
+
+          <!-- Botón Refrescar -->
+          <a-button @click="purchasesStore.fetchPurchasesData">
+            <template #icon><ReloadOutlined /></template>
+          </a-button>
+        </div>
+
+        <!-- Botón para Registrar Nueva Factura -->
+        <a-button
+          type="primary"
+          class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 border-none shadow-sm flex items-center justify-center gap-2 h-10 px-5 text-sm font-semibold"
+          @click="openCreateDrawer"
+        >
+          <PlusOutlined class="text-base" />
+          Registrar Factura
+        </a-button>
+      </div>
+
+      <!-- Tabla de Facturas Históricas -->
+      <a-table
+        :columns="columns"
+        :data-source="purchasesStore.filteredInvoices"
+        :loading="purchasesStore.loading"
+        :pagination="{
+          pageSize: 8,
+          showSizeChanger: true,
+          showTotal: (total: number) => `Total ${total} facturas registradas`
+        }"
+        row-key="id"
+        class="overflow-x-auto"
+      >
+        <!-- Fila expandible con el detalle de productos y la localización asignada -->
+        <template #expandedRowRender="{ record }">
+          <div class="p-3 bg-slate-50/80 rounded-lg border border-slate-200">
+            <h5 class="text-xs font-bold text-slate-700 uppercase mb-2">
+              Artículos en el documento y localización física de entrada:
+            </h5>
+            <div class="space-y-1.5 text-xs text-slate-700">
+              <div
+                v-for="item in record.items"
+                :key="item.id"
+                class="flex items-center justify-between py-1 border-b border-slate-200/50 last:border-0"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  <strong>{{ item.cantidad }} {{ item.unit }}</strong> de {{ item.productName }}
+                  <span class="text-slate-400 font-mono text-[10px]">({{ item.producto }})</span>
+                  <span class="text-[11px] font-mono bg-blue-50 text-blue-700 px-1.5 py-0.2 rounded border border-blue-200">
+                    📍 Destino: {{ item.localizacion }}
+                  </span>
+                </div>
+                <span class="font-medium text-slate-900">
+                  @ {{ formatearMoneda(item.unitCost, record.moneda) }} =
+                  <strong>{{ formatearMoneda(item.subtotal, record.moneda) }}</strong>
+                </span>
+              </div>
+            </div>
+
+            <div v-if="record.notes" class="mt-2 text-[11px] text-slate-500 italic">
+              Nota: {{ record.notes }}
+            </div>
+          </div>
+        </template>
+
+        <template #bodyCell="{ column, record }">
+          <!-- Columna Número de Factura -->
+          <template v-if="column.key === 'noDocument'">
+            <div class="font-mono font-semibold text-slate-800">
+              {{ record.noDocument }}
+            </div>
+          </template>
+
+          <!-- Columna Proveedor (Texto libre) -->
+          <template v-else-if="column.key === 'proveedor'">
+            <div class="font-medium text-slate-800">{{ record.proveedor }}</div>
+          </template>
+
+          <!-- Columna Fecha (DD/MM/YYYY) -->
+          <template v-else-if="column.key === 'fechaMovimiento'">
+            <span class="text-xs text-slate-700 font-mono">{{ formatearFecha(record.fechaMovimiento) }}</span>
+          </template>
+
+          <!-- Columna Monto Total -->
+          <template v-else-if="column.key === 'importeTotal'">
+            <span class="font-bold text-slate-900">
+              {{ formatearMoneda(record.importeTotal, record.moneda) }}
+            </span>
+          </template>
+
+          <!-- Columna Estado usando Badges -->
+          <template v-else-if="column.key === 'estado'">
+            <a-tag
+              :color="record.estado === 'CONFIRMADA' ? 'success' : 'warning'"
+              class="px-2.5 py-0.5 text-xs font-semibold"
+            >
+              {{ record.estado === 'CONFIRMADA' ? '✓ En Stock' : '⏳ Pendiente' }}
+            </a-tag>
+          </template>
+
+          <!-- Columna Acciones -->
+          <template v-else-if="column.key === 'actions'">
+            <div class="flex items-center gap-2">
+              <a-popconfirm
+                v-if="record.estado === 'PENDIENTE'"
+                title="¿Confirmas que la mercancía ya llegó físicamente para ingresar las existencias al Stock?"
+                ok-text="Sí, recibir y sumar stock"
+                cancel-text="Cancelar"
+                placement="bottomRight"
+                overlay-class-name="min-w-[280px]"
+                :ok-button-props="{ type: 'primary' }"
+                @confirm="handleConfirmInvoice(record.id)"
+              >
+                <a-button
+                  size="small"
+                  type="primary"
+                  class="bg-emerald-600 hover:bg-emerald-500 border-none text-xs font-semibold h-7"
+                >
+                  ✓ Recibir Stock
+                </a-button>
+              </a-popconfirm>
+              <span v-else class="text-xs text-emerald-700 font-semibold flex items-center gap-1">
+                <span>✓</span>
+                <span>Procesada</span>
+              </span>
+            </div>
+          </template>
+        </template>
+      </a-table>
+    </div>
+
+    <!-- Drawer Lateral para Registrar Nueva Factura / Albarán -->
+    <PurchaseInvoiceDrawer
+      v-model:visible="isDrawerVisible"
+      :providers="purchasesStore.providers"
+      :available-products="purchasesStore.availableProducts"
+      :loading="purchasesStore.loading"
+      @submit="handleSaveInvoice"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import {
+  SearchOutlined,
+  ReloadOutlined,
+  PlusOutlined,
+} from '@ant-design/icons-vue'
+import usePurchasesStore from '../store/purchasesStore'
+import PurchaseInvoiceDrawer from '../components/PurchaseInvoiceDrawer.vue'
+import { useFormatoMoneda } from '@/shared/composables/useFormatoMoneda'
+import { useFormatoFecha } from '@/shared/composables/useFormatoFecha'
+import type { PurchaseInvoice, CreatePurchaseInvoiceDto } from '../types/purchases'
+
+const purchasesStore = usePurchasesStore()
+const { formatearMoneda } = useFormatoMoneda()
+const { formatearFecha } = useFormatoFecha()
+
+const isDrawerVisible = ref<boolean>(false)
+
+// Columnas de la tabla de facturas
+const columns = [
+  {
+    title: 'No. Factura',
+    key: 'noDocument',
+    dataIndex: 'noDocument',
+    width: 150,
+  },
+  {
+    title: 'Proveedor',
+    key: 'proveedor',
+    dataIndex: 'proveedor',
+    sorter: (a: PurchaseInvoice, b: PurchaseInvoice) => a.proveedor.localeCompare(b.proveedor),
+  },
+  {
+    title: 'Fecha',
+    key: 'fechaMovimiento',
+    dataIndex: 'fechaMovimiento',
+    sorter: (a: PurchaseInvoice, b: PurchaseInvoice) => a.fechaMovimiento.localeCompare(b.fechaMovimiento),
+    width: 130,
+  },
+  {
+    title: 'Importe Total',
+    key: 'importeTotal',
+    dataIndex: 'importeTotal',
+    sorter: (a: PurchaseInvoice, b: PurchaseInvoice) => a.importeTotal - b.importeTotal,
+    width: 160,
+  },
+  {
+    title: 'Estado',
+    key: 'estado',
+    dataIndex: 'estado',
+    width: 140,
+  },
+  {
+    title: 'Acciones',
+    key: 'actions',
+    width: 140,
+    align: 'center' as const,
+  },
+]
+
+onMounted(() => {
+  purchasesStore.fetchPurchasesData()
+})
+
+const openCreateDrawer = () => {
+  isDrawerVisible.value = true
+}
+
+const handleSaveInvoice = async (dto: CreatePurchaseInvoiceDto) => {
+  const ok = await purchasesStore.createInvoice(dto)
+  if (ok) {
+    isDrawerVisible.value = false
+  }
+}
+
+const handleConfirmInvoice = async (invoiceId: string) => {
+  await purchasesStore.confirmInvoice(invoiceId)
+}
+</script>
