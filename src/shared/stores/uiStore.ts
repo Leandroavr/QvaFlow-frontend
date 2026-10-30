@@ -5,7 +5,7 @@ import type { ThemePreference } from '../composables/useTheme'
 
 export const useUiStore = defineStore('ui', () => {
   const serverStatus = ref<ServerConnectionStatus>('checking')
-  const theme = ref<ThemePreference>('system')
+  const theme = ref<ThemePreference>('light')
   const lastHealthCheck = ref<string | null>(null)
   const isServerAvailable = ref(true)
 

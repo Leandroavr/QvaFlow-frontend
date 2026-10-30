@@ -1,37 +1,44 @@
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, getCurrentInstance } from 'vue'
 
-export type ThemePreference = 'light' | 'dark' | 'system'
+export type ThemePreference = 'light' | 'dark'
 
 const STORAGE_KEY = 'qvaflow_theme'
-const currentTheme = ref<ThemePreference>('system')
-const systemPrefersDark = ref(false)
+const currentTheme = ref<ThemePreference>('light')
 
 /**
- * Inicialización inmediata para evitar parpadeo visual (FOUC).
+ * Inicialización inmediata para evitar parpadeo visual (FOUC)
+ * y resolución/migración segura de preferencias previas.
  */
-export function initThemeBeforeMount() {
-  const saved = localStorage.getItem(STORAGE_KEY) as ThemePreference | null
-  if (saved === 'light' || saved === 'dark' || saved === 'system') {
+export function initThemeBeforeMount(): ThemePreference {
+  if (typeof window === 'undefined') {
+    return 'light'
+  }
+
+  const saved = localStorage.getItem(STORAGE_KEY)
+
+  if (saved === 'light' || saved === 'dark') {
     currentTheme.value = saved
+  } else if (saved === 'system') {
+    // Migración segura: si contenía 'system', se resuelve UNA sola vez según prefers-color-scheme
+    const systemDark =
+      window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+    const resolved: ThemePreference = systemDark ? 'dark' : 'light'
+    currentTheme.value = resolved
+    localStorage.setItem(STORAGE_KEY, resolved)
+  } else if (saved !== null) {
+    // Valor inválido: migrar resolviendo una vez según prefers-color-scheme
+    const systemDark =
+      window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+    const resolved: ThemePreference = systemDark ? 'dark' : 'light'
+    currentTheme.value = resolved
+    localStorage.setItem(STORAGE_KEY, resolved)
   } else {
-    currentTheme.value = 'system'
+    // Primera visita sin preferencia guardada: por defecto 'light'
+    currentTheme.value = 'light'
   }
 
-  if (typeof window !== 'undefined' && window.matchMedia) {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-    systemPrefersDark.value = mediaQuery.matches
-
-    mediaQuery.addEventListener('change', (e) => {
-      systemPrefersDark.value = e.matches
-      if (currentTheme.value === 'system') {
-        applyDarkClass(e.matches)
-      }
-    })
-  }
-
-  const isDark =
-    currentTheme.value === 'dark' || (currentTheme.value === 'system' && systemPrefersDark.value)
-  applyDarkClass(isDark)
+  applyDarkClass(currentTheme.value === 'dark')
+  return currentTheme.value
 }
 
 function applyDarkClass(isDark: boolean) {
@@ -45,36 +52,27 @@ function applyDarkClass(isDark: boolean) {
 }
 
 export function useTheme() {
-  const isDark = computed(() => {
-    if (currentTheme.value === 'system') {
-      return systemPrefersDark.value
-    }
-    return currentTheme.value === 'dark'
-  })
+  const isDark = computed(() => currentTheme.value === 'dark')
 
   const setTheme = (theme: ThemePreference) => {
     currentTheme.value = theme
     localStorage.setItem(STORAGE_KEY, theme)
-    applyDarkClass(isDark.value)
+    applyDarkClass(theme === 'dark')
   }
 
   const toggleTheme = () => {
-    if (currentTheme.value === 'light') {
-      setTheme('dark')
-    } else if (currentTheme.value === 'dark') {
-      setTheme('system')
-    } else {
-      setTheme('light')
-    }
+    setTheme(currentTheme.value === 'light' ? 'dark' : 'light')
   }
 
-  watch(currentTheme, () => {
-    applyDarkClass(isDark.value)
+  watch(currentTheme, (newTheme) => {
+    applyDarkClass(newTheme === 'dark')
   })
 
-  onMounted(() => {
-    applyDarkClass(isDark.value)
-  })
+  if (getCurrentInstance()) {
+    onMounted(() => {
+      applyDarkClass(currentTheme.value === 'dark')
+    })
+  }
 
   return {
     theme: currentTheme,

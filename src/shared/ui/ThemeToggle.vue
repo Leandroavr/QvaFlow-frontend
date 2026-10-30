@@ -1,74 +1,35 @@
 <template>
-  <div
-    role="radiogroup"
-    aria-label="Selector de tema visual"
-    class="bg-surface-subtle/90 border-border-default shadow-xs backdrop-blur-xs inline-flex items-center rounded-lg border p-1 dark:bg-[#151F3A]/90"
+  <button
+    type="button"
+    :aria-label="isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+    :title="isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+    :class="[
+      'inline-flex h-9 w-9 cursor-pointer select-none items-center justify-center rounded-lg transition-all duration-150',
+      'border-border-default shadow-xs backdrop-blur-xs border',
+      'bg-surface-card/90 hover:bg-surface-subtle active:scale-95',
+      'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+      'text-content-primary',
+    ]"
+    @click="toggleTheme"
   >
-    <!-- Opción: Claro -->
-    <button
-      type="button"
-      role="radio"
-      :aria-checked="theme === 'light'"
-      aria-label="Tema Claro"
-      title="Claro"
-      :class="[
-        'flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-all duration-150',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-        theme === 'light'
-          ? 'shadow-xs border border-border-subtle bg-surface-card font-semibold text-content-primary'
-          : 'hover:bg-surface-card/40 border border-transparent text-content-muted hover:text-content-primary',
-      ]"
-      @click="setTheme('light')"
-    >
-      <Sun class="h-3.5 w-3.5 text-amber-500" aria-hidden="true" />
-      <span class="hidden sm:inline">Claro</span>
-    </button>
-
-    <!-- Opción: Oscuro -->
-    <button
-      type="button"
-      role="radio"
-      :aria-checked="theme === 'dark'"
-      aria-label="Tema Oscuro"
-      title="Oscuro"
-      :class="[
-        'flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-all duration-150',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-        theme === 'dark'
-          ? 'shadow-xs border border-border-subtle bg-surface-card font-semibold text-content-primary dark:bg-[#222E52]'
-          : 'hover:bg-surface-card/40 border border-transparent text-content-muted hover:text-content-primary',
-      ]"
-      @click="setTheme('dark')"
-    >
-      <Moon class="h-3.5 w-3.5 text-sky-400" aria-hidden="true" />
-      <span class="hidden sm:inline">Oscuro</span>
-    </button>
-
-    <!-- Opción: Sistema -->
-    <button
-      type="button"
-      role="radio"
-      :aria-checked="theme === 'system'"
-      aria-label="Tema del Sistema"
-      title="Sistema"
-      :class="[
-        'flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-all duration-150',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-        theme === 'system'
-          ? 'shadow-xs border border-border-subtle bg-surface-card font-semibold text-content-primary dark:bg-[#222E52]'
-          : 'hover:bg-surface-card/40 border border-transparent text-content-muted hover:text-content-primary',
-      ]"
-      @click="setTheme('system')"
-    >
-      <Monitor class="h-3.5 w-3.5 text-content-muted" aria-hidden="true" />
-      <span class="hidden sm:inline">Sistema</span>
-    </button>
-  </div>
+    <!-- Icono Sol cuando está en modo oscuro (para volver a claro) -->
+    <Sun
+      v-if="isDark"
+      class="h-4 w-4 text-amber-400 transition-colors hover:text-amber-300"
+      aria-hidden="true"
+    />
+    <!-- Icono Luna cuando está en modo claro (para cambiar a oscuro) -->
+    <Moon
+      v-else
+      class="h-4 w-4 text-slate-700 transition-colors hover:text-primary"
+      aria-hidden="true"
+    />
+  </button>
 </template>
 
 <script setup lang="ts">
-import { Sun, Moon, Monitor } from 'lucide-vue-next'
+import { Sun, Moon } from 'lucide-vue-next'
 import { useTheme } from '../composables/useTheme'
 
-const { theme, setTheme } = useTheme()
+const { isDark, toggleTheme } = useTheme()
 </script>
