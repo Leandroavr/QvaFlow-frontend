@@ -44,15 +44,15 @@
       <!-- Encabezado con Identidad Visual QvaFlow -->
       <div class="border-b border-border-subtle bg-surface-subtle px-6 pb-4 pt-5 text-center">
         <div class="mb-2 flex items-center justify-center">
-          <!-- Logo sobre placa clara en modo oscuro para garantizar óptimo contraste del texto azul -->
-          <div
-            class="dark:shadow-xs inline-flex items-center justify-center transition-colors dark:rounded-md dark:bg-neutral-50 dark:px-3 dark:py-1.5"
-          >
+          <!-- Logo de la marca con contraste adaptativo por tema -->
+          <div class="inline-flex items-center justify-center">
+            <!-- Modo claro: logo horizontal en color corporativo -->
+            <img :src="logoLight" alt="QvaFlow" class="h-12 w-auto object-contain dark:hidden" />
+            <!-- Modo oscuro: logo horizontal blanco, texto de alta legibilidad sin placa -->
             <img
-              src="/logo.png"
+              :src="logoDark"
               alt="QvaFlow"
-              class="h-14 w-auto object-contain"
-              onerror="this.src = '/logo-horizontal.png'"
+              class="hidden h-12 w-auto object-contain dark:block"
             />
           </div>
         </div>
@@ -65,10 +65,11 @@
 
       <!-- Formulario de Acceso -->
       <div class="p-5 sm:p-6">
-        <form @submit.prevent="handleSubmit" novalidate class="space-y-3.5">
-          <!-- Campo Usuario (Autofocus y Autocomplete correcto) -->
+        <form @submit.prevent="handleSubmit" novalidate class="flex flex-col">
+          <!-- Campo Usuario (Autofocus con ring visible y Autocomplete correcto) -->
           <BaseInput
             id="login-username"
+            ref="usernameInputRef"
             name="username"
             label="Usuario"
             placeholder="Ingrese su nombre de usuario"
@@ -95,6 +96,7 @@
             :model-value="password"
             :error="passwordError"
             :disabled="authStore.isLoading"
+            class="mt-3.5"
             @update:model-value="onPasswordInput"
           >
             <template #prefix>
@@ -102,18 +104,24 @@
             </template>
           </BaseInput>
 
-          <!-- Alerta de Error con espacio reservado para evitar saltos de interfaz -->
-          <div class="flex min-h-[46px] items-center justify-center transition-all duration-200">
-            <BaseAlert
-              v-if="errorMessage"
-              variant="error"
-              :message="errorMessage"
-              class="w-full text-xs"
-            />
+          <!-- Alerta de Error con expansión animada (grid 0fr -> 1fr) sin hueco reservado en reposo -->
+          <div
+            class="duration-250 grid transition-[grid-template-rows,margin] ease-out motion-reduce:transition-none"
+            :class="errorMessage ? 'mt-3 grid-rows-[1fr]' : 'mt-0 grid-rows-[0fr]'"
+            aria-live="assertive"
+          >
+            <div class="overflow-hidden">
+              <BaseAlert
+                v-if="errorMessage"
+                variant="error"
+                :message="errorMessage"
+                class="w-full text-xs"
+              />
+            </div>
           </div>
 
           <!-- Botón de Entrada (48px alto) -->
-          <div>
+          <div class="mt-4">
             <BaseButton
               type="submit"
               variant="primary"
@@ -128,7 +136,7 @@
           </div>
 
           <!-- Mensaje discreto de ayuda para el usuario -->
-          <div class="pt-1 text-center">
+          <div class="pt-3 text-center">
             <span class="text-xs leading-relaxed text-content-muted">
               ¿Problemas para ingresar? Contacte al administrador.
             </span>
@@ -159,7 +167,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineAsyncComponent, onMounted } from 'vue'
+import { ref, defineAsyncComponent, onMounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { User, Lock } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/authStore'
@@ -171,6 +179,8 @@ import BaseAlert from '../../../shared/ui/BaseAlert.vue'
 import StatusDot from '../../../shared/ui/StatusDot.vue'
 import ThemeToggle from '../../../shared/ui/ThemeToggle.vue'
 import { ApiError } from '../../../shared/types/api'
+import logoLight from '@/assets/logo-horizontal.png'
+import logoDark from '@/assets/logo-horizontal-white.png'
 
 // Monitorización de conexión con servidor local (ping cada 15s)
 useServerStatus(15000)
@@ -187,6 +197,9 @@ const isMockEnabled = import.meta.env.VITE_USE_MOCKS !== 'false'
 const MockQuickAccessComponent = isMockEnabled
   ? defineAsyncComponent(() => import('../components/MockQuickAccess.vue'))
   : null
+
+// Referencia al campo de usuario para enfoque inicial
+const usernameInputRef = ref<{ focus: () => void } | null>(null)
 
 // Estado del formulario
 const username = ref('')
@@ -297,5 +310,8 @@ const handleMockSelect = async ({
 
 onMounted(() => {
   authStore.clearError()
+  nextTick(() => {
+    usernameInputRef.value?.focus()
+  })
 })
 </script>

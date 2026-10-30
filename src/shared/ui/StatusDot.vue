@@ -1,16 +1,16 @@
 <template>
   <div class="inline-flex items-center gap-2 text-xs font-medium" :title="computedTooltip">
-    <span class="relative flex h-2.5 w-2.5">
-      <!-- Pulso exterior para indicar actividad en tiempo real -->
+    <span class="relative flex h-3.5 w-3.5 items-center justify-center">
+      <!-- Pulso exterior para indicar actividad en tiempo real (halo máx 14px) -->
       <span
         v-if="status === 'connected' || status === 'checking'"
         :class="[
-          'absolute inline-flex h-full w-full animate-ping rounded-full opacity-75',
+          'absolute inline-flex h-3.5 w-3.5 animate-ping rounded-full opacity-60',
           statusColors[status].ping,
         ]"
       />
-      <!-- Punto central fijo -->
-      <span :class="['relative inline-flex h-2.5 w-2.5 rounded-full', statusColors[status].dot]" />
+      <!-- Punto central fijo (8px) -->
+      <span :class="['relative inline-flex h-2 w-2 rounded-full', statusColors[status].dot]" />
     </span>
     <span v-if="showLabel" :class="statusColors[status].text">
       {{ computedLabel }}
