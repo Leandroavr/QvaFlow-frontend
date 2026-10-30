@@ -1,49 +1,77 @@
 <template>
   <div class="space-y-4">
     <!-- Métricas Superiores: 3 Tarjetas con Fondos Reales para Arqueo / Cuadre -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div
+        class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      >
         <div>
-          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Ventas Registradas</span>
-          <h3 class="text-2xl font-bold text-slate-800 m-0 mt-0.5">{{ filteredSales.length }} tickets</h3>
+          <span class="block text-xs font-semibold uppercase tracking-wider text-slate-500"
+            >Ventas Registradas</span
+          >
+          <h3 class="m-0 mt-0.5 text-2xl font-bold text-slate-800">
+            {{ filteredSales.length }} tickets
+          </h3>
           <span class="text-[11px] text-slate-400">Total en el filtro activo</span>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-blue-50 text-qvaflow-navy flex items-center justify-center font-bold text-lg">
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-lg font-bold text-qvaflow-navy"
+        >
           🧾
         </div>
       </div>
 
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+      <div
+        class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      >
         <div>
-          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Cobrado en CUP (Caja / Transf.)</span>
-          <h3 class="text-2xl font-bold text-slate-900 m-0 mt-0.5">{{ formatearMoneda(totalChargedCUP, 'CUP') }}</h3>
-          <span class="text-[11px] text-emerald-600 font-medium">Ingresos reales en pesos para arqueo</span>
+          <span class="block text-xs font-semibold uppercase tracking-wider text-slate-500"
+            >Cobrado en CUP (Caja / Transf.)</span
+          >
+          <h3 class="m-0 mt-0.5 text-2xl font-bold text-slate-900">
+            {{ formatearMoneda(totalChargedCUP, 'CUP') }}
+          </h3>
+          <span class="text-[11px] font-medium text-emerald-600"
+            >Ingresos reales en pesos para arqueo</span
+          >
         </div>
-        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg">
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-lg font-bold text-emerald-600"
+        >
           🇨🇺
         </div>
       </div>
 
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+      <div
+        class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      >
         <div>
-          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Cobrado en USD (Billetes)</span>
-          <h3 class="text-2xl font-bold text-emerald-600 m-0 mt-0.5">${{ totalChargedUSD }} USD</h3>
-          <span class="text-[11px] text-amber-700 font-medium">Billetes enteros físicos sin centavos</span>
+          <span class="block text-xs font-semibold uppercase tracking-wider text-slate-500"
+            >Cobrado en USD (Billetes)</span
+          >
+          <h3 class="m-0 mt-0.5 text-2xl font-bold text-emerald-600">${{ totalChargedUSD }} USD</h3>
+          <span class="text-[11px] font-medium text-amber-700"
+            >Billetes enteros físicos sin centavos</span
+          >
         </div>
-        <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-lg">
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-lg font-bold text-amber-600"
+        >
           💵
         </div>
       </div>
     </div>
 
     <!-- Contenedor Principal con Pestañas -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <a-tabs v-model:activeKey="activeTab">
         <!-- PESTAÑA 1: HISTORIAL DE VENTAS -->
         <a-tab-pane key="sales" tab="Historial de Ventas">
           <div class="space-y-4 pt-1">
             <!-- Barra de Filtros Simple y Sin Ruido (Inline Toolbar) -->
-            <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
+            <div
+              class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3"
+            >
               <div class="flex flex-wrap items-center gap-2.5">
                 <!-- Filtro por Turno -->
                 <a-select
@@ -73,7 +101,9 @@
                 >
                   <a-select-option value="ALL">Cualquier Fecha</a-select-option>
                   <a-select-option value="TODAY">Hoy ({{ todayFormatted }})</a-select-option>
-                  <a-select-option value="YESTERDAY">Ayer ({{ yesterdayFormatted }})</a-select-option>
+                  <a-select-option value="YESTERDAY"
+                    >Ayer ({{ yesterdayFormatted }})</a-select-option
+                  >
                   <a-select-option value="CUSTOM">Elegir fecha...</a-select-option>
                 </a-select>
 
@@ -102,9 +132,14 @@
 
                 <!-- Botón Limpiar Filtros -->
                 <button
-                  v-if="selectedShiftFilter !== 'ALL' || selectedDatePreset !== 'ALL' || selectedCurrencyFilter !== 'ALL' || salesSearchQuery"
+                  v-if="
+                    selectedShiftFilter !== 'ALL' ||
+                    selectedDatePreset !== 'ALL' ||
+                    selectedCurrencyFilter !== 'ALL' ||
+                    salesSearchQuery
+                  "
                   type="button"
-                  class="text-xs text-slate-400 hover:text-qvaflow-red font-medium transition-colors cursor-pointer ml-1"
+                  class="ml-1 cursor-pointer text-xs font-medium text-slate-400 transition-colors hover:text-qvaflow-red"
                   @click="resetFilters"
                 >
                   Limpiar filtros
@@ -122,10 +157,7 @@
                   <template #prefix><SearchOutlined class="text-slate-400" /></template>
                 </a-input>
 
-                <a-button
-                  :loading="posStore.loadingHistory"
-                  @click="posStore.fetchSalesHistory"
-                >
+                <a-button :loading="posStore.loadingHistory" @click="posStore.fetchSalesHistory">
                   <template #icon><ReloadOutlined /></template>
                 </a-button>
               </div>
@@ -143,27 +175,31 @@
               <template #bodyCell="{ column, record }">
                 <!-- Columna ID Ticket -->
                 <template v-if="column.key === 'id'">
-                  <span class="font-mono font-bold text-slate-800 block">{{ record.id }}</span>
-                  <span class="text-[11px] text-slate-400">{{ record.items?.length || 0 }} productos</span>
+                  <span class="block font-mono font-bold text-slate-800">{{ record.id }}</span>
+                  <span class="text-[11px] text-slate-400"
+                    >{{ record.items?.length || 0 }} productos</span
+                  >
                 </template>
 
                 <!-- Columna Turno Asociado -->
                 <template v-else-if="column.key === 'shiftId'">
-                  <span class="font-mono text-xs text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+                  <span class="rounded bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-600">
                     {{ record.shiftId || 'Sin Turno' }}
                   </span>
                 </template>
 
                 <!-- Columna Fecha y Hora (DD/MM/YYYY HH:mm) -->
                 <template v-else-if="column.key === 'createdAt'">
-                  <span class="text-xs text-slate-700 font-mono">
+                  <span class="font-mono text-xs text-slate-700">
                     {{ formatearFechaHora(record.createdAt) }}
                   </span>
                 </template>
 
                 <!-- Columna Cajero -->
                 <template v-else-if="column.key === 'cashierName'">
-                  <span class="text-xs text-slate-700 font-medium">{{ record.cashierName || 'Caja' }}</span>
+                  <span class="text-xs font-medium text-slate-700">{{
+                    record.cashierName || 'Caja'
+                  }}</span>
                 </template>
 
                 <!-- Columna Total Cobrado (Respeta la moneda real cobrada) -->
@@ -171,20 +207,20 @@
                   <div class="text-right">
                     <!-- Si se cobró en USD: muestra el entero cobrado (ej. $1 USD) -->
                     <template v-if="record.paidCurrency === 'USD'">
-                      <span class="font-black text-emerald-600 block text-sm">
+                      <span class="block text-sm font-black text-emerald-600">
                         ${{ Math.ceil(record.totalInCurrency || record.totalUSD || 1) }} USD
                       </span>
-                      <span class="font-mono text-[10px] text-slate-400 block">
+                      <span class="block font-mono text-[10px] text-slate-400">
                         Base: {{ formatearMoneda(record.totalCUP, 'CUP') }}
                       </span>
                     </template>
 
                     <!-- Si se cobró en CUP (Efectivo o Transferencia) -->
                     <template v-else>
-                      <span class="font-bold text-slate-900 block text-sm">
+                      <span class="block text-sm font-bold text-slate-900">
                         {{ formatearMoneda(record.totalCUP, 'CUP') }}
                       </span>
-                      <span class="font-mono text-[10px] text-slate-400 block">
+                      <span class="block font-mono text-[10px] text-slate-400">
                         Ref: ${{ (record.totalCUP / (record.exchangeRate || 360)).toFixed(2) }} USD
                       </span>
                     </template>
@@ -195,8 +231,12 @@
                 <template v-else-if="column.key === 'payment'">
                   <div class="flex items-center gap-1.5">
                     <span
-                      class="px-2 py-0.5 rounded text-[11px] font-bold"
-                      :class="record.paidCurrency === 'USD' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-blue-50 text-blue-800 border border-blue-200'"
+                      class="rounded px-2 py-0.5 text-[11px] font-bold"
+                      :class="
+                        record.paidCurrency === 'USD'
+                          ? 'border border-emerald-200 bg-emerald-50 text-emerald-800'
+                          : 'border border-blue-200 bg-blue-50 text-blue-800'
+                      "
                     >
                       {{ record.paidCurrency }}
                     </span>
@@ -208,7 +248,12 @@
 
                 <!-- Columna Acciones -->
                 <template v-else-if="column.key === 'actions'">
-                  <a-button size="small" type="link" class="text-xs text-qvaflow-navy hover:text-qvaflow-navy-dark p-0 font-semibold cursor-pointer" @click="openSaleReceipt(record)">
+                  <a-button
+                    size="small"
+                    type="link"
+                    class="cursor-pointer p-0 text-xs font-semibold text-qvaflow-navy hover:text-qvaflow-navy-dark"
+                    @click="openSaleReceipt(record)"
+                  >
                     Ver Ticket
                   </a-button>
                 </template>
@@ -220,7 +265,7 @@
         <!-- PESTAÑA 2: CUADRES DE CAJA -->
         <a-tab-pane key="shifts" tab="Cuadres de Caja">
           <div class="space-y-4 pt-1">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <span class="text-xs text-slate-500">
                 Historial de aperturas, ventas y arqueos físicos por turno.
               </span>
@@ -245,8 +290,12 @@
                 <template v-if="column.key === 'shiftInfo'">
                   <div class="font-mono font-bold text-slate-800">{{ record.id }}</div>
                   <span
-                    class="text-[10px] px-1.5 py-0.2 rounded font-bold"
-                    :class="record.status === 'OPEN' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'"
+                    class="py-0.2 rounded px-1.5 text-[10px] font-bold"
+                    :class="
+                      record.status === 'OPEN'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : 'bg-slate-100 text-slate-600'
+                    "
                   >
                     {{ record.status === 'OPEN' ? '🟢 Abierto' : 'Cerrado' }}
                   </span>
@@ -254,23 +303,29 @@
 
                 <!-- Columna Cajero -->
                 <template v-else-if="column.key === 'cashierName'">
-                  <span class="text-xs font-semibold text-slate-800 block">{{ record.cashierName }}</span>
-                  <span class="text-[10px] text-slate-400 font-mono">1 USD = {{ record.dailyRateUSD }} CUP</span>
+                  <span class="block text-xs font-semibold text-slate-800">{{
+                    record.cashierName
+                  }}</span>
+                  <span class="font-mono text-[10px] text-slate-400"
+                    >1 USD = {{ record.dailyRateUSD }} CUP</span
+                  >
                 </template>
 
                 <!-- Columna Horarios -->
                 <template v-else-if="column.key === 'times'">
                   <div class="text-xs text-slate-700">
-                    <span class="text-slate-400">Inicio:</span> {{ formatearFechaHora(record.openedAt) }}
+                    <span class="text-slate-400">Inicio:</span>
+                    {{ formatearFechaHora(record.openedAt) }}
                   </div>
                   <div class="text-xs text-slate-500">
-                    <span class="text-slate-400">Fin:</span> {{ record.closedAt ? formatearFechaHora(record.closedAt) : 'En curso' }}
+                    <span class="text-slate-400">Fin:</span>
+                    {{ record.closedAt ? formatearFechaHora(record.closedAt) : 'En curso' }}
                   </div>
                 </template>
 
                 <!-- Columna Fondo Inicial Dual -->
                 <template v-else-if="column.key === 'initialFunds'">
-                  <div class="text-sm space-y-1.5 font-medium">
+                  <div class="space-y-1.5 text-sm font-medium">
                     <div class="font-bold text-slate-800">
                       {{ formatearMoneda(record.initialFunds?.CUP || 0, 'CUP') }}
                     </div>
@@ -282,12 +337,24 @@
 
                 <!-- Columna Ventas del Turno (Cantidad y detrás la moneda limpia, más grande y separada) -->
                 <template v-else-if="column.key === 'salesTotals'">
-                  <div class="text-sm space-y-1.5 font-medium">
+                  <div class="space-y-1.5 text-sm font-medium">
                     <div class="font-bold text-slate-800">
-                      {{ formatearMoneda(record.salesTotals?.cupCash ?? (record.salesTotals?.CUP ? record.salesTotals.CUP * 0.9 : 0), 'CUP') }}
+                      {{
+                        formatearMoneda(
+                          record.salesTotals?.cupCash ??
+                            (record.salesTotals?.CUP ? record.salesTotals.CUP * 0.9 : 0),
+                          'CUP'
+                        )
+                      }}
                     </div>
                     <div class="font-bold text-slate-800">
-                      {{ formatearMoneda(record.salesTotals?.cupTransfer ?? (record.salesTotals?.CUP ? record.salesTotals.CUP * 0.1 : 0), 'Transf.') }}
+                      {{
+                        formatearMoneda(
+                          record.salesTotals?.cupTransfer ??
+                            (record.salesTotals?.CUP ? record.salesTotals.CUP * 0.1 : 0),
+                          'Transf.'
+                        )
+                      }}
                     </div>
                     <div class="font-bold text-slate-800">
                       {{ record.salesTotals?.USD || 0 }} USD
@@ -297,9 +364,15 @@
 
                 <!-- Columna Total (Fondo Inicial + Ventas) -->
                 <template v-else-if="column.key === 'totalFunds' || column.key === 'countedFunds'">
-                  <div class="text-sm space-y-1.5 font-medium">
+                  <div class="space-y-1.5 text-sm font-medium">
                     <div class="font-bold text-slate-900">
-                      {{ formatearMoneda((record.initialFunds?.CUP || 0) + (record.salesTotals?.cupCash ?? record.salesTotals?.CUP ?? 0), 'CUP') }}
+                      {{
+                        formatearMoneda(
+                          (record.initialFunds?.CUP || 0) +
+                            (record.salesTotals?.cupCash ?? record.salesTotals?.CUP ?? 0),
+                          'CUP'
+                        )
+                      }}
                     </div>
                     <div class="font-bold text-slate-900">
                       {{ (record.initialFunds?.USD || 0) + (record.salesTotals?.USD || 0) }} USD
@@ -310,12 +383,14 @@
                 <!-- Columna Arqueo (Cuadre, Faltante/Sobrante y Motivo) -->
                 <template v-else-if="column.key === 'discrepancy'">
                   <div v-if="record.status === 'OPEN'" class="space-y-1.5">
-                    <span class="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span
+                      class="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700"
+                    >
                       🟢 Turno Abierto (En curso)
                     </span>
                     <button
                       type="button"
-                      class="block w-full text-center px-2 py-1 text-xs font-semibold bg-qvaflow-navy text-white rounded hover:bg-qvaflow-navy-dark cursor-pointer transition-colors shadow-xs"
+                      class="shadow-xs block w-full cursor-pointer rounded bg-qvaflow-navy px-2 py-1 text-center text-xs font-semibold text-white transition-colors hover:bg-qvaflow-navy-dark"
                       @click="openShiftCloseModal(record)"
                     >
                       ⚖️ Arqueo y Cierre
@@ -325,47 +400,88 @@
                   <div v-else-if="record.status === 'CLOSED'" class="space-y-1.5">
                     <!-- Cuadre Perfecto -->
                     <div
-                      v-if="(!record.differences || (record.differences.CUP === 0 && record.differences.USD === 0))"
+                      v-if="
+                        !record.differences ||
+                        (record.differences.CUP === 0 && record.differences.USD === 0)
+                      "
                     >
-                      <span class="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span
+                        class="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700"
+                      >
                         ✓ Cuadrado Exacto
                       </span>
-                      <div v-if="record.notes" class="text-[10px] text-slate-500 mt-1 italic">
+                      <div v-if="record.notes" class="mt-1 text-[10px] italic text-slate-500">
                         {{ record.notes }}
                       </div>
                     </div>
 
                     <!-- Faltante Detectado -->
                     <div
-                      v-else-if="record.differences && (record.differences.CUP < 0 || record.differences.USD < 0)"
+                      v-else-if="
+                        record.differences &&
+                        (record.differences.CUP < 0 || record.differences.USD < 0)
+                      "
                       class="space-y-1"
                     >
-                      <div class="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200">
+                      <div
+                        class="inline-flex items-center gap-1 rounded border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700"
+                      >
                         <span>⚠️ Faltante:</span>
-                        <span v-if="record.differences.CUP < 0">{{ formatearMoneda(record.differences.CUP, 'CUP') }}</span>
-                        <span v-if="record.differences.CUP < 0 && record.differences.USD < 0"> / </span>
-                        <span v-if="record.differences.USD < 0">{{ record.differences.USD }} USD</span>
+                        <span v-if="record.differences.CUP < 0">{{
+                          formatearMoneda(record.differences.CUP, 'CUP')
+                        }}</span>
+                        <span v-if="record.differences.CUP < 0 && record.differences.USD < 0">
+                          /
+                        </span>
+                        <span v-if="record.differences.USD < 0"
+                          >{{ record.differences.USD }} USD</span
+                        >
                       </div>
-                      <div class="p-1.5 rounded bg-red-50/70 border border-red-200 text-xs text-red-800">
-                        <span class="block text-[10px] font-bold uppercase tracking-wider text-red-900">Motivo:</span>
-                        <span class="italic text-[11px]">{{ record.discrepancyReason || record.notes || 'Sin justificación reportada' }}</span>
+                      <div
+                        class="rounded border border-red-200 bg-red-50/70 p-1.5 text-xs text-red-800"
+                      >
+                        <span
+                          class="block text-[10px] font-bold uppercase tracking-wider text-red-900"
+                          >Motivo:</span
+                        >
+                        <span class="text-[11px] italic">{{
+                          record.discrepancyReason || record.notes || 'Sin justificación reportada'
+                        }}</span>
                       </div>
                     </div>
 
                     <!-- Sobrante Detectado -->
                     <div
-                      v-else-if="record.differences && (record.differences.CUP > 0 || record.differences.USD > 0)"
+                      v-else-if="
+                        record.differences &&
+                        (record.differences.CUP > 0 || record.differences.USD > 0)
+                      "
                       class="space-y-1"
                     >
-                      <div class="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                      <div
+                        class="inline-flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700"
+                      >
                         <span>ℹ️ Sobrante:</span>
-                        <span v-if="record.differences.CUP > 0">+{{ formatearMoneda(record.differences.CUP, 'CUP') }}</span>
-                        <span v-if="record.differences.CUP > 0 && record.differences.USD > 0"> / </span>
-                        <span v-if="record.differences.USD > 0">+${{ record.differences.USD }} USD</span>
+                        <span v-if="record.differences.CUP > 0"
+                          >+{{ formatearMoneda(record.differences.CUP, 'CUP') }}</span
+                        >
+                        <span v-if="record.differences.CUP > 0 && record.differences.USD > 0">
+                          /
+                        </span>
+                        <span v-if="record.differences.USD > 0"
+                          >+${{ record.differences.USD }} USD</span
+                        >
                       </div>
-                      <div class="p-1.5 rounded bg-blue-50/70 border border-blue-200 text-xs text-blue-800">
-                        <span class="block text-[10px] font-bold uppercase tracking-wider text-blue-900">Motivo:</span>
-                        <span class="italic text-[11px]">{{ record.discrepancyReason || record.notes || 'Sobrante no especificado' }}</span>
+                      <div
+                        class="rounded border border-blue-200 bg-blue-50/70 p-1.5 text-xs text-blue-800"
+                      >
+                        <span
+                          class="block text-[10px] font-bold uppercase tracking-wider text-blue-900"
+                          >Motivo:</span
+                        >
+                        <span class="text-[11px] italic">{{
+                          record.discrepancyReason || record.notes || 'Sobrante no especificado'
+                        }}</span>
                       </div>
                     </div>
                   </div>
@@ -386,10 +502,10 @@
       centered
     >
       <div v-if="selectedSale" class="space-y-4 py-2">
-        <div class="text-center pb-3 border-b border-dashed border-slate-200">
-          <h3 class="font-bold text-base text-slate-800 m-0">QvaFlow POS</h3>
-          <p class="text-xs text-slate-400 m-0">Comprobante Fiscal de Operación</p>
-          <div class="font-mono text-xs text-slate-600 mt-1 font-bold">
+        <div class="border-b border-dashed border-slate-200 pb-3 text-center">
+          <h3 class="m-0 text-base font-bold text-slate-800">QvaFlow POS</h3>
+          <p class="m-0 text-xs text-slate-400">Comprobante Fiscal de Operación</p>
+          <div class="mt-1 font-mono text-xs font-bold text-slate-600">
             Ticket #{{ selectedSale.id }}
           </div>
           <div class="text-[11px] text-slate-400">
@@ -402,7 +518,7 @@
           <div
             v-for="item in selectedSale.items"
             :key="item.id"
-            class="flex items-center justify-between text-xs py-1 border-b border-slate-50"
+            class="flex items-center justify-between border-b border-slate-50 py-1 text-xs"
           >
             <div>
               <span class="font-semibold text-slate-800">{{ item.product.name }}</span>
@@ -410,13 +526,15 @@
                 {{ item.quantity }} x {{ formatearMoneda(item.unitPrice, 'CUP') }}
               </div>
             </div>
-            <span class="font-bold text-slate-800">{{ formatearMoneda(item.subtotal, 'CUP') }}</span>
+            <span class="font-bold text-slate-800">{{
+              formatearMoneda(item.subtotal, 'CUP')
+            }}</span>
           </div>
         </div>
 
         <!-- Totales y Pago -->
-        <div class="pt-2 border-t border-slate-200 space-y-1 text-xs">
-          <div class="flex justify-between font-bold text-slate-800 text-sm">
+        <div class="space-y-1 border-t border-slate-200 pt-2 text-xs">
+          <div class="flex justify-between text-sm font-bold text-slate-800">
             <span>Total Facturado:</span>
             <span>{{ formatearMoneda(selectedSale.totalCUP, 'CUP') }}</span>
           </div>
@@ -426,17 +544,22 @@
           </div>
           <div class="flex justify-between text-slate-500">
             <span>Moneda Cobrada:</span>
-            <span class="font-bold">{{ selectedSale.paidCurrency }} ({{ selectedSale.paymentMethod }})</span>
+            <span class="font-bold"
+              >{{ selectedSale.paidCurrency }} ({{ selectedSale.paymentMethod }})</span
+            >
           </div>
-          <div v-if="selectedSale.transferReference" class="flex justify-between text-blue-700 font-mono">
+          <div
+            v-if="selectedSale.transferReference"
+            class="flex justify-between font-mono text-blue-700"
+          >
             <span>Ref. Transferencia:</span>
             <span>{{ selectedSale.transferReference }}</span>
           </div>
         </div>
 
-        <div class="pt-3 border-t border-slate-100 flex justify-end gap-2">
+        <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
           <a-button @click="isReceiptModalVisible = false">Cerrar</a-button>
-          <a-button type="primary" class="bg-qvaflow-navy border-none" @click="handlePrint">
+          <a-button type="primary" class="border-none bg-qvaflow-navy" @click="handlePrint">
             Imprimir
           </a-button>
         </div>
@@ -481,8 +604,16 @@ const openShiftCloseModal = (shift: CashShift) => {
   isShiftModalVisible.value = true
 }
 
-const handleCloseShift = async (payload: { countedCUP: number; countedUSD: number; notes?: string }) => {
-  const result = await posStore.closeCashShift(payload.countedCUP, payload.countedUSD, payload.notes)
+const handleCloseShift = async (payload: {
+  countedCUP: number
+  countedUSD: number
+  notes?: string
+}) => {
+  const result = await posStore.closeCashShift(
+    payload.countedCUP,
+    payload.countedUSD,
+    payload.notes
+  )
   if (result) {
     isShiftModalVisible.value = false
     await posStore.fetchShiftsHistory()
@@ -550,8 +681,7 @@ const filteredSales = computed(() => {
     const q = salesSearchQuery.value.trim().toLowerCase()
     list = list.filter(
       (s) =>
-        s.id.toLowerCase().includes(q) ||
-        (s.cashierName && s.cashierName.toLowerCase().includes(q))
+        s.id.toLowerCase().includes(q) || (s.cashierName && s.cashierName.toLowerCase().includes(q))
     )
   }
 
@@ -673,9 +803,6 @@ const shiftsColumns = [
 ]
 
 onMounted(async () => {
-  await Promise.all([
-    posStore.fetchSalesHistory(),
-    posStore.fetchShiftsHistory(),
-  ])
+  await Promise.all([posStore.fetchSalesHistory(), posStore.fetchShiftsHistory()])
 })
 </script>

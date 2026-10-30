@@ -195,7 +195,8 @@ export const inventoryService = {
       const response = await apiClient.post<Almacen>('/warehouses', dto)
       return response.data
     } catch {
-      const generatedCode = dto.codigo?.trim().toUpperCase() || `ALM-${Date.now().toString().slice(-4)}`
+      const generatedCode =
+        dto.codigo?.trim().toUpperCase() || `ALM-${Date.now().toString().slice(-4)}`
       const newLocations: Localizacion[] = dto.locations.map((loc, idx) => ({
         codigo: loc.codigo?.trim().toUpperCase() || `LOC-${generatedCode}-${idx + 1}`,
         almacen: generatedCode,
@@ -221,7 +222,10 @@ export const inventoryService = {
     razon?: string
   }): Promise<MovimientoAlmacenes> {
     try {
-      const response = await apiClient.post<MovimientoAlmacenes>('/inventory/warehouse-movements', dto)
+      const response = await apiClient.post<MovimientoAlmacenes>(
+        '/inventory/warehouse-movements',
+        dto
+      )
       return response.data
     } catch {
       const docNo = `MOV-ALM-${Date.now().toString().slice(-6)}`
@@ -235,7 +239,9 @@ export const inventoryService = {
 
         if (productItem) {
           if (productItem.stock < item.cantidad) {
-            throw new Error(`Stock insuficiente de "${productItem.name}" para realizar el traslado.`)
+            throw new Error(
+              `Stock insuficiente de "${productItem.name}" para realizar el traslado.`
+            )
           }
           productItem.stock -= item.cantidad
           productItem.location = item.localizacion2
@@ -274,7 +280,9 @@ export const inventoryService = {
   /**
    * Registra un movimiento general (Entrada, Salida, Traslado o Ajuste).
    */
-  async recordMovement(dto: CreateMovementDto): Promise<{ item: InventoryItem; movement: InventoryMovement }> {
+  async recordMovement(
+    dto: CreateMovementDto
+  ): Promise<{ item: InventoryItem; movement: InventoryMovement }> {
     try {
       const response = await apiClient.post<{ item: InventoryItem; movement: InventoryMovement }>(
         '/inventory/movements',
@@ -293,7 +301,9 @@ export const inventoryService = {
         currentItem.stock += dto.quantity
       } else if (dto.type === 'SALIDA') {
         if (currentItem.stock < dto.quantity) {
-          throw new Error(`Stock insuficiente (${currentItem.stock} disponibles) para realizar la salida.`)
+          throw new Error(
+            `Stock insuficiente (${currentItem.stock} disponibles) para realizar la salida.`
+          )
         }
         currentItem.stock -= dto.quantity
       } else if (dto.type === 'TRASLADO') {

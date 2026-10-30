@@ -29,7 +29,8 @@ export function initThemeBeforeMount() {
     })
   }
 
-  const isDark = currentTheme.value === 'dark' || (currentTheme.value === 'system' && systemPrefersDark.value)
+  const isDark =
+    currentTheme.value === 'dark' || (currentTheme.value === 'system' && systemPrefersDark.value)
   applyDarkClass(isDark)
 }
 

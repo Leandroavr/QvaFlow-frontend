@@ -4,12 +4,12 @@ import type { AppPermission } from '../types/permissions'
 
 /**
  * Composable para verificación reactiva de permisos RBAC en componentes y vistas.
- * 
+ *
  * ============================================================================
  * NOTA DE SEGURIDAD ARQUITECTURAL (IMPORTANTE):
  * Las funciones `can` y `canAny` son EXCLUSIVAMENTE para control visual de UI/UX
  * (mostrar u ocultar botones, pestañas o enlaces según las capacidades del usuario).
- * 
+ *
  * La seguridad, autorización y validación real de negocio la realiza el backend
  * Symfony en cada petición mediante JWT y voters de Symfony. El frontend NUNCA debe
  * asumir que una acción no visible es inaccesible a nivel de API.

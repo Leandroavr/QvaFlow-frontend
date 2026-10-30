@@ -7,13 +7,19 @@
       collapsible
       width="260"
       collapsed-width="80"
-      class="border-r border-slate-800 shadow-md min-h-screen"
-      style="background: #122645;"
+      class="min-h-screen border-r border-slate-800 shadow-md"
+      style="background: #122645"
     >
       <!-- Logo y Nombre del Sistema -->
-      <div class="h-16 flex items-center justify-center px-3 border-b border-slate-200 overflow-hidden bg-white shadow-xs shrink-0">
-        <div v-if="!isCollapsed" class="flex items-center justify-center w-full">
-          <img src="/logo-horizontal.png" alt="QvaFlow" class="h-9 w-auto object-contain max-w-[215px] transition-all" />
+      <div
+        class="shadow-xs flex h-16 shrink-0 items-center justify-center overflow-hidden border-b border-slate-200 bg-white px-3"
+      >
+        <div v-if="!isCollapsed" class="flex w-full items-center justify-center">
+          <img
+            src="/logo-horizontal.png"
+            alt="QvaFlow"
+            class="h-9 w-auto max-w-[215px] object-contain transition-all"
+          />
         </div>
         <div v-else class="flex items-center justify-center">
           <img src="/logo-icon.png" alt="Q" class="h-9 w-auto object-contain transition-all" />
@@ -26,8 +32,8 @@
         v-model:openKeys="openKeys"
         mode="inline"
         theme="dark"
-        class="border-r-0 py-2 font-medium qvaflow-sidebar-menu"
-        style="background: #122645;"
+        class="qvaflow-sidebar-menu border-r-0 py-2 font-medium"
+        style="background: #122645"
       >
         <!-- MÓDULO 1: VENTAS Y OPERACIONES -->
         <a-sub-menu
@@ -41,11 +47,7 @@
             <span class="font-semibold text-white">Ventas y Caja</span>
           </template>
 
-          <a-menu-item
-            v-if="authStore.canAccessPos"
-            key="/pos"
-            @click="navigateTo('/pos')"
-          >
+          <a-menu-item v-if="authStore.canAccessPos" key="/pos" @click="navigateTo('/pos')">
             <template #icon>
               <ShoppingCartOutlined class="text-sm" />
             </template>
@@ -66,7 +68,11 @@
 
         <!-- MÓDULO 2: INVENTARIO Y ALMACÉN -->
         <a-sub-menu
-          v-if="authStore.canAccessCatalog || authStore.canAccessInventory || authStore.canAccessPurchases"
+          v-if="
+            authStore.canAccessCatalog ||
+            authStore.canAccessInventory ||
+            authStore.canAccessPurchases
+          "
           key="sub-inventario"
         >
           <template #icon>
@@ -111,10 +117,7 @@
         </a-sub-menu>
 
         <!-- MÓDULO 3: REPORTES Y ANALÍTICAS -->
-        <a-sub-menu
-          v-if="authStore.canAccessReports"
-          key="sub-reportes"
-        >
+        <a-sub-menu v-if="authStore.canAccessReports" key="sub-reportes">
           <template #icon>
             <BarChartOutlined class="text-base text-emerald-400" />
           </template>
@@ -122,10 +125,7 @@
             <span class="font-semibold text-white">Reportes</span>
           </template>
 
-          <a-menu-item
-            key="/reports"
-            @click="navigateTo('/reports')"
-          >
+          <a-menu-item key="/reports" @click="navigateTo('/reports')">
             <template #icon>
               <LineChartOutlined class="text-sm" />
             </template>
@@ -134,10 +134,7 @@
         </a-sub-menu>
 
         <!-- MÓDULO 4: ADMINISTRACIÓN Y SEGURIDAD -->
-        <a-sub-menu
-          v-if="authStore.canManageUsers || authStore.canAccessBackups"
-          key="sub-admin"
-        >
+        <a-sub-menu v-if="authStore.canManageUsers || authStore.canAccessBackups" key="sub-admin">
           <template #icon>
             <SettingOutlined class="text-base text-indigo-400" />
           </template>
@@ -145,11 +142,7 @@
             <span class="font-semibold text-white">Administración</span>
           </template>
 
-          <a-menu-item
-            v-if="authStore.canManageUsers"
-            key="/roles"
-            @click="navigateTo('/roles')"
-          >
+          <a-menu-item v-if="authStore.canManageUsers" key="/roles" @click="navigateTo('/roles')">
             <template #icon>
               <TeamOutlined class="text-sm" />
             </template>
@@ -173,28 +166,31 @@
       <div class="absolute bottom-4 left-0 right-0 px-3">
         <div
           v-if="!isCollapsed"
-          class="p-2.5 rounded-lg border border-white/10 bg-[#0E1E36] flex items-center gap-2 text-xs text-slate-300 shadow-inner"
+          class="flex items-center gap-2 rounded-lg border border-white/10 bg-[#0E1E36] p-2.5 text-xs text-slate-300 shadow-inner"
         >
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-400"></span>
           <span>Red Local: <strong class="text-white">Conectado</strong></span>
         </div>
         <div v-else class="flex justify-center">
-          <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" title="Red Local: Conectado"></span>
+          <span
+            class="h-3 w-3 animate-pulse rounded-full bg-emerald-400"
+            title="Red Local: Conectado"
+          ></span>
         </div>
       </div>
     </a-layout-sider>
 
     <!-- Área Principal de la Aplicación -->
-    <a-layout class="flex flex-col min-h-screen">
+    <a-layout class="flex min-h-screen flex-col">
       <!-- Header Superior -->
       <a-layout-header
-        class="h-16 px-6 bg-qvaflow-navy-dark border-b border-[#1E3E6B]/60 flex items-center justify-between shadow-sm sticky top-0 z-10"
+        class="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-[#1E3E6B]/60 bg-qvaflow-navy-dark px-6 shadow-sm"
       >
         <!-- Botón para colapsar y título -->
         <div class="flex items-center gap-4">
           <button
             type="button"
-            class="text-slate-200 hover:text-white text-lg transition-colors p-1.5 rounded hover:bg-white/10 cursor-pointer"
+            class="cursor-pointer rounded p-1.5 text-lg text-slate-200 transition-colors hover:bg-white/10 hover:text-white"
             @click="toggleCollapse"
           >
             <MenuUnfoldOutlined v-if="isCollapsed" />
@@ -202,10 +198,10 @@
           </button>
 
           <div>
-            <h1 class="text-lg font-semibold text-white leading-tight">
+            <h1 class="text-lg font-semibold leading-tight text-white">
               {{ currentTitle }}
             </h1>
-            <p class="text-xs text-slate-200 m-0">Sistema POS Offline-first para MIPYMES</p>
+            <p class="m-0 text-xs text-slate-200">Sistema POS Offline-first para MIPYMES</p>
           </div>
         </div>
 
@@ -214,26 +210,29 @@
           <!-- Widget Interactivo Tasa del Día -->
           <button
             type="button"
-            class="hidden md:flex items-center gap-1.5 px-3 py-1 bg-white/10 hover:bg-white/15 text-amber-300 border border-white/15 rounded-full text-xs font-semibold cursor-pointer transition-colors"
+            class="hidden cursor-pointer items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-amber-300 transition-colors hover:bg-white/15 md:flex"
             title="Haga clic para actualizar la tasa oficial del día"
             @click="isDailyRateModalVisible = true"
           >
             <span>💵 1 USD = {{ posStore.exchangeRates.USD }} CUP</span>
-            <span class="text-[10px] bg-amber-400/20 text-amber-200 px-1 rounded">Editar</span>
+            <span class="rounded bg-amber-400/20 px-1 text-[10px] text-amber-200">Editar</span>
           </button>
 
-          <a-tag color="success" class="flex items-center gap-1.5 py-0.5 px-2.5 text-xs m-0">
+          <a-tag color="success" class="m-0 flex items-center gap-1.5 px-2.5 py-0.5 text-xs">
             <WifiOutlined />
             <span>Servidor Symfony Activo</span>
           </a-tag>
 
           <!-- Perfil del Cajero / Administrador -->
           <div class="flex items-center gap-2 border-l border-white/15 pl-4">
-            <a-avatar size="small" class="bg-qvaflow-navy text-white font-bold border border-white/20">
+            <a-avatar
+              size="small"
+              class="border border-white/20 bg-qvaflow-navy font-bold text-white"
+            >
               <template #icon><UserOutlined /></template>
             </a-avatar>
-            <div class="hidden sm:block text-left text-xs">
-              <div class="font-medium text-white leading-tight">
+            <div class="hidden text-left text-xs sm:block">
+              <div class="font-medium leading-tight text-white">
                 {{ authStore.userName }}
               </div>
               <div class="text-slate-200">{{ authStore.userRole }}</div>
@@ -242,7 +241,7 @@
             <!-- Botón Salir / Logout Seguro (Con Bloqueo si hay Turno Abierto) -->
             <button
               type="button"
-              class="ml-2 p-1.5 text-slate-300 hover:text-red-400 rounded hover:bg-slate-800 transition-colors cursor-pointer flex items-center justify-center"
+              class="ml-2 flex cursor-pointer items-center justify-center rounded p-1.5 text-slate-300 transition-colors hover:bg-slate-800 hover:text-red-400"
               title="Cerrar Sesión"
               @click="handleLogoutClick"
             >
@@ -253,7 +252,7 @@
       </a-layout-header>
 
       <!-- Contenido Dinámico según la Ruta -->
-      <a-layout-content class="p-6 flex-1 overflow-auto bg-slate-50">
+      <a-layout-content class="flex-1 overflow-auto bg-slate-50 p-6">
         <router-view />
       </a-layout-content>
     </a-layout>
@@ -272,7 +271,7 @@
       :ok-button-props="{ danger: true }"
       @ok="confirmLogout"
     >
-      <div class="py-2 text-slate-700 text-sm">
+      <div class="py-2 text-sm text-slate-700">
         ¿Está seguro de que desea salir del sistema QvaFlow?
       </div>
     </a-modal>
@@ -286,41 +285,50 @@
       width="480px"
     >
       <div class="space-y-4 py-2">
-        <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-900 text-xs">
-          <div class="font-bold text-sm mb-1 flex items-center gap-1.5 text-red-700">
+        <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-900">
+          <div class="mb-1 flex items-center gap-1.5 text-sm font-bold text-red-700">
             <span>🛑 Cierre de Sesión Bloqueado</span>
           </div>
           <div>
             El turno <strong class="font-mono">{{ posStore.currentShift?.id }}</strong> a nombre de
-            <strong>{{ posStore.currentShift?.cashierName }}</strong> se encuentra actualmente <span class="font-bold underline text-red-700">ABIERTO</span>.
+            <strong>{{ posStore.currentShift?.cashierName }}</strong> se encuentra actualmente
+            <span class="font-bold text-red-700 underline">ABIERTO</span>.
           </div>
           <div class="mt-1 text-slate-700">
-            El sistema no permite cerrar sesión dejando turnos abiertos en el aire. Debes realizar el arqueo y cerrar el turno para cuadrar el efectivo antes de salir.
+            El sistema no permite cerrar sesión dejando turnos abiertos en el aire. Debes realizar
+            el arqueo y cerrar el turno para cuadrar el efectivo antes de salir.
           </div>
         </div>
 
-        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs space-y-1.5">
+        <div class="space-y-1.5 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs">
           <div class="flex justify-between">
             <span class="text-slate-500">Hora de Apertura:</span>
             <span class="font-semibold">{{ posStore.currentShift?.openedAt }}</span>
           </div>
           <div class="flex justify-between">
             <span class="text-slate-500">Cobrado en CUP (Efectivo):</span>
-            <span class="font-bold text-slate-800">{{ formatearMoneda(posStore.currentShift?.salesTotals.cupCash ?? posStore.currentShift?.salesTotals.CUP ?? 0, 'CUP') }}</span>
+            <span class="font-bold text-slate-800">{{
+              formatearMoneda(
+                posStore.currentShift?.salesTotals.cupCash ??
+                  posStore.currentShift?.salesTotals.CUP ??
+                  0,
+                'CUP'
+              )
+            }}</span>
           </div>
           <div class="flex justify-between">
             <span class="text-slate-500">Cobrado en USD (Billetes):</span>
-            <span class="font-bold text-emerald-700">${{ posStore.currentShift?.salesTotals.USD || 0 }} USD</span>
+            <span class="font-bold text-emerald-700"
+              >${{ posStore.currentShift?.salesTotals.USD || 0 }} USD</span
+            >
           </div>
         </div>
 
-        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-          <a-button @click="isShiftBlockModalVisible = false">
-            Seguir trabajando
-          </a-button>
+        <div class="flex items-center justify-end gap-2 border-t border-slate-100 pt-2">
+          <a-button @click="isShiftBlockModalVisible = false"> Seguir trabajando </a-button>
           <a-button
             type="primary"
-            class="bg-qvaflow-navy border-none"
+            class="border-none bg-qvaflow-navy"
             @click="openShiftCloseFromWarning"
           >
             Arqueo / Cerrar Turno Ahora
@@ -403,7 +411,11 @@ const openKeys = ref<string[]>(['sub-ventas', 'sub-inventario', 'sub-reportes', 
 const updateOpenKeysByRoute = (path: string) => {
   if (path.includes('/pos') || path.includes('/sales-and-shifts')) {
     if (!openKeys.value.includes('sub-ventas')) openKeys.value.push('sub-ventas')
-  } else if (path.includes('/catalog') || path.includes('/inventory') || path.includes('/purchases')) {
+  } else if (
+    path.includes('/catalog') ||
+    path.includes('/inventory') ||
+    path.includes('/purchases')
+  ) {
     if (!openKeys.value.includes('sub-inventario')) openKeys.value.push('sub-inventario')
   } else if (path.includes('/reports')) {
     if (!openKeys.value.includes('sub-reportes')) openKeys.value.push('sub-reportes')
@@ -459,10 +471,16 @@ const handleCloseShiftFromLayout = async (payload: {
   countedUSD: number
   notes?: string
 }) => {
-  const result = await posStore.closeCashShift(payload.countedCUP, payload.countedUSD, payload.notes)
+  const result = await posStore.closeCashShift(
+    payload.countedCUP,
+    payload.countedUSD,
+    payload.notes
+  )
   if (result) {
     isShiftModalVisible.value = false
-    message.success('Turno cerrado y arqueado con éxito. Ahora puede cerrar sesión de forma segura.')
+    message.success(
+      'Turno cerrado y arqueado con éxito. Ahora puede cerrar sesión de forma segura.'
+    )
   }
 }
 </script>

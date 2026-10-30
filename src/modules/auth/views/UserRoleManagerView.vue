@@ -4,79 +4,107 @@
     <a-alert
       type="warning"
       show-icon
-      class="rounded-xl border-amber-200 bg-amber-50/80 shadow-xs p-4"
+      class="shadow-xs rounded-xl border-amber-200 bg-amber-50/80 p-4"
     >
       <template #message>
-        <span class="font-bold text-amber-900 text-sm">
+        <span class="text-sm font-bold text-amber-900">
           Zona Restringida: Control de Acceso Basado en Roles (RBAC)
         </span>
       </template>
       <template #description>
-        <div class="text-xs text-amber-800 leading-relaxed mt-1">
-          Solo el <strong>Superadministrador</strong> tiene autorización para alterar los roles del negocio, asignar credenciales o revocar el acceso a módulos confidenciales (como la visualización de costos de compra o reportes financieros).
+        <div class="mt-1 text-xs leading-relaxed text-amber-800">
+          Solo el <strong>Superadministrador</strong> tiene autorización para alterar los roles del
+          negocio, asignar credenciales o revocar el acceso a módulos confidenciales (como la
+          visualización de costos de compra o reportes financieros).
         </div>
       </template>
     </a-alert>
 
     <!-- TARJETAS SUPERIORES: KPIS DEL EQUIPO -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div
+        class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      >
         <div>
-          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Trabajadores</p>
-          <h3 class="text-2xl font-black text-slate-800 m-0">{{ authStore.users.length }}</h3>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Total Trabajadores
+          </p>
+          <h3 class="m-0 text-2xl font-black text-slate-800">{{ authStore.users.length }}</h3>
           <span class="text-[11px] text-slate-400">Plantilla del negocio</span>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-bold">
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-xl font-bold text-blue-600"
+        >
           👥
         </div>
       </div>
 
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+      <div
+        class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      >
         <div>
-          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cajeros / Dependientes</p>
-          <h3 class="text-2xl font-black text-slate-800 m-0">
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Cajeros / Dependientes
+          </p>
+          <h3 class="m-0 text-2xl font-black text-slate-800">
             {{ authStore.users.filter((u) => u.role === 'CASHIER').length }}
           </h3>
           <span class="text-[11px] text-slate-400">Atención en mostrador</span>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-xl font-bold text-emerald-600"
+        >
           🛒
         </div>
       </div>
 
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+      <div
+        class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      >
         <div>
-          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Administradores</p>
-          <h3 class="text-2xl font-black text-slate-800 m-0">
-            {{ authStore.users.filter((u) => u.role === 'ADMIN' || u.role === 'SUPERADMIN').length }}
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Administradores
+          </p>
+          <h3 class="m-0 text-2xl font-black text-slate-800">
+            {{
+              authStore.users.filter((u) => u.role === 'ADMIN' || u.role === 'SUPERADMIN').length
+            }}
           </h3>
           <span class="text-[11px] text-slate-400">Gestión y auditoría</span>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-xl font-bold">
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50 text-xl font-bold text-purple-600"
+        >
           🛡️
         </div>
       </div>
 
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+      <div
+        class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      >
         <div>
-          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cuentas Activas</p>
-          <h3 class="text-2xl font-black text-emerald-600 m-0">
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Cuentas Activas
+          </p>
+          <h3 class="m-0 text-2xl font-black text-emerald-600">
             {{ authStore.users.filter((u) => u.status === 'ACTIVO').length }}
           </h3>
-          <span class="text-[11px] text-emerald-600 font-medium">Con acceso permitido</span>
+          <span class="text-[11px] font-medium text-emerald-600">Con acceso permitido</span>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-xl font-bold text-emerald-600"
+        >
           ✓
         </div>
       </div>
     </div>
 
     <!-- CONTENEDOR PRINCIPAL: TABLA DE PERSONAL -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div class="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h3 class="font-bold text-slate-800 text-base m-0">Trabajadores y Matriz de Permisos</h3>
-          <p class="text-xs text-slate-400 m-0">Administración de credenciales de la red local</p>
+          <h3 class="m-0 text-base font-bold text-slate-800">Trabajadores y Matriz de Permisos</h3>
+          <p class="m-0 text-xs text-slate-400">Administración de credenciales de la red local</p>
         </div>
 
         <div class="flex items-center gap-2">
@@ -87,7 +115,7 @@
 
           <a-button
             type="primary"
-            class="bg-emerald-600 hover:bg-emerald-500 border-none font-semibold flex items-center gap-1.5"
+            class="flex items-center gap-1.5 border-none bg-emerald-600 font-semibold hover:bg-emerald-500"
             @click="openCreateUserModal"
           >
             <UserAddOutlined />
@@ -110,38 +138,40 @@
           <template v-if="column.key === 'userInfo'">
             <div class="flex items-center gap-3">
               <div
-                class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0 shadow-sm"
+                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm"
                 :class="getRoleAvatarColor(record.role)"
               >
                 {{ record.name.charAt(0) }}
               </div>
               <div>
-                <div class="font-bold text-slate-800 text-xs">{{ record.name }}</div>
-                <div class="text-[11px] text-slate-400 font-mono">@{{ record.username }} • {{ record.phone || 'Sin tel' }}</div>
+                <div class="text-xs font-bold text-slate-800">{{ record.name }}</div>
+                <div class="font-mono text-[11px] text-slate-400">
+                  @{{ record.username }} • {{ record.phone || 'Sin tel' }}
+                </div>
               </div>
             </div>
           </template>
 
           <!-- Columna Rol -->
           <template v-else-if="column.key === 'role'">
-            <a-tag :color="getRoleTagColor(record.role)" class="text-xs font-bold px-2 py-0.5">
+            <a-tag :color="getRoleTagColor(record.role)" class="px-2 py-0.5 text-xs font-bold">
               {{ getRoleLabel(record.role) }}
             </a-tag>
           </template>
 
           <!-- Columna Permisos Activos -->
           <template v-else-if="column.key === 'permissions'">
-            <div class="flex flex-wrap gap-1 max-w-xs">
+            <div class="flex max-w-xs flex-wrap gap-1">
               <span
                 v-for="perm in record.permissions.slice(0, 3)"
                 :key="perm"
-                class="text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono border border-slate-200"
+                class="rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-700"
               >
                 {{ perm }}
               </span>
               <span
                 v-if="record.permissions.length > 3"
-                class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded"
+                class="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700"
               >
                 +{{ record.permissions.length - 3 }} más
               </span>
@@ -157,7 +187,9 @@
 
           <!-- Columna Último Acceso (DD/MM/YYYY) -->
           <template v-else-if="column.key === 'lastLogin'">
-            <span class="text-xs text-slate-600 font-mono">{{ formatearFechaHora(record.lastLogin) }}</span>
+            <span class="font-mono text-xs text-slate-600">{{
+              formatearFechaHora(record.lastLogin)
+            }}</span>
           </template>
 
           <!-- Columna Acciones -->
@@ -165,7 +197,7 @@
             <a-button
               size="small"
               type="primary"
-              class="bg-blue-600 hover:bg-blue-500 border-none text-xs font-semibold flex items-center gap-1"
+              class="flex items-center gap-1 border-none bg-blue-600 text-xs font-semibold hover:bg-blue-500"
               @click="openEditPermissionsModal(record)"
             >
               <EditOutlined />
@@ -188,11 +220,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import {
-  ReloadOutlined,
-  UserAddOutlined,
-  EditOutlined,
-} from '@ant-design/icons-vue'
+import { ReloadOutlined, UserAddOutlined, EditOutlined } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
 import useAuthStore from '../store/authStore'
 import UserRoleModal from '../components/UserRoleModal.vue'

@@ -9,13 +9,7 @@
     @ok="handleSubmit"
     @cancel="handleCancel"
   >
-    <a-form
-      ref="formRef"
-      :model="formData"
-      :rules="rules"
-      layout="vertical"
-      class="pt-3"
-    >
+    <a-form ref="formRef" :model="formData" :rules="rules" layout="vertical" class="pt-3">
       <!-- Tipo de Movimiento -->
       <a-form-item label="Tipo de Movimiento" name="type">
         <a-select
@@ -51,7 +45,7 @@
           >
             <div class="flex items-center justify-between">
               <span>{{ item.name }}</span>
-              <span class="text-xs text-slate-400 font-mono">
+              <span class="font-mono text-xs text-slate-400">
                 Stock: {{ item.stock }} {{ item.unit }}
               </span>
             </div>
@@ -143,9 +137,14 @@
           size="large"
           placeholder="Ej. 10"
         />
-        <div v-if="selectedProductInfo" class="text-xs text-slate-400 mt-1">
-          Stock actual: <strong class="text-slate-700">{{ selectedProductInfo.stock }} {{ selectedProductInfo.unit }}</strong>
-          en {{ selectedProductInfo.warehouse }} ({{ selectedProductInfo.locationName || selectedProductInfo.location || 'General' }}).
+        <div v-if="selectedProductInfo" class="mt-1 text-xs text-slate-400">
+          Stock actual:
+          <strong class="text-slate-700"
+            >{{ selectedProductInfo.stock }} {{ selectedProductInfo.unit }}</strong
+          >
+          en {{ selectedProductInfo.warehouse }} ({{
+            selectedProductInfo.locationName || selectedProductInfo.location || 'General'
+          }}).
         </div>
       </a-form-item>
 

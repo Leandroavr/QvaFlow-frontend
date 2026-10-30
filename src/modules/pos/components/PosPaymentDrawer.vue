@@ -9,22 +9,22 @@
   >
     <div class="space-y-4">
       <!-- RESUMEN DEL TOTAL A COBRAR -->
-      <div class="p-4 rounded-xl bg-slate-900 text-white shadow-md">
-        <div class="flex items-center justify-between text-xs text-slate-300 mb-1">
+      <div class="rounded-xl bg-slate-900 p-4 text-white shadow-md">
+        <div class="mb-1 flex items-center justify-between text-xs text-slate-300">
           <span>Total en Moneda Base (CUP):</span>
-          <span class="font-bold text-white font-mono">{{ formatearMoneda(totalCUP, 'CUP') }}</span>
+          <span class="font-mono font-bold text-white">{{ formatearMoneda(totalCUP, 'CUP') }}</span>
         </div>
 
-        <div class="flex items-baseline justify-between pt-2 border-t border-slate-700">
+        <div class="flex items-baseline justify-between border-t border-slate-700 pt-2">
           <div>
-            <span class="text-xs text-slate-300 block">Total a Pagar en {{ currency }}:</span>
-            <span v-if="currency !== 'CUP'" class="text-[11px] text-emerald-400 font-mono">
+            <span class="block text-xs text-slate-300">Total a Pagar en {{ currency }}:</span>
+            <span v-if="currency !== 'CUP'" class="font-mono text-[11px] text-emerald-400">
               Tasa: 1 {{ currency }} = {{ exchangeRate }} CUP
             </span>
           </div>
 
           <div class="text-right">
-            <span class="text-3xl font-black text-emerald-400 tracking-tight">
+            <span class="text-3xl font-black tracking-tight text-emerald-400">
               {{ formatearMoneda(effectiveTotalDue, currency) }}
             </span>
           </div>
@@ -38,7 +38,7 @@
           <div class="space-y-4 pt-1">
             <!-- Entrada de Efectivo Recibido -->
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase">
+              <label class="mb-1.5 block text-xs font-bold uppercase text-slate-700">
                 Efectivo Recibido (en {{ currency }}):
               </label>
               <a-input-number
@@ -53,13 +53,13 @@
 
               <!-- Calculadora de Denominaciones Rápidas -->
               <div class="mt-2.5">
-                <span class="text-[11px] text-slate-400 font-semibold uppercase block mb-1.5">
+                <span class="mb-1.5 block text-[11px] font-semibold uppercase text-slate-400">
                   Billetes Rápidos:
                 </span>
                 <div class="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    class="px-3 py-1.5 text-xs rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold border border-emerald-200 transition-colors"
+                    class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 transition-colors hover:bg-emerald-100"
                     @click="setExactCash"
                   >
                     Exacto ({{ effectiveTotalDue }})
@@ -69,7 +69,7 @@
                     v-for="quick in quickCashDenominations"
                     :key="quick"
                     type="button"
-                    class="px-3 py-1.5 text-xs rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold border border-slate-200 transition-colors"
+                    class="rounded-lg border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 transition-colors hover:bg-slate-200"
                     @click="addCash(quick)"
                   >
                     +{{ quick }} {{ currency }}
@@ -77,7 +77,7 @@
 
                   <button
                     type="button"
-                    class="px-2.5 py-1.5 text-xs rounded-lg text-slate-400 hover:text-slate-600 font-medium"
+                    class="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-400 hover:text-slate-600"
                     @click="cashReceived = 0"
                   >
                     Limpiar
@@ -88,29 +88,33 @@
 
             <!-- Panel de Cálculo de Vuelto (Estricto sin centavos en CUP) -->
             <div
-              class="p-4 rounded-xl border transition-all"
+              class="rounded-xl border p-4 transition-all"
               :class="[
                 isCashSufficient
-                  ? 'bg-emerald-50 border-emerald-300 text-emerald-900 shadow-sm'
-                  : 'bg-amber-50 border-amber-300 text-amber-900'
+                  ? 'border-emerald-300 bg-emerald-50 text-emerald-900 shadow-sm'
+                  : 'border-amber-300 bg-amber-50 text-amber-900',
               ]"
             >
               <div class="flex items-center justify-between">
                 <div>
-                  <span class="text-xs font-bold uppercase tracking-wider block">
+                  <span class="block text-xs font-bold uppercase tracking-wider">
                     {{ isCashSufficient ? 'Vuelto / Cambio a Entregar:' : 'Falta por Pagar:' }}
                   </span>
                   <span v-if="currency === 'CUP'" class="text-[11px] text-slate-500">
                     Regla de arqueo: Sin centavos
                   </span>
                   <div v-else-if="isCashSufficient" class="mt-0.5 space-y-0.5">
-                    <span v-if="currency === 'USD'" class="text-[11px] font-bold text-emerald-700 block">
-                      💵 Vuelto a entregar al cliente en CUP: {{ formatearMoneda(changeInCUP, 'CUP') }}
+                    <span
+                      v-if="currency === 'USD'"
+                      class="block text-[11px] font-bold text-emerald-700"
+                    >
+                      💵 Vuelto a entregar al cliente en CUP:
+                      {{ formatearMoneda(changeInCUP, 'CUP') }}
                     </span>
-                    <span v-else class="text-[11px] opacity-80 block">
+                    <span v-else class="block text-[11px] opacity-80">
                       Equivalente en CUP: {{ formatearMoneda(changeInCUP, 'CUP') }}
                     </span>
-                    <span class="text-[10px] text-slate-500 block">
+                    <span class="block text-[10px] text-slate-500">
                       (Tasa aplicada: 1 {{ currency }} = {{ exchangeRate }} CUP)
                     </span>
                   </div>
@@ -132,49 +136,53 @@
             <!-- Selector de Pasarela -->
             <div class="grid grid-cols-2 gap-3">
               <div
-                class="p-3 rounded-xl border-2 cursor-pointer transition-all text-center select-none"
+                class="cursor-pointer select-none rounded-xl border-2 p-3 text-center transition-all"
                 :class="[
                   selectedGateway === 'TRANSFERMOVIL'
                     ? 'border-blue-600 bg-blue-50 text-blue-900 shadow-sm'
-                    : 'border-slate-200 bg-white hover:border-slate-300 text-slate-600'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
                 ]"
                 @click="selectedGateway = 'TRANSFERMOVIL'"
               >
-                <div class="text-xl mb-0.5">📲</div>
-                <div class="font-bold text-xs">Transfermóvil</div>
+                <div class="mb-0.5 text-xl">📲</div>
+                <div class="text-xs font-bold">Transfermóvil</div>
                 <div class="text-[10px] opacity-75">BPA / BANDEC / BM</div>
               </div>
 
               <div
-                class="p-3 rounded-xl border-2 cursor-pointer transition-all text-center select-none"
+                class="cursor-pointer select-none rounded-xl border-2 p-3 text-center transition-all"
                 :class="[
                   selectedGateway === 'ENZONA'
                     ? 'border-emerald-600 bg-emerald-50 text-emerald-900 shadow-sm'
-                    : 'border-slate-200 bg-white hover:border-slate-300 text-slate-600'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
                 ]"
                 @click="selectedGateway = 'ENZONA'"
               >
-                <div class="text-xl mb-0.5">💳</div>
-                <div class="font-bold text-xs">EnZona</div>
+                <div class="mb-0.5 text-xl">💳</div>
+                <div class="text-xs font-bold">EnZona</div>
                 <div class="text-[10px] opacity-75">Pasarela XETID</div>
               </div>
             </div>
 
             <!-- Código QR Estático Simulado -->
-            <div class="p-4 bg-white rounded-xl border border-slate-200 flex flex-col items-center justify-center text-center shadow-xs">
-              <div class="w-36 h-36 bg-slate-900 rounded-lg p-2.5 flex items-center justify-center text-white mb-2 shadow-inner">
+            <div
+              class="shadow-xs flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-4 text-center"
+            >
+              <div
+                class="mb-2 flex h-36 w-36 items-center justify-center rounded-lg bg-slate-900 p-2.5 text-white shadow-inner"
+              >
                 <!-- Gráfico de Código QR -->
-                <div class="w-full h-full bg-white p-1 rounded flex flex-col justify-between">
+                <div class="flex h-full w-full flex-col justify-between rounded bg-white p-1">
                   <div class="flex justify-between">
-                    <div class="w-7 h-7 bg-black rounded-xs"></div>
-                    <div class="w-7 h-7 bg-black rounded-xs"></div>
+                    <div class="rounded-xs h-7 w-7 bg-black"></div>
+                    <div class="rounded-xs h-7 w-7 bg-black"></div>
                   </div>
-                  <div class="text-[9px] font-mono text-black font-extrabold text-center">
+                  <div class="text-center font-mono text-[9px] font-extrabold text-black">
                     QvaFlow-PAY
                   </div>
-                  <div class="flex justify-between items-end">
-                    <div class="w-7 h-7 bg-black rounded-xs"></div>
-                    <div class="w-4 h-4 bg-black rounded-xs"></div>
+                  <div class="flex items-end justify-between">
+                    <div class="rounded-xs h-7 w-7 bg-black"></div>
+                    <div class="rounded-xs h-4 w-4 bg-black"></div>
                   </div>
                 </div>
               </div>
@@ -182,14 +190,14 @@
               <span class="text-xs font-bold text-slate-800">
                 Escanee con {{ selectedGateway === 'TRANSFERMOVIL' ? 'Transfermóvil' : 'EnZona' }}
               </span>
-              <span class="text-xs text-emerald-600 font-extrabold mt-0.5">
+              <span class="mt-0.5 text-xs font-extrabold text-emerald-600">
                 Monto: {{ formatearMoneda(totalCUP, 'CUP') }}
               </span>
             </div>
 
             <!-- Campo Obligatorio: Número de Referencia / Transacción Bancaria -->
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">
+              <label class="mb-1 block text-xs font-bold text-slate-700">
                 Número de Referencia / ID Transacción: <span class="text-red-500">*</span>
               </label>
               <a-input
@@ -199,7 +207,7 @@
                 class="font-mono"
                 allow-clear
               />
-              <span class="text-[11px] text-slate-400 mt-1 block">
+              <span class="mt-1 block text-[11px] text-slate-400">
                 Verifique en el móvil del cliente el mensaje bancario antes de confirmar.
               </span>
             </div>
@@ -209,7 +217,9 @@
     </div>
 
     <!-- FOOTER FIJO DEL DRAWER -->
-    <div class="absolute bottom-0 left-0 right-0 py-3.5 px-6 bg-white border-t border-slate-200 flex items-center justify-between shadow-lg">
+    <div
+      class="absolute bottom-0 left-0 right-0 flex items-center justify-between border-t border-slate-200 bg-white px-6 py-3.5 shadow-lg"
+    >
       <a-button size="large" @click="handleClose">Cancelar</a-button>
 
       <a-button
@@ -217,7 +227,7 @@
         size="large"
         :loading="loading"
         :disabled="isConfirmDisabled"
-        class="bg-emerald-600 hover:bg-emerald-500 border-none font-bold shadow-md flex items-center gap-1.5"
+        class="flex items-center gap-1.5 border-none bg-emerald-600 font-bold shadow-md hover:bg-emerald-500"
         @click="handleConfirm"
       >
         <span>Confirmar Cobro e Imprimir</span>

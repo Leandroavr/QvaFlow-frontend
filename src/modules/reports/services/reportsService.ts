@@ -41,7 +41,7 @@ const FINANZAS_MENSUALES_MOCK: Record<string, MonthlyFinanceRecord> = {
     purchasesUSD: 216.66,
     purchasesCount: 10,
     grossProfitCUP: 50400,
-    grossProfitUSD: 140.00,
+    grossProfitUSD: 140.0,
     marginPercent: 39.25,
   },
   '2026-08': {
@@ -122,7 +122,7 @@ const MOVIMIENTOS_MOCK: FinancialMovement[] = [
     category: 'Bebidas',
     warehouse: 'Tienda Principal',
     amountCUP: 950,
-    amountUSD: 3.00,
+    amountUSD: 3.0,
     paymentMethod: 'USD Efectivo',
     status: 'COMPLETADA',
   },
@@ -161,7 +161,7 @@ const MOVIMIENTOS_MOCK: FinancialMovement[] = [
     category: 'Alimentos',
     warehouse: 'Almacén Central',
     amountCUP: 45000,
-    amountUSD: 125.00,
+    amountUSD: 125.0,
     paymentMethod: 'Transferencia',
     status: 'PAGADA',
   },
@@ -282,7 +282,8 @@ export const reportsService = {
       const purchasesUSD = all.reduce((acc, m) => acc + m.purchasesUSD, 0)
       const grossProfitCUP = salesCUP - purchasesCUP
       const grossProfitUSD = salesUSD - purchasesUSD
-      const marginPercent = salesCUP > 0 ? Number(((grossProfitCUP / salesCUP) * 100).toFixed(2)) : 0
+      const marginPercent =
+        salesCUP > 0 ? Number(((grossProfitCUP / salesCUP) * 100).toFixed(2)) : 0
 
       return Promise.resolve({
         monthKey: 'ALL',

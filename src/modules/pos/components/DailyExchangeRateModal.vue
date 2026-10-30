@@ -10,24 +10,28 @@
     @cancel="handleClose"
   >
     <div class="space-y-4 pt-1">
-      <div class="p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
-        <span class="text-base shrink-0">💡</span>
+      <div
+        class="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900"
+      >
+        <span class="shrink-0 text-base">💡</span>
         <div>
           <span class="font-bold">Moneda Principal del Negocio: USD</span>
           <p class="m-0 mt-0.5 text-amber-800">
-            Al actualizar la tasa del día, el sistema recalcula en tiempo real los equivalentes en CUP en el Punto de Venta. Los productos con precio fijo manual en CUP o USD respetarán siempre lo establecido por el administrador.
+            Al actualizar la tasa del día, el sistema recalcula en tiempo real los equivalentes en
+            CUP en el Punto de Venta. Los productos con precio fijo manual en CUP o USD respetarán
+            siempre lo establecido por el administrador.
           </p>
         </div>
       </div>
 
       <a-form layout="vertical">
         <!-- Tasa USD a CUP (Principal) -->
-        <div class="p-3.5 bg-slate-50 rounded-xl border-2 border-emerald-500 shadow-xs">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-black text-emerald-800 uppercase tracking-wide">
+        <div class="shadow-xs rounded-xl border-2 border-emerald-500 bg-slate-50 p-3.5">
+          <div class="mb-2 flex items-center justify-between">
+            <span class="text-xs font-black uppercase tracking-wide text-emerald-800">
               🇺🇸 Tasa USD Oficial (Base CUP)
             </span>
-            <a-tag color="success" class="text-[10px] m-0 font-bold">Referencia Central</a-tag>
+            <a-tag color="success" class="m-0 text-[10px] font-bold">Referencia Central</a-tag>
           </div>
 
           <div class="flex items-center gap-2">
@@ -36,19 +40,19 @@
               v-model:value="formRates.USD"
               :min="1"
               :precision="0"
-              class="flex-1 font-bold text-base"
+              class="flex-1 text-base font-bold"
               addon-after="CUP"
             />
           </div>
-          <span class="text-[11px] text-slate-500 mt-1 block">
+          <span class="mt-1 block text-[11px] text-slate-500">
             Tasa informal / representativa vigente para el día de operaciones.
           </span>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+        <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <!-- Tasa EUR -->
-          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
-            <span class="text-xs font-bold text-slate-700 block mb-1.5">🇪🇺 Tasa EUR</span>
+          <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <span class="mb-1.5 block text-xs font-bold text-slate-700">🇪🇺 Tasa EUR</span>
             <div class="flex items-center gap-1.5">
               <span class="text-xs text-slate-500">1 EUR =</span>
               <a-input-number
@@ -62,8 +66,8 @@
           </div>
 
           <!-- Tasa MLC -->
-          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
-            <span class="text-xs font-bold text-slate-700 block mb-1.5">💳 Tasa MLC</span>
+          <div class="rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <span class="mb-1.5 block text-xs font-bold text-slate-700">💳 Tasa MLC</span>
             <div class="flex items-center gap-1.5">
               <span class="text-xs text-slate-500">1 MLC =</span>
               <a-input-number
@@ -78,13 +82,16 @@
         </div>
 
         <!-- Simulación en vivo de Conversión -->
-        <div class="p-3 bg-blue-50/70 rounded-lg border border-blue-200 text-xs text-blue-900 mt-3">
-          <div class="font-bold mb-1 flex items-center justify-between">
+        <div class="mt-3 rounded-lg border border-blue-200 bg-blue-50/70 p-3 text-xs text-blue-900">
+          <div class="mb-1 flex items-center justify-between font-bold">
             <span>Ejemplo de cobro en POS:</span>
-            <span class="font-mono text-emerald-700">$10.00 USD = {{ 10 * (formRates.USD || 360) }} CUP</span>
+            <span class="font-mono text-emerald-700"
+              >$10.00 USD = {{ 10 * (formRates.USD || 360) }} CUP</span
+            >
           </div>
-          <p class="m-0 text-blue-800 text-[11px]">
-            Un producto valorado en $10.00 USD se cobrará al cliente a <strong>{{ 10 * (formRates.USD || 360) }} CUP</strong> cuando pague en moneda nacional.
+          <p class="m-0 text-[11px] text-blue-800">
+            Un producto valorado en $10.00 USD se cobrará al cliente a
+            <strong>{{ 10 * (formRates.USD || 360) }} CUP</strong> cuando pague en moneda nacional.
           </p>
         </div>
       </a-form>

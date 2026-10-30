@@ -59,9 +59,7 @@ export const usePosStore = defineStore('pos', () => {
     const query = searchQuery.value.trim().toLowerCase()
     return products.value.filter((p) => {
       const matchQuery =
-        !query ||
-        p.name.toLowerCase().includes(query) ||
-        p.code.toLowerCase().includes(query)
+        !query || p.name.toLowerCase().includes(query) || p.code.toLowerCase().includes(query)
 
       const matchCategory =
         selectedCategory.value === 'all' || p.category === selectedCategory.value
@@ -198,7 +196,9 @@ export const usePosStore = defineStore('pos', () => {
       const newQty = currentItem.quantity + quantityToAdd
 
       if (newQty > product.stock) {
-        message.warning(`Stock máximo disponible para "${product.name}": ${product.stock} ${product.unit}`)
+        message.warning(
+          `Stock máximo disponible para "${product.name}": ${product.stock} ${product.unit}`
+        )
         return
       }
 
@@ -227,9 +227,7 @@ export const usePosStore = defineStore('pos', () => {
     const cleanCode = scannedCode.trim()
     if (!cleanCode) return false
 
-    const found = products.value.find(
-      (p) => p.code.toLowerCase() === cleanCode.toLowerCase()
-    )
+    const found = products.value.find((p) => p.code.toLowerCase() === cleanCode.toLowerCase())
 
     if (found) {
       addToCart(found, 1)
@@ -401,7 +399,9 @@ export const usePosStore = defineStore('pos', () => {
 
       // Refrescar estado del turno local
       currentShift.value = await posService.getCurrentShift()
-      message.success(`Canje registrado: Recibido ${amountFrom} ${currencyFrom} -> Entregado ${amountTo} ${currencyTo}`)
+      message.success(
+        `Canje registrado: Recibido ${amountFrom} ${currencyFrom} -> Entregado ${amountTo} ${currencyTo}`
+      )
       return true
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : 'Error al registrar canje'
@@ -433,7 +433,8 @@ export const usePosStore = defineStore('pos', () => {
       let changeGiven = 0
       if (payload.paymentMethod === 'CASH') {
         const rawChange = Math.max(0, payload.cashReceived - totalDueInCurr)
-        changeGiven = selectedCurrency.value === 'CUP' ? Math.round(rawChange) : Number(rawChange.toFixed(2))
+        changeGiven =
+          selectedCurrency.value === 'CUP' ? Math.round(rawChange) : Number(rawChange.toFixed(2))
       }
 
       // Si se cobró en USD, el total en USD es ESTRICTAMENTE el entero cobrado (sin centavos, ej. 1 USD)
@@ -448,7 +449,8 @@ export const usePosStore = defineStore('pos', () => {
         totalUSD: chargedUSD,
         paidCurrency: selectedCurrency.value,
         exchangeRate: currentRate.value,
-        totalInCurrency: selectedCurrency.value === 'USD' ? Math.ceil(totalDueInCurr) : totalDueInCurr,
+        totalInCurrency:
+          selectedCurrency.value === 'USD' ? Math.ceil(totalDueInCurr) : totalDueInCurr,
         cashReceived: payload.cashReceived,
         changeGiven,
         paymentMethod: payload.paymentMethod,

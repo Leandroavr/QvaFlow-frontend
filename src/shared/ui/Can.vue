@@ -10,16 +10,16 @@ import type { AppPermission } from '../types/permissions'
 
 /**
  * Componente declarativo <Can> para renderizado condicional según permisos RBAC.
- * 
+ *
  * Uso:
  * <Can permission="inventory.view">
  *   <InventoryTable />
  * </Can>
- * 
+ *
  * <Can :permission="['sales.create', 'sales.cancel']" any>
  *   <PosActions />
  * </Can>
- * 
+ *
  * Recordatorio: Control visual de interfaz. La seguridad real se aplica en Symfony.
  */
 interface Props {

@@ -9,7 +9,7 @@
     @ok="handleSubmit"
     @cancel="handleCancel"
   >
-    <div class="py-2 space-y-4">
+    <div class="space-y-4 py-2">
       <a-form ref="formRef" :model="formState" layout="vertical">
         <a-form-item
           label="Nombre del Almacén"
@@ -24,7 +24,7 @@
         </a-form-item>
 
         <!-- Localizaciones Dinámicas -->
-        <div class="border-t border-slate-200 pt-3 space-y-2">
+        <div class="space-y-2 border-t border-slate-200 pt-3">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold text-slate-700">Localizaciones</span>
             <span class="text-xs text-slate-400">{{ formState.locations.length }} agregada(s)</span>
@@ -40,7 +40,7 @@
             />
             <a-button
               type="primary"
-              class="bg-qvaflow-navy border-none"
+              class="border-none bg-qvaflow-navy"
               :disabled="!newLocationName.trim()"
               @click="addLocation"
             >
@@ -49,19 +49,22 @@
           </div>
 
           <!-- Lista de localizaciones añadidas -->
-          <div v-if="formState.locations.length > 0" class="space-y-1.5 max-h-48 overflow-y-auto p-2 bg-slate-50 rounded-lg border border-slate-200">
+          <div
+            v-if="formState.locations.length > 0"
+            class="max-h-48 space-y-1.5 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-2"
+          >
             <div
               v-for="(loc, index) in formState.locations"
               :key="index"
-              class="flex items-center justify-between bg-white px-3 py-1.5 rounded border border-slate-200 text-xs"
+              class="flex items-center justify-between rounded border border-slate-200 bg-white px-3 py-1.5 text-xs"
             >
               <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
                 <span class="font-medium text-slate-800">{{ loc.nombre }}</span>
               </div>
               <button
                 type="button"
-                class="text-red-500 hover:text-red-700 text-xs font-bold cursor-pointer p-0.5"
+                class="cursor-pointer p-0.5 text-xs font-bold text-red-500 hover:text-red-700"
                 title="Eliminar"
                 @click="removeLocation(index)"
               >
@@ -69,7 +72,7 @@
               </button>
             </div>
           </div>
-          <div v-else class="text-xs text-slate-400 italic">
+          <div v-else class="text-xs italic text-slate-400">
             Agrega al menos una localización para este almacén.
           </div>
         </div>
@@ -103,9 +106,7 @@ const newLocationName = ref<string>('')
 
 const formState = reactive({
   nombre: '',
-  locations: [
-    { nombre: 'Mostrador / General' }
-  ] as { nombre: string }[],
+  locations: [{ nombre: 'Mostrador / General' }] as { nombre: string }[],
 })
 
 const addLocation = () => {

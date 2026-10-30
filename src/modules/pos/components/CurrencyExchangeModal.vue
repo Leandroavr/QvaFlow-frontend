@@ -9,16 +9,20 @@
     @ok="handleConfirm"
     @cancel="handleCancel"
   >
-    <div class="py-2 space-y-4">
+    <div class="space-y-4 py-2">
       <!-- Tarjeta Resumen de Tasa con Margen -->
-      <div class="p-3 bg-blue-50 rounded-xl border border-blue-200 text-xs text-blue-900 flex items-center justify-between">
+      <div
+        class="flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900"
+      >
         <div>
-          <span class="font-bold block text-sm">Canje Oficial de Mostrador</span>
-          <span class="text-[11px] opacity-80">Compra de divisas al cliente para fondo de caja</span>
+          <span class="block text-sm font-bold">Canje Oficial de Mostrador</span>
+          <span class="text-[11px] opacity-80"
+            >Compra de divisas al cliente para fondo de caja</span
+          >
         </div>
         <div class="text-right">
-          <span class="text-[11px] text-slate-500 block">Tasa Fija Canje:</span>
-          <span class="font-mono font-black text-emerald-700 text-base">
+          <span class="block text-[11px] text-slate-500">Tasa Fija Canje:</span>
+          <span class="font-mono text-base font-black text-emerald-700">
             1 {{ currencyFrom }} = {{ effectiveExchangeRate }} CUP
           </span>
         </div>
@@ -27,7 +31,7 @@
       <!-- Dirección del Canje -->
       <a-row :gutter="16">
         <a-col :span="12">
-          <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">
+          <label class="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-700">
             Moneda Recibida (Cliente entrega):
           </label>
           <a-select
@@ -43,31 +47,42 @@
         </a-col>
 
         <a-col :span="12">
-          <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">
+          <label class="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-700">
             Moneda a Entregar (Caja paga):
           </label>
-          <a-input value="🇨🇺 Peso Cubano (CUP)" disabled class="font-bold bg-slate-100 text-slate-800" />
+          <a-input
+            value="🇨🇺 Peso Cubano (CUP)"
+            disabled
+            class="bg-slate-100 font-bold text-slate-800"
+          />
         </a-col>
       </a-row>
 
       <!-- Campo de Tasa de Canje (Estrictamente de Solo Lectura con Margen de -10 CUP) -->
       <div>
-        <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">
+        <label class="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-700">
           Tasa de Canje Aplicada (Solo Lectura):
         </label>
         <a-input
           :value="`1 ${currencyFrom} = ${effectiveExchangeRate} CUP`"
           disabled
-          class="font-mono font-black text-emerald-800 bg-slate-100 text-base"
+          class="bg-slate-100 font-mono text-base font-black text-emerald-800"
         />
-        <div class="mt-1 p-2 bg-emerald-50 rounded border border-emerald-200 text-[11px] text-emerald-800 leading-snug">
-          📌 <strong>Regla de Margen Fijo:</strong> Se toma la Tasa Diaria Oficial ({{ dailyBaseRate }} CUP) y se descuenta automáticamente el margen operativo fijo de <strong>-10 CUP</strong> ({{ dailyBaseRate }} - 10 = <strong>{{ effectiveExchangeRate }} CUP</strong>).
+        <div
+          class="mt-1 rounded border border-emerald-200 bg-emerald-50 p-2 text-[11px] leading-snug text-emerald-800"
+        >
+          📌 <strong>Regla de Margen Fijo:</strong> Se toma la Tasa Diaria Oficial ({{
+            dailyBaseRate
+          }}
+          CUP) y se descuenta automáticamente el margen operativo fijo de
+          <strong>-10 CUP</strong> ({{ dailyBaseRate }} - 10 =
+          <strong>{{ effectiveExchangeRate }} CUP</strong>).
         </div>
       </div>
 
       <!-- Importe a recibir del cliente -->
       <div>
-        <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1">
+        <label class="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-700">
           Importe Recibido del Cliente (en {{ currencyFrom }}):
         </label>
         <a-input-number
@@ -81,12 +96,12 @@
         />
 
         <!-- Botones de billetes comunes -->
-        <div class="flex gap-2 mt-2">
+        <div class="mt-2 flex gap-2">
           <button
             v-for="quick in [10, 20, 50, 100]"
             :key="quick"
             type="button"
-            class="px-2.5 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold border border-slate-200"
+            class="rounded border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700 hover:bg-slate-200"
             @click="amountFrom = quick"
           >
             {{ quick }} {{ currencyFrom }}
@@ -95,15 +110,19 @@
       </div>
 
       <!-- Cálculo Automático a Entregar en CUP (Estricto sin centavos) -->
-      <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+      <div class="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4">
         <div class="flex items-center justify-between text-xs text-slate-500">
           <span>Fórmula de Conversión:</span>
-          <span class="font-mono font-bold text-slate-700">{{ amountFrom || 0 }} {{ currencyFrom }} × {{ effectiveExchangeRate }} CUP</span>
+          <span class="font-mono font-bold text-slate-700"
+            >{{ amountFrom || 0 }} {{ currencyFrom }} × {{ effectiveExchangeRate }} CUP</span
+          >
         </div>
 
-        <div class="flex items-baseline justify-between pt-2 border-t border-slate-200">
+        <div class="flex items-baseline justify-between border-t border-slate-200 pt-2">
           <div>
-            <span class="text-xs font-bold text-slate-700 block">Monto a Entregar al Cliente (CUP):</span>
+            <span class="block text-xs font-bold text-slate-700"
+              >Monto a Entregar al Cliente (CUP):</span
+            >
             <span class="text-[11px] text-slate-400">Redondeado sin centavos</span>
           </div>
           <span class="text-2xl font-black text-emerald-600">
@@ -113,11 +132,15 @@
       </div>
 
       <!-- Impacto en Caja -->
-      <div class="p-2.5 bg-slate-100 rounded-lg text-xs text-slate-600 space-y-1 border border-slate-200">
-        <span class="font-bold text-slate-700 block">Impacto en el Arqueo de Caja del Turno:</span>
+      <div
+        class="space-y-1 rounded-lg border border-slate-200 bg-slate-100 p-2.5 text-xs text-slate-600"
+      >
+        <span class="block font-bold text-slate-700">Impacto en el Arqueo de Caja del Turno:</span>
         <div class="flex justify-between text-[11px]">
-          <span class="text-emerald-700 font-bold">+{{ amountFrom || 0 }} {{ currencyFrom }} (Ingresa a caja)</span>
-          <span class="text-red-700 font-bold">-{{ amountToCUP }} CUP (Sale de caja)</span>
+          <span class="font-bold text-emerald-700"
+            >+{{ amountFrom || 0 }} {{ currencyFrom }} (Ingresa a caja)</span
+          >
+          <span class="font-bold text-red-700">-{{ amountToCUP }} CUP (Sale de caja)</span>
         </div>
       </div>
     </div>

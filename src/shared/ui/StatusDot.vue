@@ -5,17 +5,12 @@
       <span
         v-if="status === 'connected' || status === 'checking'"
         :class="[
-          'animate-ping absolute inline-flex h-full w-full rounded-full opacity-75',
+          'absolute inline-flex h-full w-full animate-ping rounded-full opacity-75',
           statusColors[status].ping,
         ]"
       />
       <!-- Punto central fijo -->
-      <span
-        :class="[
-          'relative inline-flex rounded-full h-2.5 w-2.5',
-          statusColors[status].dot,
-        ]"
-      />
+      <span :class="['relative inline-flex h-2.5 w-2.5 rounded-full', statusColors[status].dot]" />
     </span>
     <span v-if="showLabel" :class="statusColors[status].text">
       {{ computedLabel }}

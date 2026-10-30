@@ -1,30 +1,27 @@
 <template>
   <div
-    class="relative flex flex-col justify-between bg-white rounded-xl border border-slate-200 p-3.5 transition-all duration-150 select-none shadow-sm"
+    class="relative flex select-none flex-col justify-between rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm transition-all duration-150"
     :class="[
       isOutOfStock
-        ? 'opacity-60 cursor-not-allowed bg-slate-50'
-        : 'hover:shadow-md hover:border-emerald-400 cursor-pointer active:scale-[0.98]'
+        ? 'cursor-not-allowed bg-slate-50 opacity-60'
+        : 'cursor-pointer hover:border-emerald-400 hover:shadow-md active:scale-[0.98]',
     ]"
     @click="handleClick"
   >
     <!-- Cabecera de la tarjeta: Icono/Imagen y Badge de Stock -->
-    <div class="flex items-start justify-between gap-2 mb-2">
+    <div class="mb-2 flex items-start justify-between gap-2">
       <div
-        class="w-12 h-12 rounded-lg flex items-center justify-center text-2xl shadow-inner"
+        class="flex h-12 w-12 items-center justify-center rounded-lg text-2xl shadow-inner"
         :style="{ backgroundColor: (product.accentColor || '#10b981') + '15' }"
       >
         <span>{{ product.image || '📦' }}</span>
       </div>
 
       <div class="flex flex-col items-end">
-        <span
-          class="px-2 py-0.5 rounded-full text-xs font-semibold"
-          :class="stockBadgeClass"
-        >
+        <span class="rounded-full px-2 py-0.5 text-xs font-semibold" :class="stockBadgeClass">
           {{ isOutOfStock ? 'Agotado' : `${product.stock} ${product.unit}` }}
         </span>
-        <span class="text-[10px] text-slate-400 mt-0.5 tracking-wider font-mono">
+        <span class="mt-0.5 font-mono text-[10px] tracking-wider text-slate-400">
           {{ product.code }}
         </span>
       </div>
@@ -32,23 +29,23 @@
 
     <!-- Contenido: Nombre y Categoría -->
     <div class="my-1.5 flex-1">
-      <h4 class="font-semibold text-slate-800 text-sm line-clamp-2 leading-snug m-0">
+      <h4 class="m-0 line-clamp-2 text-sm font-semibold leading-snug text-slate-800">
         {{ product.name }}
       </h4>
-      <span class="text-[11px] text-slate-400 font-medium">
+      <span class="text-[11px] font-medium text-slate-400">
         {{ product.category }}
       </span>
     </div>
 
     <!-- Pie de la tarjeta: Precio USD / CUP y Botón Agregar -->
-    <div class="pt-2 border-t border-slate-100 flex items-center justify-between mt-auto">
+    <div class="mt-auto flex items-center justify-between border-t border-slate-100 pt-2">
       <div>
         <div class="flex items-baseline gap-1">
-          <span class="font-black text-sm text-emerald-700 tracking-tight font-mono">
-            ${{ (product.priceUSD || (product.price / 360)).toFixed(2) }} USD
+          <span class="font-mono text-sm font-black tracking-tight text-emerald-700">
+            ${{ (product.priceUSD || product.price / 360).toFixed(2) }} USD
           </span>
         </div>
-        <span class="text-xs font-bold text-slate-800 block leading-tight">
+        <span class="block text-xs font-bold leading-tight text-slate-800">
           {{ formatearMoneda(product.price, 'CUP') }}
         </span>
       </div>
@@ -56,11 +53,11 @@
       <button
         type="button"
         :disabled="isOutOfStock"
-        class="w-8 h-8 rounded-lg flex items-center justify-center text-white transition-colors shadow-sm"
+        class="flex h-8 w-8 items-center justify-center rounded-lg text-white shadow-sm transition-colors"
         :class="[
           isOutOfStock
-            ? 'bg-slate-300 cursor-not-allowed'
-            : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800'
+            ? 'cursor-not-allowed bg-slate-300'
+            : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800',
         ]"
         title="Agregar al Carrito"
         @click.stop="handleClick"

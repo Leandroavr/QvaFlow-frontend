@@ -3,11 +3,7 @@ import { ref, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import purchasesService from '../services/purchasesService'
 import useInventoryStore from '@/modules/inventory/store/inventoryStore'
-import type {
-  PurchaseInvoice,
-  Provider,
-  CreatePurchaseInvoiceDto,
-} from '../types/purchases'
+import type { PurchaseInvoice, Provider, CreatePurchaseInvoiceDto } from '../types/purchases'
 
 /**
  * Store Pinia para el módulo de Facturas de Compra (Sintaxis Setup).
@@ -36,11 +32,9 @@ export const usePurchasesStore = defineStore('purchases', () => {
         inv.noDocument.toLowerCase().includes(query) ||
         inv.proveedor.toLowerCase().includes(query)
 
-      const matchStatus =
-        statusFilter.value === 'all' || inv.estado === statusFilter.value
+      const matchStatus = statusFilter.value === 'all' || inv.estado === statusFilter.value
 
-      const matchCurrency =
-        currencyFilter.value === 'all' || inv.moneda === currencyFilter.value
+      const matchCurrency = currencyFilter.value === 'all' || inv.moneda === currencyFilter.value
 
       return matchQuery && matchStatus && matchCurrency
     })
@@ -120,7 +114,9 @@ export const usePurchasesStore = defineStore('purchases', () => {
     loading.value = true
     try {
       const updated = await purchasesService.confirmInvoice(invoiceId)
-      const index = invoices.value.findIndex((inv) => inv.id === invoiceId || inv.noDocument === invoiceId)
+      const index = invoices.value.findIndex(
+        (inv) => inv.id === invoiceId || inv.noDocument === invoiceId
+      )
       if (index !== -1) {
         invoices.value[index] = updated
       }

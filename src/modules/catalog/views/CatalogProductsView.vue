@@ -1,43 +1,61 @@
 <template>
   <div class="space-y-4">
     <!-- Barra superior de métricas y acciones -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div
+        class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      >
         <div>
-          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total de Productos</p>
-          <h3 class="text-2xl font-bold text-slate-800 m-0">{{ catalogStore.totalProducts }}</h3>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Total de Productos
+          </p>
+          <h3 class="m-0 text-2xl font-bold text-slate-800">{{ catalogStore.totalProducts }}</h3>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg">
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-lg font-bold text-emerald-600"
+        >
           📦
         </div>
       </div>
 
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+      <div
+        class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      >
         <div>
-          <p class="text-xs font-semibold text-amber-600 uppercase tracking-wider">Stock Crítico</p>
-          <h3 class="text-2xl font-bold text-amber-600 m-0">{{ catalogStore.lowStockCount }}</h3>
+          <p class="text-xs font-semibold uppercase tracking-wider text-amber-600">Stock Crítico</p>
+          <h3 class="m-0 text-2xl font-bold text-amber-600">{{ catalogStore.lowStockCount }}</h3>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-lg">
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-lg font-bold text-amber-600"
+        >
           ⚠️
         </div>
       </div>
 
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+      <div
+        class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      >
         <div>
-          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Categorías Activas</p>
-          <h3 class="text-2xl font-bold text-slate-800 m-0">{{ catalogStore.categories.length - 1 }}</h3>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Categorías Activas
+          </p>
+          <h3 class="m-0 text-2xl font-bold text-slate-800">
+            {{ catalogStore.categories.length - 1 }}
+          </h3>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-lg">
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-lg font-bold text-blue-600"
+        >
           🏷️
         </div>
       </div>
     </div>
 
     <!-- Contenedor principal de la tabla y filtros -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <!-- Filtros y botón de creación -->
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-5">
-        <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+      <div class="mb-5 flex flex-col items-center justify-between gap-4 sm:flex-row">
+        <div class="flex w-full flex-wrap items-center gap-3 sm:w-auto">
           <!-- Búsqueda rápida por nombre o código -->
           <a-input
             v-model:value="catalogStore.searchQuery"
@@ -78,7 +96,7 @@
           v-if="authStore.hasPermission('MANAGE_CATALOG') || authStore.canManageUsers"
           type="primary"
           size="middle"
-          class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 border-none shadow-md flex items-center justify-center gap-2 font-bold px-4"
+          class="flex w-full items-center justify-center gap-2 border-none bg-emerald-600 px-4 font-bold shadow-md hover:bg-emerald-500 sm:w-auto"
           @click="openCreateModal"
         >
           <PlusOutlined />
@@ -91,7 +109,11 @@
         :columns="tableColumns"
         :data-source="catalogStore.filteredProducts"
         :loading="catalogStore.loading"
-        :pagination="{ pageSize: 8, showSizeChanger: true, showTotal: (total: number) => `Total ${total} productos` }"
+        :pagination="{
+          pageSize: 8,
+          showSizeChanger: true,
+          showTotal: (total: number) => `Total ${total} productos`,
+        }"
         row-key="id"
         class="overflow-x-auto"
       >
@@ -101,25 +123,25 @@
             <div class="flex items-center gap-3">
               <!-- Miniatura del producto si existe -->
               <div
-                class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-lg shrink-0 overflow-hidden border border-slate-200"
+                class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-slate-100 text-lg"
               >
                 <img
                   v-if="record.images && record.images.length > 0"
                   :src="record.images[0].url"
                   :alt="record.name"
-                  class="w-full h-full object-cover"
+                  class="h-full w-full object-cover"
                 />
                 <span v-else>📦</span>
               </div>
 
               <div>
-                <div class="font-semibold text-slate-800 leading-snug">{{ record.name }}</div>
-                <div class="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5">
+                <div class="font-semibold leading-snug text-slate-800">{{ record.name }}</div>
+                <div class="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
                   <span class="font-mono">SKU: {{ record.code }}</span>
                   <a-tag
                     v-if="record.barcodes && record.barcodes.length > 1"
                     color="cyan"
-                    class="text-[10px] py-0 px-1"
+                    class="px-1 py-0 text-[10px]"
                   >
                     +{{ record.barcodes.length - 1 }} códigos
                   </a-tag>
@@ -128,19 +150,16 @@
                 <!-- Atributos dinámicos EAV resumidos -->
                 <div
                   v-if="record.attributes && record.attributes.length > 0"
-                  class="flex flex-wrap gap-1 mt-1"
+                  class="mt-1 flex flex-wrap gap-1"
                 >
                   <span
                     v-for="attr in record.attributes.slice(0, 2)"
                     :key="attr.id"
-                    class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded"
+                    class="py-0.2 rounded bg-slate-100 px-1.5 text-[10px] text-slate-600"
                   >
                     {{ attr.name }}: {{ attr.value }}
                   </span>
-                  <span
-                    v-if="record.attributes.length > 2"
-                    class="text-[10px] text-slate-400"
-                  >
+                  <span v-if="record.attributes.length > 2" class="text-[10px] text-slate-400">
                     +{{ record.attributes.length - 2 }}
                   </span>
                 </div>
@@ -156,7 +175,7 @@
           <!-- Columna Precio Costo (USD / CUP con permisos RBAC) -->
           <template v-else-if="column.key === 'costPrice'">
             <div>
-              <div v-if="record.costPriceUSD" class="font-bold text-slate-800 font-mono text-xs">
+              <div v-if="record.costPriceUSD" class="font-mono text-xs font-bold text-slate-800">
                 ${{ record.costPriceUSD }} USD
               </div>
               <div class="text-[11px] text-slate-500">
@@ -168,8 +187,11 @@
           <!-- Columna Precio Venta (USD / CUP) -->
           <template v-else-if="column.key === 'salePrice'">
             <div>
-              <div class="font-black text-emerald-700 font-mono text-xs">
-                ${{ record.salePriceUSD || record.prices?.USD || (record.salePrice / 360).toFixed(2) }} USD
+              <div class="font-mono text-xs font-black text-emerald-700">
+                ${{
+                  record.salePriceUSD || record.prices?.USD || (record.salePrice / 360).toFixed(2)
+                }}
+                USD
               </div>
               <div class="text-xs font-semibold text-slate-800">
                 {{ formatearMoneda(record.salePriceCUP || record.salePrice, 'CUP') }}
@@ -182,8 +204,8 @@
             <div class="flex items-center gap-2">
               <span
                 :class="[
-                  'font-medium text-sm',
-                  record.stock <= record.minStock ? 'text-red-600 font-bold' : 'text-slate-700'
+                  'text-sm font-medium',
+                  record.stock <= record.minStock ? 'font-bold text-red-600' : 'text-slate-700',
                 ]"
               >
                 {{ record.stock }} {{ record.unit }}
@@ -224,11 +246,7 @@
                 :ok-button-props="{ danger: true, type: 'primary' }"
                 @confirm="handleDelete(record.id)"
               >
-                <a-button
-                  size="small"
-                  type="text"
-                  danger
-                >
+                <a-button size="small" type="text" danger>
                   <template #icon><DeleteOutlined /></template>
                 </a-button>
               </a-popconfirm>

@@ -51,7 +51,8 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined
+    const originalRequest = error.config as
+      (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined
 
     if (!error.response) {
       // Servidor local caído o problema de conectividad en red LAN

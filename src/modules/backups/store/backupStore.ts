@@ -42,7 +42,9 @@ export const useBackupStore = defineStore('backup', () => {
   /**
    * Genera el volcado JSON de la base de datos y activa la descarga directa en el navegador.
    */
-  const generateAndDownload = async (userName: string = 'Administrador'): Promise<BackupLog | null> => {
+  const generateAndDownload = async (
+    userName: string = 'Administrador'
+  ): Promise<BackupLog | null> => {
     isGenerating.value = true
     try {
       const newBackup = await backupService.generateAndDownloadBackup(userName)
@@ -74,7 +76,8 @@ export const useBackupStore = defineStore('backup', () => {
       message.success('Base de datos restaurada correctamente desde el archivo de salva.')
       return restored
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : 'Error al restaurar la copia de seguridad'
+      const errorMsg =
+        err instanceof Error ? err.message : 'Error al restaurar la copia de seguridad'
       message.error(errorMsg)
       return null
     } finally {

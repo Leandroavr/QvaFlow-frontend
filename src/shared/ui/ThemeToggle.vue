@@ -2,7 +2,7 @@
   <div
     role="radiogroup"
     aria-label="Selector de tema visual"
-    class="inline-flex items-center p-1 rounded-lg bg-surface-subtle/90 dark:bg-[#151F3A]/90 border border-border-default shadow-xs backdrop-blur-xs"
+    class="bg-surface-subtle/90 border-border-default shadow-xs backdrop-blur-xs inline-flex items-center rounded-lg border p-1 dark:bg-[#151F3A]/90"
   >
     <!-- Opción: Claro -->
     <button
@@ -12,15 +12,15 @@
       aria-label="Tema Claro"
       title="Claro"
       :class="[
-        'flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-150 cursor-pointer',
+        'flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-all duration-150',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
         theme === 'light'
-          ? 'bg-surface-card text-content-primary shadow-xs font-semibold border border-border-subtle'
-          : 'text-content-muted hover:text-content-primary hover:bg-surface-card/40 border border-transparent',
+          ? 'shadow-xs border border-border-subtle bg-surface-card font-semibold text-content-primary'
+          : 'hover:bg-surface-card/40 border border-transparent text-content-muted hover:text-content-primary',
       ]"
       @click="setTheme('light')"
     >
-      <Sun class="w-3.5 h-3.5 text-amber-500" aria-hidden="true" />
+      <Sun class="h-3.5 w-3.5 text-amber-500" aria-hidden="true" />
       <span class="hidden sm:inline">Claro</span>
     </button>
 
@@ -32,15 +32,15 @@
       aria-label="Tema Oscuro"
       title="Oscuro"
       :class="[
-        'flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-150 cursor-pointer',
+        'flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-all duration-150',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
         theme === 'dark'
-          ? 'bg-surface-card dark:bg-[#222E52] text-content-primary shadow-xs font-semibold border border-border-subtle'
-          : 'text-content-muted hover:text-content-primary hover:bg-surface-card/40 border border-transparent',
+          ? 'shadow-xs border border-border-subtle bg-surface-card font-semibold text-content-primary dark:bg-[#222E52]'
+          : 'hover:bg-surface-card/40 border border-transparent text-content-muted hover:text-content-primary',
       ]"
       @click="setTheme('dark')"
     >
-      <Moon class="w-3.5 h-3.5 text-sky-400" aria-hidden="true" />
+      <Moon class="h-3.5 w-3.5 text-sky-400" aria-hidden="true" />
       <span class="hidden sm:inline">Oscuro</span>
     </button>
 
@@ -52,15 +52,15 @@
       aria-label="Tema del Sistema"
       title="Sistema"
       :class="[
-        'flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-150 cursor-pointer',
+        'flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-all duration-150',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
         theme === 'system'
-          ? 'bg-surface-card dark:bg-[#222E52] text-content-primary shadow-xs font-semibold border border-border-subtle'
-          : 'text-content-muted hover:text-content-primary hover:bg-surface-card/40 border border-transparent',
+          ? 'shadow-xs border border-border-subtle bg-surface-card font-semibold text-content-primary dark:bg-[#222E52]'
+          : 'hover:bg-surface-card/40 border border-transparent text-content-muted hover:text-content-primary',
       ]"
       @click="setTheme('system')"
     >
-      <Monitor class="w-3.5 h-3.5 text-content-muted" aria-hidden="true" />
+      <Monitor class="h-3.5 w-3.5 text-content-muted" aria-hidden="true" />
       <span class="hidden sm:inline">Sistema</span>
     </button>
   </div>

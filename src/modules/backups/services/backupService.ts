@@ -90,12 +90,48 @@ export const backupService = {
       checksum: `sha256_${Date.now().toString(16)}_${Math.random().toString(36).substring(2, 8)}`,
       data: {
         catalog: [
-          { code: '78910001', name: 'Café Serrano Clásico 250g', category: 'Alimentos', price: 650, cost: 450 },
-          { code: '78910002', name: 'Aceite de Girasol Criollo 1L', category: 'Alimentos', price: 950, cost: 700 },
-          { code: '78910003', name: 'Refresco Tukola Lata 330ml', category: 'Bebidas', price: 280, cost: 180 },
-          { code: '78910004', name: 'Cerveza Cristal Lata 355ml', category: 'Bebidas', price: 320, cost: 220 },
-          { code: '78910005', name: 'Cigarros H. Upmann Selecto', category: 'Tabacos', price: 300, cost: 210 },
-          { code: '78910006', name: 'Pollo Entero Congelado 1kg', category: 'Cárnicos', price: 1350, cost: 980 },
+          {
+            code: '78910001',
+            name: 'Café Serrano Clásico 250g',
+            category: 'Alimentos',
+            price: 650,
+            cost: 450,
+          },
+          {
+            code: '78910002',
+            name: 'Aceite de Girasol Criollo 1L',
+            category: 'Alimentos',
+            price: 950,
+            cost: 700,
+          },
+          {
+            code: '78910003',
+            name: 'Refresco Tukola Lata 330ml',
+            category: 'Bebidas',
+            price: 280,
+            cost: 180,
+          },
+          {
+            code: '78910004',
+            name: 'Cerveza Cristal Lata 355ml',
+            category: 'Bebidas',
+            price: 320,
+            cost: 220,
+          },
+          {
+            code: '78910005',
+            name: 'Cigarros H. Upmann Selecto',
+            category: 'Tabacos',
+            price: 300,
+            cost: 210,
+          },
+          {
+            code: '78910006',
+            name: 'Pollo Entero Congelado 1kg',
+            category: 'Cárnicos',
+            price: 1350,
+            cost: 980,
+          },
         ],
         inventory: [
           { warehouse: 'Tienda Principal', itemsCount: 4, stockTotal: 82 },
@@ -103,7 +139,13 @@ export const backupService = {
           { warehouse: 'Almacén Central', itemsCount: 1, stockTotal: 15 },
         ],
         shifts: [
-          { shiftId: 'TURNO-2026-001', cashier: 'Caja Principal', status: 'OPEN', initialCUP: 10000, initialUSD: 100 },
+          {
+            shiftId: 'TURNO-2026-001',
+            cashier: 'Caja Principal',
+            status: 'OPEN',
+            initialCUP: 10000,
+            initialUSD: 100,
+          },
         ],
         rates: { CUP: 1, USD: 360, EUR: 380, MLC: 275 },
         salesSummary: {

@@ -16,9 +16,8 @@ export function formatDate(
 ): string {
   if (!dateInput) return '—'
 
-  const date = typeof dateInput === 'string' || typeof dateInput === 'number'
-    ? new Date(dateInput)
-    : dateInput
+  const date =
+    typeof dateInput === 'string' || typeof dateInput === 'number' ? new Date(dateInput) : dateInput
 
   if (isNaN(date.getTime())) return '—'
 

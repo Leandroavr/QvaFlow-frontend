@@ -9,7 +9,7 @@ export const httpClient: AxiosInstance = axios.create({
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    Accept: 'application/json',
   },
 })
 
@@ -39,7 +39,13 @@ httpClient.interceptors.response.use(
     }
     return response
   },
-  (error: AxiosError<{ code?: string; message?: string; details?: Record<string, string | string[]> }>) => {
+  (
+    error: AxiosError<{
+      code?: string
+      message?: string
+      details?: Record<string, string | string[]>
+    }>
+  ) => {
     const uiStore = useUiStore()
 
     // 1. Error de conexión con el servidor local (offline, timeout, refused)
@@ -59,7 +65,11 @@ httpClient.interceptors.response.use(
     if (status === 401) {
       localStorage.removeItem('qvaflow_token')
       localStorage.removeItem('qvaflow_user')
-      if (typeof window !== 'undefined' && !window.location.hash.includes('/login') && !window.location.pathname.includes('/login')) {
+      if (
+        typeof window !== 'undefined' &&
+        !window.location.hash.includes('/login') &&
+        !window.location.pathname.includes('/login')
+      ) {
         const currentPath = window.location.pathname + window.location.search
         window.location.href = `#/login?redirect=${encodeURIComponent(currentPath)}`
       }

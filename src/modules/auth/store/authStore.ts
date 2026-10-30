@@ -61,7 +61,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Permisos granulares de acceso por módulo (RBAC)
   const canAccessPos = computed(() => {
-    if (isSuperadmin.value || userRole.value === 'ADMIN' || userRole.value === 'CASHIER') return true
+    if (isSuperadmin.value || userRole.value === 'ADMIN' || userRole.value === 'CASHIER')
+      return true
     return permissions.value.includes('POS_ACCESS')
   })
 
@@ -71,12 +72,14 @@ export const useAuthStore = defineStore('auth', () => {
   })
 
   const canAccessCatalog = computed(() => {
-    if (isSuperadmin.value || userRole.value === 'ADMIN' || userRole.value === 'WAREHOUSE') return true
+    if (isSuperadmin.value || userRole.value === 'ADMIN' || userRole.value === 'WAREHOUSE')
+      return true
     return permissions.value.includes('MANAGE_CATALOG')
   })
 
   const canAccessInventory = computed(() => {
-    if (isSuperadmin.value || userRole.value === 'ADMIN' || userRole.value === 'WAREHOUSE') return true
+    if (isSuperadmin.value || userRole.value === 'ADMIN' || userRole.value === 'WAREHOUSE')
+      return true
     return permissions.value.includes('MANAGE_INVENTORY')
   })
 

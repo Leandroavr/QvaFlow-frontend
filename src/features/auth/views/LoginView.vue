@@ -1,22 +1,22 @@
 <template>
   <main
-    class="min-h-dvh w-full flex flex-col justify-between items-center py-3 px-4 relative overflow-y-auto sm:overflow-hidden select-none"
+    class="relative flex min-h-dvh w-full select-none flex-col items-center justify-between overflow-y-auto px-4 py-3 sm:overflow-hidden"
     :class="[
       'bg-gradient-to-br from-[#0F2347] via-[#162E56] to-[#1E3A6B]',
       'dark:from-[#070D1E] dark:via-[#0B1530] dark:to-[#111E44]',
     ]"
   >
     <!-- Fondo con formas geométricas sutiles de baja opacidad (sin formas recortadas incómodas, opacidad <= 6%) -->
-    <div class="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+    <div class="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
       <svg
-        class="absolute -top-16 -left-16 w-80 h-80 opacity-[0.04] text-white"
+        class="absolute -left-16 -top-16 h-80 w-80 text-white opacity-[0.04]"
         fill="currentColor"
         viewBox="0 0 200 200"
       >
         <circle cx="100" cy="100" r="90" />
       </svg>
       <svg
-        class="absolute -bottom-20 -right-20 w-96 h-96 opacity-[0.05] text-white"
+        class="absolute -bottom-20 -right-20 h-96 w-96 text-white opacity-[0.05]"
         fill="currentColor"
         viewBox="0 0 200 200"
       >
@@ -24,12 +24,12 @@
       </svg>
       <!-- Patrón sutil de cuadrícula de puntos -->
       <div
-        class="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.06)_1px,transparent_1px)] [background-size:24px_24px] opacity-40"
+        class="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.06)_1px,transparent_1px)] opacity-40 [background-size:24px_24px]"
       />
     </div>
 
     <!-- Barra superior con selector segmentado de tema -->
-    <header class="w-full max-w-5xl flex justify-end items-center z-10 pt-1 pb-2">
+    <header class="z-10 flex w-full max-w-5xl items-center justify-end pb-2 pt-1">
       <ThemeToggle />
     </header>
 
@@ -37,26 +37,28 @@
     <div
       ref="cardRef"
       :class="[
-        'w-full max-w-md bg-surface-card rounded-2xl shadow-card border border-border-default overflow-hidden z-10 transition-transform duration-200',
+        'border-border-default z-10 w-full max-w-md overflow-hidden rounded-2xl border bg-surface-card shadow-card transition-transform duration-200',
         hasShakeError ? 'animate-card-shake' : '',
       ]"
     >
       <!-- Encabezado con Identidad Visual QvaFlow -->
-      <div class="pt-5 pb-4 px-6 text-center bg-surface-subtle border-b border-border-subtle">
-        <div class="flex items-center justify-center mb-2">
+      <div class="border-b border-border-subtle bg-surface-subtle px-6 pb-4 pt-5 text-center">
+        <div class="mb-2 flex items-center justify-center">
           <!-- Logo sobre placa clara en modo oscuro para garantizar óptimo contraste del texto azul -->
-          <div class="inline-flex items-center justify-center dark:bg-neutral-50 dark:px-3 dark:py-1.5 dark:rounded-md dark:shadow-xs transition-colors">
+          <div
+            class="dark:shadow-xs inline-flex items-center justify-center transition-colors dark:rounded-md dark:bg-neutral-50 dark:px-3 dark:py-1.5"
+          >
             <img
               src="/logo.png"
               alt="QvaFlow"
               class="h-14 w-auto object-contain"
-              onerror="this.src='/logo-horizontal.png'"
+              onerror="this.src = '/logo-horizontal.png'"
             />
           </div>
         </div>
         <!-- Título accesible oculto visualmente para evitar duplicidad con el logo -->
         <h1 class="sr-only">QvaFlow</h1>
-        <p class="text-xs text-content-muted font-medium mb-0 leading-normal">
+        <p class="mb-0 text-xs font-medium leading-normal text-content-muted">
           Sistema de gestión y punto de venta para MIPYMES
         </p>
       </div>
@@ -78,7 +80,7 @@
             @update:model-value="onUsernameInput"
           >
             <template #prefix>
-              <User class="w-5 h-5 text-content-muted" aria-hidden="true" />
+              <User class="h-5 w-5 text-content-muted" aria-hidden="true" />
             </template>
           </BaseInput>
 
@@ -96,12 +98,12 @@
             @update:model-value="onPasswordInput"
           >
             <template #prefix>
-              <Lock class="w-5 h-5 text-content-muted" aria-hidden="true" />
+              <Lock class="h-5 w-5 text-content-muted" aria-hidden="true" />
             </template>
           </BaseInput>
 
           <!-- Alerta de Error con espacio reservado para evitar saltos de interfaz -->
-          <div class="min-h-[46px] flex items-center justify-center transition-all duration-200">
+          <div class="flex min-h-[46px] items-center justify-center transition-all duration-200">
             <BaseAlert
               v-if="errorMessage"
               variant="error"
@@ -119,15 +121,15 @@
               block
               :loading="authStore.isLoading"
               loading-text="Ingresando..."
-              class="shadow-md shadow-primary/30"
+              class="shadow-primary/30 shadow-md"
             >
               Iniciar sesión
             </BaseButton>
           </div>
 
           <!-- Mensaje discreto de ayuda para el usuario -->
-          <div class="text-center pt-1">
-            <span class="text-xs text-content-muted leading-relaxed">
+          <div class="pt-1 text-center">
+            <span class="text-xs leading-relaxed text-content-muted">
               ¿Problemas para ingresar? Contacte al administrador.
             </span>
           </div>
@@ -135,7 +137,9 @@
       </div>
 
       <!-- Pie de la Tarjeta: Versión y Estado del Servidor Local -->
-      <footer class="py-2.5 px-6 bg-surface-subtle border-t border-border-subtle flex items-center justify-between text-xs text-content-muted">
+      <footer
+        class="flex items-center justify-between border-t border-border-subtle bg-surface-subtle px-6 py-2.5 text-xs text-content-muted"
+      >
         <span>Versión {{ appVersion }}</span>
         <StatusDot :status="uiStore.serverStatus" />
       </footer>
@@ -258,7 +262,8 @@ const handleSubmit = async () => {
 
     if (err instanceof ApiError) {
       if (err.code === 'SERVER_UNAVAILABLE') {
-        errorMessage.value = 'No se puede conectar con el servidor local. Verifique que esté encendido.'
+        errorMessage.value =
+          'No se puede conectar con el servidor local. Verifique que esté encendido.'
       } else if (err.code === 'AUTH_INVALID_CREDENTIALS' || err.statusCode === 401) {
         errorMessage.value = 'Usuario o contraseña incorrectos. Verifique sus credenciales.'
       } else {

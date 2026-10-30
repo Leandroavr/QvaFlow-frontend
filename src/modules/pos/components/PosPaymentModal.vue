@@ -9,26 +9,28 @@
     @ok="handleConfirm"
     @cancel="handleCancel"
   >
-    <div class="py-2 space-y-4">
+    <div class="space-y-4 py-2">
       <!-- Resumen del Total a Pagar -->
-      <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Total en Moneda Base</span>
+      <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div class="mb-1 flex items-center justify-between">
+          <span class="text-xs font-medium uppercase tracking-wide text-slate-500"
+            >Total en Moneda Base</span
+          >
           <span class="text-sm font-semibold text-slate-700">
             {{ formatearMoneda(totalCUP, 'CUP') }}
           </span>
         </div>
 
-        <div class="flex items-baseline justify-between pt-2 border-t border-slate-200">
+        <div class="flex items-baseline justify-between border-t border-slate-200 pt-2">
           <div>
-            <span class="text-xs text-slate-500 block">Total a Pagar ({{ currency }})</span>
-            <span v-if="currency !== 'CUP'" class="text-[11px] text-emerald-600 font-mono">
+            <span class="block text-xs text-slate-500">Total a Pagar ({{ currency }})</span>
+            <span v-if="currency !== 'CUP'" class="font-mono text-[11px] text-emerald-600">
               Tasa: 1 {{ currency }} = {{ exchangeRate }} CUP
             </span>
           </div>
 
           <div class="text-right">
-            <span class="text-2xl font-black text-emerald-600 tracking-tight">
+            <span class="text-2xl font-black tracking-tight text-emerald-600">
               {{ formatearMoneda(totalInCurrency, currency) }}
             </span>
           </div>
@@ -37,7 +39,7 @@
 
       <!-- Importe entregado por el cliente -->
       <div>
-        <label class="block text-xs font-semibold text-slate-700 mb-1.5">
+        <label class="mb-1.5 block text-xs font-semibold text-slate-700">
           Efectivo Recibido (en {{ currency }}):
         </label>
         <a-input-number
@@ -51,10 +53,10 @@
         />
 
         <!-- Botones de monto rápido -->
-        <div class="flex flex-wrap gap-2 mt-2">
+        <div class="mt-2 flex flex-wrap gap-2">
           <button
             type="button"
-            class="px-2.5 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-colors"
+            class="rounded bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-200"
             @click="setExactCash"
           >
             Exacto ({{ totalInCurrency }})
@@ -63,7 +65,7 @@
             v-for="quickAmount in quickCashOptions"
             :key="quickAmount"
             type="button"
-            class="px-2.5 py-1 text-xs rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium transition-colors"
+            class="rounded bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-200"
             @click="cashReceived = quickAmount"
           >
             {{ quickAmount }} {{ currency }}
@@ -73,15 +75,15 @@
 
       <!-- Cálculo de Vuelto / Cambio -->
       <div
-        class="p-3.5 rounded-lg border flex items-center justify-between"
+        class="flex items-center justify-between rounded-lg border p-3.5"
         :class="[
           isPaymentSufficient
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-            : 'bg-amber-50 border-amber-200 text-amber-800'
+            ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+            : 'border-amber-200 bg-amber-50 text-amber-800',
         ]"
       >
         <div>
-          <span class="text-xs font-semibold block">
+          <span class="block text-xs font-semibold">
             {{ isPaymentSufficient ? 'Vuelto / Cambio a entregar:' : 'Falta para completar pago:' }}
           </span>
           <span v-if="isPaymentSufficient && currency !== 'CUP'" class="text-[11px] opacity-75">

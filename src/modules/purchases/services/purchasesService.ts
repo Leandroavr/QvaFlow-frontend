@@ -90,7 +90,8 @@ const FACTURAS_MOCK: PurchaseInvoice[] = [
     currency: 'CUP',
     estado: 'PENDIENTE',
     status: 'PENDIENTE',
-    notes: 'Entrada de cerveza Cristal para reposición. Mercancía en tránsito (Pendiente de confirmación).',
+    notes:
+      'Entrada de cerveza Cristal para reposición. Mercancía en tránsito (Pendiente de confirmación).',
     createdAt: '2026-10-24 15:45',
     items: [
       {
@@ -112,10 +113,22 @@ const FACTURAS_MOCK: PurchaseInvoice[] = [
 
 const PRODUCTOS_ABASTECIMIENTO_MOCK = [
   { id: 101, code: '78910001', name: 'Café Serrano Clásico 250g', unit: 'pqte', defaultCost: 450 },
-  { id: 102, code: '78910002', name: 'Aceite de Girasol Criollo 1L', unit: 'botella', defaultCost: 700 },
+  {
+    id: 102,
+    code: '78910002',
+    name: 'Aceite de Girasol Criollo 1L',
+    unit: 'botella',
+    defaultCost: 700,
+  },
   { id: 103, code: '78910003', name: 'Refresco Tukola Lata 330ml', unit: 'lata', defaultCost: 180 },
   { id: 104, code: '78910004', name: 'Cerveza Cristal Lata 355ml', unit: 'lata', defaultCost: 220 },
-  { id: 105, code: '78910005', name: 'Cigarros H. Upmann Selecto', unit: 'cajetilla', defaultCost: 210 },
+  {
+    id: 105,
+    code: '78910005',
+    name: 'Cigarros H. Upmann Selecto',
+    unit: 'cajetilla',
+    defaultCost: 210,
+  },
   { id: 106, code: '78910006', name: 'Pollo Entero Congelado 1kg', unit: 'kg', defaultCost: 980 },
 ]
 
@@ -186,7 +199,10 @@ export const purchasesService = {
         }
       })
 
-      const docNo = dto.noDocument || dto.invoiceNumber || `FAC-${new Date().getFullYear()}-${Date.now().toString().slice(-4)}`
+      const docNo =
+        dto.noDocument ||
+        dto.invoiceNumber ||
+        `FAC-${new Date().getFullYear()}-${Date.now().toString().slice(-4)}`
       const proveedorClean = dto.proveedor.trim()
 
       const newInvoice: PurchaseInvoice = {
@@ -195,7 +211,8 @@ export const purchasesService = {
         invoiceNumber: docNo,
         proveedor: proveedorClean,
         providerName: proveedorClean,
-        fechaMovimiento: dto.fechaMovimiento || dto.issueDate || new Date().toISOString().slice(0, 10),
+        fechaMovimiento:
+          dto.fechaMovimiento || dto.issueDate || new Date().toISOString().slice(0, 10),
         issueDate: dto.fechaMovimiento || dto.issueDate || new Date().toISOString().slice(0, 10),
         importeTotal: totalCalc,
         total: totalCalc,
@@ -211,7 +228,10 @@ export const purchasesService = {
       localInvoices.unshift(newInvoice)
 
       // Guardar proveedor en lista si es nuevo
-      if (proveedorClean && !localProviders.some((p) => p.name.toLowerCase() === proveedorClean.toLowerCase())) {
+      if (
+        proveedorClean &&
+        !localProviders.some((p) => p.name.toLowerCase() === proveedorClean.toLowerCase())
+      ) {
         localProviders.push({
           id: Date.now(),
           code: `PROV-${Date.now().toString().slice(-3)}`,
@@ -230,10 +250,14 @@ export const purchasesService = {
    */
   async confirmInvoice(invoiceId: string): Promise<PurchaseInvoice> {
     try {
-      const response = await apiClient.post<PurchaseInvoice>(`/purchases/invoices/${invoiceId}/confirm`)
+      const response = await apiClient.post<PurchaseInvoice>(
+        `/purchases/invoices/${invoiceId}/confirm`
+      )
       return response.data
     } catch {
-      const invoice = localInvoices.find((inv) => inv.id === invoiceId || inv.noDocument === invoiceId)
+      const invoice = localInvoices.find(
+        (inv) => inv.id === invoiceId || inv.noDocument === invoiceId
+      )
       if (!invoice) {
         throw new Error(`Factura ${invoiceId} no encontrada`)
       }

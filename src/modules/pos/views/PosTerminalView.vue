@@ -1,18 +1,24 @@
 <template>
-  <div class="h-[calc(100vh-7rem)] flex flex-col gap-3">
+  <div class="flex h-[calc(100vh-7rem)] flex-col gap-3">
     <!-- BARRA OPERACIONAL SUPERIOR: Control de Turno, Tickets en Espera y Atajos -->
-    <div class="bg-white rounded-xl border border-slate-200 px-4 py-2.5 shadow-xs flex flex-wrap items-center justify-between gap-3 shrink-0">
+    <div
+      class="shadow-xs flex shrink-0 flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2.5"
+    >
       <!-- Izquierda: Estado del Turno y Botón de Apertura / Cierre -->
       <div class="flex items-center gap-2.5">
         <a-tag
           :color="posStore.isShiftOpen ? 'success' : 'error'"
-          class="px-2.5 py-1 text-xs font-bold flex items-center gap-1.5"
+          class="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold"
         >
           <span
-            class="w-2 h-2 rounded-full"
-            :class="posStore.isShiftOpen ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'"
+            class="h-2 w-2 rounded-full"
+            :class="posStore.isShiftOpen ? 'animate-pulse bg-emerald-500' : 'bg-red-500'"
           ></span>
-          <span>{{ posStore.isShiftOpen ? `Turno Abierto: ${posStore.currentShift?.id}` : 'Turno de Caja Cerrado' }}</span>
+          <span>{{
+            posStore.isShiftOpen
+              ? `Turno Abierto: ${posStore.currentShift?.id}`
+              : 'Turno de Caja Cerrado'
+          }}</span>
         </a-tag>
 
         <!-- Botón para Abrir o Cerrar Turno -->
@@ -20,7 +26,7 @@
           v-if="!posStore.isShiftOpen"
           type="primary"
           size="small"
-          class="bg-emerald-600 hover:bg-emerald-500 border-none font-semibold text-xs"
+          class="border-none bg-emerald-600 text-xs font-semibold hover:bg-emerald-500"
           @click="openShiftModal('OPEN')"
         >
           Abrir Turno
@@ -29,7 +35,7 @@
         <a-button
           v-else
           size="small"
-          class="font-semibold text-xs text-slate-700 hover:text-red-600 hover:border-red-400"
+          class="text-xs font-semibold text-slate-700 hover:border-red-400 hover:text-red-600"
           @click="openShiftModal('CLOSE')"
         >
           Arqueo / Cerrar Turno
@@ -41,7 +47,7 @@
         <!-- Tasa de Cambio del Día -->
         <a-button
           size="small"
-          class="flex items-center gap-1 text-xs font-bold text-emerald-800 bg-emerald-50 border-emerald-300 hover:bg-emerald-100"
+          class="flex items-center gap-1 border-emerald-300 bg-emerald-50 text-xs font-bold text-emerald-800 hover:bg-emerald-100"
           @click="isDailyRateModalVisible = true"
         >
           <span>💵 Tasa: 1 USD = {{ posStore.exchangeRates.USD }} CUP</span>
@@ -50,7 +56,7 @@
         <!-- Historial de Ventas y Cuadres -->
         <a-button
           size="small"
-          class="flex items-center gap-1 text-xs font-semibold text-slate-700 bg-slate-50 border-slate-300 hover:bg-slate-100"
+          class="flex items-center gap-1 border-slate-300 bg-slate-50 text-xs font-semibold text-slate-700 hover:bg-slate-100"
           @click="router.push('/sales-and-shifts')"
         >
           <span>🧾 Ventas y Cuadres</span>
@@ -59,22 +65,22 @@
         <!-- Canje de Divisas en Mostrador -->
         <a-button
           size="small"
-          class="flex items-center gap-1 text-xs font-semibold text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100"
+          class="flex items-center gap-1 border-blue-200 bg-blue-50 text-xs font-semibold text-blue-700 hover:bg-blue-100"
           @click="isExchangeModalVisible = true"
         >
           <span>💱 Canje Divisas</span>
-          <span class="text-[10px] bg-blue-200/80 px-1 rounded font-mono">F6</span>
+          <span class="rounded bg-blue-200/80 px-1 font-mono text-[10px]">F6</span>
         </a-button>
 
         <!-- Botón Poner en Espera (Hold F4) -->
         <a-button
           size="small"
           :disabled="posStore.cart.length === 0"
-          class="flex items-center gap-1 text-xs font-semibold text-amber-800 bg-amber-50 border-amber-200 hover:bg-amber-100"
+          class="flex items-center gap-1 border-amber-200 bg-amber-50 text-xs font-semibold text-amber-800 hover:bg-amber-100"
           @click="handleHoldOrder"
         >
           <span>⏸️ Suspender</span>
-          <span class="text-[10px] bg-amber-200/80 px-1 rounded font-mono">F4</span>
+          <span class="rounded bg-amber-200/80 px-1 font-mono text-[10px]">F4</span>
         </a-button>
 
         <!-- Popover para Ver y Restaurar Tickets en Espera -->
@@ -84,7 +90,7 @@
               <div
                 v-for="order in posStore.heldOrders"
                 :key="order.id"
-                class="p-2 rounded bg-slate-50 border border-slate-200 flex items-center justify-between text-xs"
+                class="flex items-center justify-between rounded border border-slate-200 bg-slate-50 p-2 text-xs"
               >
                 <div>
                   <div class="font-bold text-slate-800">{{ order.name }}</div>
@@ -96,14 +102,14 @@
                   <a-button
                     size="small"
                     type="primary"
-                    class="bg-emerald-600 border-none text-[11px] h-6 px-2"
+                    class="h-6 border-none bg-emerald-600 px-2 text-[11px]"
                     @click="posStore.restoreHeldOrder(order.id)"
                   >
                     Restaurar
                   </a-button>
                   <button
                     type="button"
-                    class="text-slate-400 hover:text-red-500 p-1"
+                    class="p-1 text-slate-400 hover:text-red-500"
                     title="Descartar ticket"
                     @click="posStore.deleteHeldOrder(order.id)"
                   >
@@ -112,7 +118,7 @@
                 </div>
               </div>
             </div>
-            <div v-else class="text-xs text-slate-400 text-center py-2">
+            <div v-else class="py-2 text-center text-xs text-slate-400">
               No hay tickets en espera.
             </div>
           </template>
@@ -127,11 +133,13 @@
     </div>
 
     <!-- CUERPO PRINCIPAL: CATÁLOGO (70%) Y CARRITO (30%) -->
-    <div class="flex-1 flex flex-col lg:flex-row gap-4 overflow-hidden">
+    <div class="flex flex-1 flex-col gap-4 overflow-hidden lg:flex-row">
       <!-- COLUMNA IZQUIERDA (70%): Catálogo y Buscador Pistola USB -->
-      <div class="w-full lg:w-[68%] flex flex-col h-full bg-white rounded-xl border border-slate-200 shadow-sm p-4 overflow-hidden">
+      <div
+        class="flex h-full w-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm lg:w-[68%]"
+      >
         <!-- Barra Superior: Buscador Lector de Códigos y Filtro de Categorías -->
-        <div class="space-y-3 pb-3 border-b border-slate-100 shrink-0">
+        <div class="shrink-0 space-y-3 border-b border-slate-100 pb-3">
           <div class="flex items-center gap-3">
             <!-- Input optimizado para Pistolas USB (captura Enter automático) -->
             <a-input
@@ -144,19 +152,24 @@
               @keydown.enter="handleBarcodeScanned"
             >
               <template #prefix>
-                <SearchOutlined class="text-slate-400 text-base mr-1" />
+                <SearchOutlined class="mr-1 text-base text-slate-400" />
               </template>
               <template #suffix>
                 <div class="flex items-center gap-1.5">
-                  <span class="text-[10px] text-slate-400 font-mono bg-slate-100 px-1 rounded">F2</span>
-                  <BarcodeOutlined class="text-emerald-600 text-lg" title="Lector de código USB listo" />
+                  <span class="rounded bg-slate-100 px-1 font-mono text-[10px] text-slate-400"
+                    >F2</span
+                  >
+                  <BarcodeOutlined
+                    class="text-lg text-emerald-600"
+                    title="Lector de código USB listo"
+                  />
                 </div>
               </template>
             </a-input>
 
             <a-button
               size="large"
-              class="rounded-lg flex items-center justify-center"
+              class="flex items-center justify-center rounded-lg"
               title="Refrescar catálogo"
               @click="posStore.loadInitialData"
             >
@@ -165,16 +178,16 @@
           </div>
 
           <!-- Píldoras de Categorías para Filtrado Táctil -->
-          <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs no-scrollbar">
+          <div class="no-scrollbar flex items-center gap-2 overflow-x-auto pb-1 text-xs">
             <button
               v-for="cat in posStore.categories"
               :key="cat"
               type="button"
-              class="px-3 py-1.5 rounded-lg font-medium transition-all shrink-0 select-none"
+              class="shrink-0 select-none rounded-lg px-3 py-1.5 font-medium transition-all"
               :class="[
                 posStore.selectedCategory === cat
                   ? 'bg-emerald-600 text-white shadow-sm'
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200',
               ]"
               @click="posStore.selectedCategory = cat"
             >
@@ -184,10 +197,10 @@
         </div>
 
         <!-- Grid de Productos (Scrollable) -->
-        <div class="flex-1 overflow-y-auto pt-3 pr-1">
+        <div class="flex-1 overflow-y-auto pr-1 pt-3">
           <div
             v-if="posStore.filteredProducts.length > 0"
-            class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3.5"
+            class="grid grid-cols-2 gap-3.5 sm:grid-cols-3 xl:grid-cols-4"
           >
             <PosProductCard
               v-for="product in posStore.filteredProducts"
@@ -198,15 +211,14 @@
           </div>
 
           <!-- Estado vacío -->
-          <div
-            v-else
-            class="h-64 flex flex-col items-center justify-center text-slate-400"
-          >
-            <div class="text-4xl mb-2">🔍</div>
-            <p class="text-sm font-medium">No se encontraron productos para "{{ posStore.searchQuery }}"</p>
+          <div v-else class="flex h-64 flex-col items-center justify-center text-slate-400">
+            <div class="mb-2 text-4xl">🔍</div>
+            <p class="text-sm font-medium">
+              No se encontraron productos para "{{ posStore.searchQuery }}"
+            </p>
             <button
               type="button"
-              class="text-xs text-emerald-600 hover:underline mt-1"
+              class="mt-1 text-xs text-emerald-600 hover:underline"
               @click="posStore.searchQuery = ''"
             >
               Limpiar búsqueda
@@ -216,13 +228,19 @@
       </div>
 
       <!-- COLUMNA DERECHA (30%): Carrito de Venta y Multimoneda -->
-      <div class="w-full lg:w-[32%] flex flex-col h-full bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div
+        class="flex h-full w-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:w-[32%]"
+      >
         <!-- Encabezado del Carrito -->
-        <div class="p-3.5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50">
+        <div
+          class="flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50/50 p-3.5"
+        >
           <div class="flex items-center gap-2">
-            <ShoppingCartOutlined class="text-emerald-600 text-lg" />
-            <h3 class="font-bold text-slate-800 text-sm m-0">Carrito de Venta</h3>
-            <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+            <ShoppingCartOutlined class="text-lg text-emerald-600" />
+            <h3 class="m-0 text-sm font-bold text-slate-800">Carrito de Venta</h3>
+            <span
+              class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800"
+            >
               {{ posStore.totalUnitsInCart }}
             </span>
           </div>
@@ -240,7 +258,7 @@
           >
             <button
               type="button"
-              class="text-xs text-red-500 hover:text-red-700 font-semibold transition-colors px-2 py-1 rounded hover:bg-red-50 focus:outline-none outline-none cursor-pointer"
+              class="cursor-pointer rounded px-2 py-1 text-xs font-semibold text-red-500 outline-none transition-colors hover:bg-red-50 hover:text-red-700 focus:outline-none"
             >
               Vaciar
             </button>
@@ -248,7 +266,7 @@
         </div>
 
         <!-- Lista de Artículos en el Carrito (Scrollable) -->
-        <div class="flex-1 overflow-y-auto p-3 space-y-2">
+        <div class="flex-1 space-y-2 overflow-y-auto p-3">
           <template v-if="posStore.cart.length > 0">
             <PosCartItem
               v-for="item in posStore.cart"
@@ -261,86 +279,94 @@
 
           <div
             v-else
-            class="h-full flex flex-col items-center justify-center text-slate-400 p-6 text-center"
+            class="flex h-full flex-col items-center justify-center p-6 text-center text-slate-400"
           >
-            <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-2xl mb-2">
+            <div
+              class="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-2xl"
+            >
               🛒
             </div>
-            <h4 class="font-semibold text-slate-600 text-sm m-0">Carrito Vacío</h4>
-            <p class="text-xs text-slate-400 mt-1 max-w-[200px]">
+            <h4 class="m-0 text-sm font-semibold text-slate-600">Carrito Vacío</h4>
+            <p class="mt-1 max-w-[200px] text-xs text-slate-400">
               Escanee con la pistola USB o seleccione productos del catálogo.
             </p>
           </div>
         </div>
 
         <!-- Panel Inferior: Resumen Multimoneda y Botón de Cobro (F8) -->
-        <div class="p-4 border-t border-slate-200 bg-slate-50 shrink-0 space-y-3">
+        <div class="shrink-0 space-y-3 border-t border-slate-200 bg-slate-50 p-4">
           <!-- Selector Ágil de Modalidad de Cobro (1-Click) -->
           <div class="space-y-1.5">
             <div class="flex items-center justify-between text-xs">
-              <span class="font-bold text-slate-600 uppercase tracking-wide text-[11px]">
+              <span class="text-[11px] font-bold uppercase tracking-wide text-slate-600">
                 Forma de Cobro:
               </span>
               <!-- Badge si está en USD canje o Transferencia -->
               <span
                 v-if="posStore.paymentMode === 'USD_CASH'"
-                class="text-[10px] bg-amber-100 text-amber-900 font-extrabold px-1.5 py-0.5 rounded border border-amber-300"
+                class="rounded border border-amber-300 bg-amber-100 px-1.5 py-0.5 text-[10px] font-extrabold text-amber-900"
               >
                 Canje: 1 USD = {{ posStore.effectiveRateUSD }} CUP (-10)
               </span>
               <span
                 v-else-if="posStore.paymentMode === 'CUP_TRANSFER'"
-                class="text-[10px] bg-blue-100 text-blue-900 font-bold px-1.5 py-0.5 rounded border border-blue-200"
+                class="rounded border border-blue-200 bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-900"
               >
                 📱 Transfermóvil / EnZona
               </span>
             </div>
 
             <!-- Botonera Ágil de 1 Clic -->
-            <div class="grid grid-cols-3 gap-1.5 bg-slate-200/80 p-1 rounded-xl">
+            <div class="grid grid-cols-3 gap-1.5 rounded-xl bg-slate-200/80 p-1">
               <button
                 type="button"
-                class="py-2 px-1 rounded-lg text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 border cursor-pointer select-none"
-                :class="posStore.paymentMode === 'CUP_CASH'
-                  ? 'bg-white text-emerald-700 shadow-sm border-emerald-300 ring-1 ring-emerald-400'
-                  : 'bg-transparent text-slate-600 hover:text-slate-900 hover:bg-white/60 border-transparent'"
+                class="flex cursor-pointer select-none flex-col items-center justify-center gap-0.5 rounded-lg border px-1 py-2 text-xs font-bold transition-all"
+                :class="
+                  posStore.paymentMode === 'CUP_CASH'
+                    ? 'border-emerald-300 bg-white text-emerald-700 shadow-sm ring-1 ring-emerald-400'
+                    : 'border-transparent bg-transparent text-slate-600 hover:bg-white/60 hover:text-slate-900'
+                "
                 @click="posStore.setPaymentMode('CUP_CASH')"
               >
                 <span class="text-sm">💵</span>
-                <span class="leading-tight text-[11px]">CUP Efectivo</span>
+                <span class="text-[11px] leading-tight">CUP Efectivo</span>
               </button>
 
               <button
                 type="button"
-                class="py-2 px-1 rounded-lg text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 border cursor-pointer select-none"
-                :class="posStore.paymentMode === 'CUP_TRANSFER'
-                  ? 'bg-blue-600 text-white shadow-sm border-blue-700 ring-1 ring-blue-500'
-                  : 'bg-transparent text-slate-600 hover:text-slate-900 hover:bg-white/60 border-transparent'"
+                class="flex cursor-pointer select-none flex-col items-center justify-center gap-0.5 rounded-lg border px-1 py-2 text-xs font-bold transition-all"
+                :class="
+                  posStore.paymentMode === 'CUP_TRANSFER'
+                    ? 'border-blue-700 bg-blue-600 text-white shadow-sm ring-1 ring-blue-500'
+                    : 'border-transparent bg-transparent text-slate-600 hover:bg-white/60 hover:text-slate-900'
+                "
                 @click="posStore.setPaymentMode('CUP_TRANSFER')"
               >
                 <span class="text-sm">📱</span>
-                <span class="leading-tight text-[11px]">CUP Transf.</span>
+                <span class="text-[11px] leading-tight">CUP Transf.</span>
               </button>
 
               <button
                 type="button"
-                class="py-2 px-1 rounded-lg text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 border cursor-pointer select-none"
-                :class="posStore.paymentMode === 'USD_CASH'
-                  ? 'bg-emerald-600 text-white shadow-sm border-emerald-700 ring-1 ring-emerald-500'
-                  : 'bg-transparent text-slate-600 hover:text-slate-900 hover:bg-white/60 border-transparent'"
+                class="flex cursor-pointer select-none flex-col items-center justify-center gap-0.5 rounded-lg border px-1 py-2 text-xs font-bold transition-all"
+                :class="
+                  posStore.paymentMode === 'USD_CASH'
+                    ? 'border-emerald-700 bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-500'
+                    : 'border-transparent bg-transparent text-slate-600 hover:bg-white/60 hover:text-slate-900'
+                "
                 @click="posStore.setPaymentMode('USD_CASH')"
               >
                 <span class="text-sm">🇺🇸</span>
-                <span class="leading-tight text-[11px]">USD Efectivo</span>
+                <span class="text-[11px] leading-tight">USD Efectivo</span>
               </button>
             </div>
           </div>
 
           <!-- Desglose de Tasas y Total -->
-          <div class="p-3 bg-white rounded-lg border border-slate-200/80 shadow-xs space-y-1.5">
+          <div class="shadow-xs space-y-1.5 rounded-lg border border-slate-200/80 bg-white p-3">
             <div class="flex items-center justify-between text-xs">
-              <span class="text-slate-500 font-semibold">Equivalente USD (Base):</span>
-              <span class="font-black text-slate-700 font-mono text-xs">
+              <span class="font-semibold text-slate-500">Equivalente USD (Base):</span>
+              <span class="font-mono text-xs font-black text-slate-700">
                 ${{ posStore.totalUSD.toFixed(2) }} USD
               </span>
             </div>
@@ -355,11 +381,11 @@
             <!-- Desglose especial si se cobra en USD Efectivo (Margen Canje -10 CUP y Redondeo sin centavos) -->
             <div
               v-if="posStore.paymentMode === 'USD_CASH'"
-              class="pt-1.5 border-t border-dashed border-amber-200 text-[11px] space-y-0.5 text-amber-900 bg-amber-50/70 p-2 rounded-lg"
+              class="space-y-0.5 rounded-lg border-t border-dashed border-amber-200 bg-amber-50/70 p-2 pt-1.5 text-[11px] text-amber-900"
             >
               <div class="flex items-center justify-between">
                 <span>Tasa Canje Aplicada:</span>
-                <span class="font-bold font-mono">1 USD = {{ posStore.effectiveRateUSD }} CUP</span>
+                <span class="font-mono font-bold">1 USD = {{ posStore.effectiveRateUSD }} CUP</span>
               </div>
               <div class="flex items-center justify-between text-slate-600">
                 <span>Regla de Efectivo:</span>
@@ -367,27 +393,31 @@
               </div>
               <div
                 v-if="posStore.changeInCUPForRoundedUSD > 0"
-                class="flex items-center justify-between text-emerald-700 font-semibold pt-0.5 border-t border-amber-200/60"
+                class="flex items-center justify-between border-t border-amber-200/60 pt-0.5 font-semibold text-emerald-700"
               >
                 <span>Vuelto al cliente en CUP:</span>
-                <span class="font-bold">{{ formatearMoneda(posStore.changeInCUPForRoundedUSD, 'CUP') }}</span>
+                <span class="font-bold">{{
+                  formatearMoneda(posStore.changeInCUPForRoundedUSD, 'CUP')
+                }}</span>
               </div>
             </div>
 
             <!-- Desglose si es transferencia QR -->
             <div
               v-else-if="posStore.paymentMode === 'CUP_TRANSFER'"
-              class="pt-1.5 border-t border-dashed border-blue-200 text-[11px] text-blue-800 bg-blue-50/70 p-2 rounded-lg flex items-center justify-between"
+              class="flex items-center justify-between rounded-lg border-t border-dashed border-blue-200 bg-blue-50/70 p-2 pt-1.5 text-[11px] text-blue-800"
             >
               <span>Canal de Cobro:</span>
               <span class="font-bold">Transfermóvil / EnZona (Sin vuelto físico)</span>
             </div>
 
-            <div class="flex items-baseline justify-between pt-1 border-t border-slate-100">
+            <div class="flex items-baseline justify-between border-t border-slate-100 pt-1">
               <span class="text-xs font-bold text-slate-700">Total a Cobrar:</span>
               <span
                 class="text-xl font-black tracking-tight"
-                :class="posStore.paymentMode === 'CUP_TRANSFER' ? 'text-blue-600' : 'text-emerald-600'"
+                :class="
+                  posStore.paymentMode === 'CUP_TRANSFER' ? 'text-blue-600' : 'text-emerald-600'
+                "
               >
                 {{ formatearMoneda(posStore.totalInSelectedCurrency, posStore.selectedCurrency) }}
               </span>
@@ -401,8 +431,12 @@
             block
             :disabled="posStore.cart.length === 0"
             :loading="posStore.loading"
-            class="h-12 border-none font-bold text-base flex items-center justify-center gap-2 shadow-md disabled:bg-slate-300 disabled:cursor-not-allowed"
-            :class="posStore.paymentMode === 'CUP_TRANSFER' ? 'bg-blue-600 hover:bg-blue-500' : 'bg-emerald-600 hover:bg-emerald-500'"
+            class="flex h-12 items-center justify-center gap-2 border-none text-base font-bold shadow-md disabled:cursor-not-allowed disabled:bg-slate-300"
+            :class="
+              posStore.paymentMode === 'CUP_TRANSFER'
+                ? 'bg-blue-600 hover:bg-blue-500'
+                : 'bg-emerald-600 hover:bg-emerald-500'
+            "
             @click="openPaymentDrawer"
           >
             <DollarCircleOutlined class="text-lg" />

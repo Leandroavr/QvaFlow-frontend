@@ -260,7 +260,8 @@ let shiftsHistory: CashShift[] = [
     exchangeAdjustments: { CUP: -3580, USD: 10 },
     countedFunds: { CUP: 49620, USD: 145 },
     differences: { CUP: 0, USD: 0 },
-    discrepancyReason: 'Arqueo perfecto. Todo el efectivo en caja coincide exactamente con el sistema.',
+    discrepancyReason:
+      'Arqueo perfecto. Todo el efectivo en caja coincide exactamente con el sistema.',
     notes: 'Arqueo perfecto. Todo el efectivo en caja coincide exactamente con el sistema.',
   },
   {
@@ -275,8 +276,10 @@ let shiftsHistory: CashShift[] = [
     exchangeAdjustments: { CUP: 0, USD: 0 },
     countedFunds: { CUP: 42350, USD: 130 },
     differences: { CUP: -50, USD: 0 },
-    discrepancyReason: 'Faltante de 50 CUP por redondeo y falta de billetes fraccionarios para cambio en vueltos.',
-    notes: 'Faltante de 50 CUP por redondeo y falta de billetes fraccionarios para cambio en vueltos.',
+    discrepancyReason:
+      'Faltante de 50 CUP por redondeo y falta de billetes fraccionarios para cambio en vueltos.',
+    notes:
+      'Faltante de 50 CUP por redondeo y falta de billetes fraccionarios para cambio en vueltos.',
   },
   {
     id: 'TURNO-2026-998',
@@ -370,11 +373,7 @@ export const posService = {
   /**
    * Cierra y arquea el turno actual comparando lo esperado vs lo contado.
    */
-  async closeShift(
-    countedCUP: number,
-    countedUSD: number,
-    notes?: string
-  ): Promise<CashShift> {
+  async closeShift(countedCUP: number, countedUSD: number, notes?: string): Promise<CashShift> {
     try {
       const response = await apiClient.post<CashShift>('/pos/shifts/close', {
         countedFunds: { CUP: countedCUP, USD: countedUSD },

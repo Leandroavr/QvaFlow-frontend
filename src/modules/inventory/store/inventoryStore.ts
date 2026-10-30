@@ -60,9 +60,7 @@ export const useInventoryStore = defineStore('inventory', () => {
 
     return items.value.filter((item) => {
       const matchQuery =
-        !query ||
-        item.name.toLowerCase().includes(query) ||
-        item.code.toLowerCase().includes(query)
+        !query || item.name.toLowerCase().includes(query) || item.code.toLowerCase().includes(query)
 
       const matchWarehouse =
         selectedWarehouse.value === 'all' || item.warehouse === selectedWarehouse.value

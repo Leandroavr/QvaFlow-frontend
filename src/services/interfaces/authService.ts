@@ -3,7 +3,7 @@ import type { HealthCheckResponse } from '../../shared/types/api'
 
 /**
  * Contrato de servicio de autenticación y sesión.
- * 
+ *
  * Este desacoplamiento permite alternar con total transparencia entre
  * MockAuthService (desarrollo independiente) y HttpAuthService (integración Symfony)
  * simplemente modificando la variable de entorno VITE_USE_MOCKS.

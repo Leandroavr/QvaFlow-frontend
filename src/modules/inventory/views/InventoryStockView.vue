@@ -1,15 +1,23 @@
 <template>
   <div class="space-y-4">
     <!-- Fila Superior de Métricas / KPIs del Inventario -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <!-- Unidades Totales -->
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+      <div
+        class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      >
         <div>
-          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Unidades Totales</p>
-          <h3 class="text-2xl font-bold text-slate-800 m-0">{{ inventoryStore.totalStockUnits }}</h3>
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Unidades Totales
+          </p>
+          <h3 class="m-0 text-2xl font-bold text-slate-800">
+            {{ inventoryStore.totalStockUnits }}
+          </h3>
           <span class="text-[11px] text-slate-400">Distribuidas en almacenes</span>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-xl font-bold text-emerald-600"
+        >
           📦
         </div>
       </div>
@@ -17,49 +25,65 @@
       <!-- Valorización al Costo (Protegido por canViewCosts) -->
       <div
         v-if="authStore.canViewCosts"
-        class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between"
+        class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
       >
         <div>
-          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Valor en Costo</p>
-          <h3 class="text-xl font-bold text-slate-800 m-0">
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Valor en Costo
+          </p>
+          <h3 class="m-0 text-xl font-bold text-slate-800">
             {{ formatearMoneda(inventoryStore.totalCostValue, 'CUP') }}
           </h3>
           <span class="text-[11px] text-slate-400">Capital invertido</span>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-bold">
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-xl font-bold text-blue-600"
+        >
           💰
         </div>
       </div>
 
       <!-- Stock Bajo (< 10) -->
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+      <div
+        class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      >
         <div>
-          <p class="text-xs font-semibold text-amber-600 uppercase tracking-wider">Bajo Stock (&lt; 10)</p>
-          <h3 class="text-2xl font-bold text-amber-600 m-0">{{ inventoryStore.lowStockCount }}</h3>
-          <span class="text-[11px] text-amber-500 font-medium">Requieren reposición</span>
+          <p class="text-xs font-semibold uppercase tracking-wider text-amber-600">
+            Bajo Stock (&lt; 10)
+          </p>
+          <h3 class="m-0 text-2xl font-bold text-amber-600">{{ inventoryStore.lowStockCount }}</h3>
+          <span class="text-[11px] font-medium text-amber-500">Requieren reposición</span>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold">
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-xl font-bold text-amber-600"
+        >
           ⚠️
         </div>
       </div>
 
       <!-- Agotados (0) -->
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+      <div
+        class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      >
         <div>
-          <p class="text-xs font-semibold text-red-600 uppercase tracking-wider">Agotados (0)</p>
-          <h3 class="text-2xl font-bold text-red-600 m-0">{{ inventoryStore.outOfStockCount }}</h3>
-          <span class="text-[11px] text-red-500 font-medium">Sin disponibilidad</span>
+          <p class="text-xs font-semibold uppercase tracking-wider text-red-600">Agotados (0)</p>
+          <h3 class="m-0 text-2xl font-bold text-red-600">{{ inventoryStore.outOfStockCount }}</h3>
+          <span class="text-[11px] font-medium text-red-500">Sin disponibilidad</span>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center text-xl font-bold">
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-xl font-bold text-red-600"
+        >
           🚫
         </div>
       </div>
     </div>
 
     <!-- Contenedor Principal: Filtros y Tabla de Existencias -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <!-- Barra Superior de Controles y Filtros -->
-      <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 mb-5">
+      <div
+        class="mb-5 flex flex-col items-stretch justify-between gap-4 lg:flex-row lg:items-center"
+      >
         <div class="flex flex-wrap items-center gap-3">
           <!-- Búsqueda rápida por nombre o código -->
           <a-input
@@ -134,7 +158,7 @@
         <div class="flex flex-wrap items-center gap-2.5">
           <!-- Botón: Nuevo Almacén y Localizaciones -->
           <a-button
-            class="border-slate-300 hover:border-qvaflow-navy flex items-center gap-1.5 h-10 px-4 text-sm font-semibold"
+            class="flex h-10 items-center gap-1.5 border-slate-300 px-4 text-sm font-semibold hover:border-qvaflow-navy"
             @click="isWarehouseModalVisible = true"
           >
             <span>🏢</span>
@@ -144,7 +168,7 @@
           <!-- Botón: Registrar Movimiento / Traslado -->
           <a-button
             type="primary"
-            class="bg-emerald-600 hover:bg-emerald-500 border-none shadow-sm flex items-center justify-center gap-2 h-10 px-5 text-sm font-semibold"
+            class="flex h-10 items-center justify-center gap-2 border-none bg-emerald-600 px-5 text-sm font-semibold shadow-sm hover:bg-emerald-500"
             @click="openMovementModal"
           >
             <SwapOutlined class="text-base" />
@@ -161,7 +185,7 @@
         :pagination="{
           pageSize: 8,
           showSizeChanger: true,
-          showTotal: (total: number) => `Total ${total} artículos en existencias`
+          showTotal: (total: number) => `Total ${total} artículos en existencias`,
         }"
         row-key="id"
         class="overflow-x-auto"
@@ -169,7 +193,9 @@
         <template #bodyCell="{ column, record }">
           <!-- Columna Código -->
           <template v-if="column.key === 'code'">
-            <span class="font-mono text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+            <span
+              class="rounded bg-slate-100 px-2 py-0.5 font-mono text-xs font-semibold text-slate-600"
+            >
               {{ record.code }}
             </span>
           </template>
@@ -178,26 +204,32 @@
           <template v-else-if="column.key === 'name'">
             <div>
               <div class="font-semibold text-slate-800">{{ record.name }}</div>
-              <div class="text-[11px] text-slate-400">Actualizado: {{ formatearFechaHora(record.lastUpdated) }}</div>
+              <div class="text-[11px] text-slate-400">
+                Actualizado: {{ formatearFechaHora(record.lastUpdated) }}
+              </div>
             </div>
           </template>
 
           <!-- Columna Categoría -->
           <template v-else-if="column.key === 'category'">
-            <span class="text-xs px-2.5 py-0.5 rounded-full font-medium bg-slate-100 text-slate-600">
+            <span
+              class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600"
+            >
               {{ record.category }}
             </span>
           </template>
 
           <!-- Columna Almacén y Localización Física -->
           <template v-else-if="column.key === 'warehouse'">
-            <div class="text-xs space-y-0.5">
-              <div class="font-semibold text-slate-800 flex items-center gap-1">
+            <div class="space-y-0.5 text-xs">
+              <div class="flex items-center gap-1 font-semibold text-slate-800">
                 <span>🏢</span>
                 <span>{{ record.warehouse }}</span>
               </div>
-              <div class="text-slate-500 flex items-center gap-1">
-                <span class="text-[11px] font-mono bg-blue-50 text-blue-700 px-1.5 py-0.2 rounded border border-blue-200">
+              <div class="flex items-center gap-1 text-slate-500">
+                <span
+                  class="py-0.2 rounded border border-blue-200 bg-blue-50 px-1.5 font-mono text-[11px] text-blue-700"
+                >
                   📍 {{ record.locationName || record.location || 'Localización General' }}
                 </span>
               </div>
@@ -222,20 +254,19 @@
           <template v-else-if="column.key === 'stock'">
             <div class="flex items-center gap-2">
               <span
-                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold"
+                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold"
                 :class="getStockBadgeClasses(record.stock)"
               >
-                <span class="w-1.5 h-1.5 rounded-full" :class="getStockDotClasses(record.stock)"></span>
+                <span
+                  class="h-1.5 w-1.5 rounded-full"
+                  :class="getStockDotClasses(record.stock)"
+                ></span>
                 {{ record.stock }} {{ record.unit }}
               </span>
 
               <!-- Etiqueta de Alerta -->
-              <a-tag v-if="record.stock === 0" color="error" class="text-xs">
-                Agotado
-              </a-tag>
-              <a-tag v-else-if="record.stock < 10" color="warning" class="text-xs">
-                Bajo
-              </a-tag>
+              <a-tag v-if="record.stock === 0" color="error" class="text-xs"> Agotado </a-tag>
+              <a-tag v-else-if="record.stock < 10" color="warning" class="text-xs"> Bajo </a-tag>
             </div>
           </template>
 
@@ -244,7 +275,7 @@
             <a-button
               size="small"
               type="link"
-              class="text-emerald-600 hover:text-emerald-700 font-medium p-0"
+              class="p-0 font-medium text-emerald-600 hover:text-emerald-700"
               @click="openMovementModalForProduct(record)"
             >
               Trasladar / Ajustar
@@ -274,11 +305,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import {
-  SearchOutlined,
-  ReloadOutlined,
-  SwapOutlined,
-} from '@ant-design/icons-vue'
+import { SearchOutlined, ReloadOutlined, SwapOutlined } from '@ant-design/icons-vue'
 import useInventoryStore from '../store/inventoryStore'
 import useAuthStore from '@/modules/auth/store/authStore'
 import InventoryMovementModal from '../components/InventoryMovementModal.vue'

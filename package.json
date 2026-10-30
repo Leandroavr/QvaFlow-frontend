@@ -8,7 +8,10 @@
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "lint": "prettier --check \"src/**/*.{vue,ts,js,css}\"",
+    "format": "prettier --write \"src/**/*.{vue,ts,js,css}\"",
+    "check:offline": "node scripts/check-offline.js"
   },
   "dependencies": {
     "@ant-design/icons-vue": "^7.0.1",

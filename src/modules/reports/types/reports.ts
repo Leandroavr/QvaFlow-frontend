@@ -64,4 +64,3 @@ export interface FinancialMovement {
   paymentMethod: string
   status: string
 }
-

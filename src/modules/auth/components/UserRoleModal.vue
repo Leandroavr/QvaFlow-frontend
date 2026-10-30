@@ -9,12 +9,16 @@
     @ok="handleSubmit"
     @cancel="handleCancel"
   >
-    <div v-if="userToEdit" class="py-2 space-y-4">
+    <div v-if="userToEdit" class="space-y-4 py-2">
       <!-- Tarjeta informativa del trabajador -->
-      <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+      <div
+        class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3.5"
+      >
         <div>
-          <span class="font-bold text-slate-800 text-sm block">{{ userToEdit.name }}</span>
-          <span class="text-xs text-slate-400 font-mono">Usuario: @{{ userToEdit.username }} | {{ userToEdit.email || 'Sin correo' }}</span>
+          <span class="block text-sm font-bold text-slate-800">{{ userToEdit.name }}</span>
+          <span class="font-mono text-xs text-slate-400"
+            >Usuario: @{{ userToEdit.username }} | {{ userToEdit.email || 'Sin correo' }}</span
+          >
         </div>
         <a-tag :color="userToEdit.status === 'ACTIVO' ? 'success' : 'default'">
           {{ userToEdit.status }}
@@ -23,7 +27,7 @@
 
       <!-- Selector de Rol General -->
       <div>
-        <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block mb-1.5">
+        <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-700">
           Rol General Asignado:
         </label>
         <a-select
@@ -50,34 +54,37 @@
             ⭐ Superadministrador (Acceso total al sistema)
           </a-select-option>
         </a-select>
-        <span class="text-[11px] text-slate-400 mt-1 block">
-          Al cambiar el rol general se preseleccionan los permisos sugeridos, los cuales puede personalizar a continuación.
+        <span class="mt-1 block text-[11px] text-slate-400">
+          Al cambiar el rol general se preseleccionan los permisos sugeridos, los cuales puede
+          personalizar a continuación.
         </span>
       </div>
 
       <!-- Matriz Granular de Permisos por Módulo (a-checkbox-group) -->
       <div class="space-y-2.5">
         <div class="flex items-center justify-between">
-          <label class="text-xs font-bold text-slate-700 uppercase tracking-wide block m-0">
+          <label class="m-0 block text-xs font-bold uppercase tracking-wide text-slate-700">
             Permisos Granulares por Módulo (RBAC):
           </label>
-          <span class="text-xs text-emerald-600 font-semibold">
+          <span class="text-xs font-semibold text-emerald-600">
             {{ selectedPermissions.length }} de {{ permissionOptions.length }} permisos activos
           </span>
         </div>
 
-        <div class="p-4 bg-white rounded-xl border border-slate-200 shadow-xs">
+        <div class="shadow-xs rounded-xl border border-slate-200 bg-white p-4">
           <a-checkbox-group v-model:value="selectedPermissions" class="w-full">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div
                 v-for="opt in permissionOptions"
                 :key="opt.value"
-                class="p-2.5 rounded-lg border border-slate-100 hover:border-slate-200 hover:bg-slate-50/70 transition-all"
+                class="rounded-lg border border-slate-100 p-2.5 transition-all hover:border-slate-200 hover:bg-slate-50/70"
               >
                 <a-checkbox :value="opt.value" class="items-start">
                   <div class="ml-1">
-                    <span class="text-xs font-bold text-slate-800 block">{{ opt.label }}</span>
-                    <span class="text-[11px] text-slate-400 block leading-tight">{{ opt.description }}</span>
+                    <span class="block text-xs font-bold text-slate-800">{{ opt.label }}</span>
+                    <span class="block text-[11px] leading-tight text-slate-400">{{
+                      opt.description
+                    }}</span>
                   </div>
                 </a-checkbox>
               </div>
@@ -87,10 +94,14 @@
       </div>
 
       <!-- Estado de la Cuenta -->
-      <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+      <div
+        class="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-3"
+      >
         <div>
-          <span class="text-xs font-bold text-slate-700 block">Estado del Usuario</span>
-          <span class="text-[11px] text-slate-400">Permitir o revocar el acceso a la red local</span>
+          <span class="block text-xs font-bold text-slate-700">Estado del Usuario</span>
+          <span class="text-[11px] text-slate-400"
+            >Permitir o revocar el acceso a la red local</span
+          >
         </div>
         <a-select
           v-model:value="accountStatus"
@@ -197,21 +208,9 @@ const ROLE_PRESETS: Record<UserRole, Permission[]> = {
     'VIEW_REPORTS',
     'VIEW_ALL_SALES',
   ],
-  MANAGER: [
-    'POS_ACCESS',
-    'VIEW_COSTS',
-    'MANAGE_PURCHASES',
-    'VIEW_REPORTS',
-    'VIEW_ALL_SALES',
-  ],
-  WAREHOUSE: [
-    'MANAGE_INVENTORY',
-    'MANAGE_CATALOG',
-    'MANAGE_PURCHASES',
-  ],
-  CASHIER: [
-    'POS_ACCESS',
-  ],
+  MANAGER: ['POS_ACCESS', 'VIEW_COSTS', 'MANAGE_PURCHASES', 'VIEW_REPORTS', 'VIEW_ALL_SALES'],
+  WAREHOUSE: ['MANAGE_INVENTORY', 'MANAGE_CATALOG', 'MANAGE_PURCHASES'],
+  CASHIER: ['POS_ACCESS'],
 }
 
 watch(

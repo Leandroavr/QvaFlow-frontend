@@ -3,12 +3,15 @@ import { SUPPORTED_CURRENCIES } from '../types/currency'
 
 /**
  * Formatea importes monetarios preservando la precisión exacta de los decimales.
- * 
+ *
  * @param amount Cantidad como string decimal ("1200.50") o número
  * @param currency Código de moneda admitida ('USD' | 'CUP' | 'CUP_TRANSFER' | 'MLC')
  * @returns Cadena con formato visual (ej: "$ 1,200.50", "₱ 450.00")
  */
-export function formatMoney(amount: DecimalString | number | null | undefined, currency: Currency = 'USD'): string {
+export function formatMoney(
+  amount: DecimalString | number | null | undefined,
+  currency: Currency = 'USD'
+): string {
   if (amount === null || amount === undefined || amount === '') {
     return '—'
   }

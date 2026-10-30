@@ -7,15 +7,9 @@
     :body-style="{ paddingBottom: '80px' }"
     @close="handleClose"
   >
-    <a-form
-      ref="formRef"
-      :model="formState"
-      :rules="formRules"
-      layout="vertical"
-      class="space-y-4"
-    >
+    <a-form ref="formRef" :model="formState" :rules="formRules" layout="vertical" class="space-y-4">
       <!-- Datos Generales -->
-      <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+      <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
         <a-row :gutter="16">
           <!-- Proveedor -->
           <a-col :xs="24" :sm="12">
@@ -59,7 +53,11 @@
           <!-- Moneda de la Factura -->
           <a-col :xs="24" :sm="12">
             <a-form-item label="Moneda" name="moneda">
-              <a-select v-model:value="formState.moneda" :dropdown-match-select-width="false" :popup-match-select-width="false">
+              <a-select
+                v-model:value="formState.moneda"
+                :dropdown-match-select-width="false"
+                :popup-match-select-width="false"
+              >
                 <a-select-option value="CUP">CUP (Pesos)</a-select-option>
                 <a-select-option value="USD">USD (Dólares)</a-select-option>
               </a-select>
@@ -71,8 +69,8 @@
       <!-- Artículos y Localización -->
       <div class="space-y-3">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Artículos</span>
-          <span class="text-xs text-slate-400 font-medium">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Artículos</span>
+          <span class="text-xs font-medium text-slate-400">
             {{ invoiceItems.length }} artículo(s)
           </span>
         </div>
@@ -98,7 +96,7 @@
             >
               <div class="flex items-center justify-between">
                 <span>{{ prod.name }}</span>
-                <span class="text-xs text-slate-400 font-mono">
+                <span class="font-mono text-xs text-slate-400">
                   SKU: {{ prod.code }} | Costo Ref: ${{ prod.defaultCost }}
                 </span>
               </div>
@@ -107,7 +105,7 @@
 
           <a-button
             type="primary"
-            class="bg-emerald-600 hover:bg-emerald-500 border-none flex items-center gap-1"
+            class="flex items-center gap-1 border-none bg-emerald-600 hover:bg-emerald-500"
             :disabled="!selectedProductIdToAdd"
             @click="addProductRow"
           >
@@ -117,23 +115,32 @@
         </div>
 
         <!-- Tabla editable de artículos entrantes -->
-        <div v-if="invoiceItems.length > 0" class="border border-slate-200 rounded-lg overflow-x-auto">
-          <table class="w-full text-left text-xs min-w-[680px]">
-            <thead class="bg-slate-100 text-slate-700 uppercase font-semibold border-b border-slate-200">
+        <div
+          v-if="invoiceItems.length > 0"
+          class="overflow-x-auto rounded-lg border border-slate-200"
+        >
+          <table class="w-full min-w-[680px] text-left text-xs">
+            <thead
+              class="border-b border-slate-200 bg-slate-100 font-semibold uppercase text-slate-700"
+            >
               <tr>
                 <th class="p-2.5">Producto</th>
-                <th class="p-2.5 w-44">Localización Destino</th>
-                <th class="p-2.5 w-24 text-center">Cantidad</th>
-                <th class="p-2.5 w-28 text-center">Costo Unit. ({{ formState.moneda }})</th>
-                <th class="p-2.5 w-28 text-right">Subtotal</th>
-                <th class="p-2.5 w-10 text-center"></th>
+                <th class="w-44 p-2.5">Localización Destino</th>
+                <th class="w-24 p-2.5 text-center">Cantidad</th>
+                <th class="w-28 p-2.5 text-center">Costo Unit. ({{ formState.moneda }})</th>
+                <th class="w-28 p-2.5 text-right">Subtotal</th>
+                <th class="w-10 p-2.5 text-center"></th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
-              <tr v-for="(item, idx) in invoiceItems" :key="item.productId" class="hover:bg-slate-50">
+              <tr
+                v-for="(item, idx) in invoiceItems"
+                :key="item.productId"
+                class="hover:bg-slate-50"
+              >
                 <td class="p-2.5 font-medium text-slate-800">
                   <div>{{ item.productName }}</div>
-                  <span class="text-[10px] font-mono text-slate-400">{{ item.productCode }}</span>
+                  <span class="font-mono text-[10px] text-slate-400">{{ item.productCode }}</span>
                 </td>
 
                 <!-- Selector de Localización en Almacén -->
@@ -183,7 +190,7 @@
                 <td class="p-2.5 text-center">
                   <button
                     type="button"
-                    class="text-red-500 hover:text-red-700 text-xs font-bold cursor-pointer"
+                    class="cursor-pointer text-xs font-bold text-red-500 hover:text-red-700"
                     @click="removeProductRow(idx)"
                   >
                     ✕
@@ -193,7 +200,10 @@
             </tbody>
           </table>
         </div>
-        <div v-else class="text-center py-6 border-2 border-dashed border-slate-200 rounded-lg text-xs text-slate-400">
+        <div
+          v-else
+          class="rounded-lg border-2 border-dashed border-slate-200 py-6 text-center text-xs text-slate-400"
+        >
           No has agregado artículos a esta factura todavía.
         </div>
 
@@ -209,14 +219,22 @@
       </div>
 
       <!-- SECCIÓN INFERIOR: Total a Pagar -->
-      <div class="p-3 bg-slate-900 text-white rounded-xl flex items-center justify-between">
+      <div class="flex items-center justify-between rounded-xl bg-slate-900 p-3 text-white">
         <div>
-          <span class="text-xs text-slate-400 uppercase tracking-wider block">Importe Total Factura</span>
-          <span class="text-2xl font-bold">{{ formatearMoneda(invoiceTotal, formState.moneda) }}</span>
+          <span class="block text-xs uppercase tracking-wider text-slate-400"
+            >Importe Total Factura</span
+          >
+          <span class="text-2xl font-bold">{{
+            formatearMoneda(invoiceTotal, formState.moneda)
+          }}</span>
         </div>
         <div class="text-right text-xs text-slate-400">
-          <div>Moneda: <strong class="text-white">{{ formState.moneda }}</strong></div>
-          <div>Total de Unidades: <strong class="text-white">{{ totalUnits }}</strong></div>
+          <div>
+            Moneda: <strong class="text-white">{{ formState.moneda }}</strong>
+          </div>
+          <div>
+            Total de Unidades: <strong class="text-white">{{ totalUnits }}</strong>
+          </div>
         </div>
       </div>
     </a-form>
@@ -227,7 +245,7 @@
         <a-button @click="handleClose">Cancelar</a-button>
         <a-button
           type="primary"
-          class="bg-emerald-600 hover:bg-emerald-500 border-none"
+          class="border-none bg-emerald-600 hover:bg-emerald-500"
           :loading="loading"
           @click="handleSubmit"
         >

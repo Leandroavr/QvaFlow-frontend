@@ -18,7 +18,9 @@
   min-width: max-content !important;
   width: auto !important;
   max-width: 95vw !important;
-  box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.12), 0 3px 6px -4px rgba(0, 0, 0, 0.16) !important;
+  box-shadow:
+    0 6px 16px 0 rgba(0, 0, 0, 0.12),
+    0 3px 6px -4px rgba(0, 0, 0, 0.16) !important;
 }
 
 .ant-select-dropdown .rc-virtual-list,

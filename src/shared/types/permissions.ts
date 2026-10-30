@@ -1,11 +1,11 @@
 /**
  * Formato de permisos RBAC dinámicos en QvaFlow: "modulo.accion"
- * 
+ *
  * NOTA DE SEGURIDAD ARQUITECTURAL:
  * Los roles en QvaFlow son dinámicos (el administrador crea roles a medida en la BD).
  * El frontend NUNCA debe comparar nombres de rol ('admin', 'cajero', etc.).
  * La lógica en vistas y componentes se basa EXCLUSIVAMENTE en verificar permisos específicos.
- * 
+ *
  * IMPORTANTE: El control en el frontend es puramente VISUAL y de ergonomía de interfaz (UI/UX).
  * La seguridad e integridad real y definitiva de los datos la aplica el backend Symfony en cada petición.
  */
@@ -46,7 +46,7 @@ export const KNOWN_PERMISSIONS = [
   'system.config',
 ] as const
 
-export type AppPermission = typeof KNOWN_PERMISSIONS[number] | string
+export type AppPermission = (typeof KNOWN_PERMISSIONS)[number] | string
 
 export interface PermissionDefinition {
   id: string

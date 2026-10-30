@@ -5,7 +5,7 @@ import { httpClient } from '../api/httpClient'
 
 /**
  * Implementación HTTP real para conectar con el backend Symfony.
- * 
+ *
  * GUÍA DE INTEGRACIÓN PARA EL DESARROLLADOR DE BACKEND:
  * Cada método documenta la ruta y cuerpo esperado. Ver /docs/API_CONTRACT.md para los detalles completos.
  */

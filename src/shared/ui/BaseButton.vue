@@ -3,8 +3,8 @@
     :type="type"
     :disabled="disabled || loading"
     :class="[
-      'inline-flex items-center justify-center font-semibold transition-all duration-150 select-none cursor-pointer',
-      'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary',
+      'inline-flex cursor-pointer select-none items-center justify-center font-semibold transition-all duration-150',
+      'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
       'disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none',
       'active:scale-[0.98]',
       variantClasses[variant],

@@ -1,53 +1,71 @@
 <template>
   <div class="space-y-4">
     <!-- Tarjetas KPI Superiores -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
       <!-- Total Comprado CUP -->
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+      <div
+        class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      >
         <div>
-          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Comprado (CUP)</p>
-          <h3 class="text-2xl font-bold text-slate-800 m-0">
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Total Comprado (CUP)
+          </p>
+          <h3 class="m-0 text-2xl font-bold text-slate-800">
             {{ formatearMoneda(purchasesStore.totalPurchasedAmountCUP, 'CUP') }}
           </h3>
           <span class="text-[11px] text-slate-400">Total en pesos</span>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-xl font-bold text-emerald-600"
+        >
           🇨🇺
         </div>
       </div>
 
       <!-- Total Comprado USD -->
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+      <div
+        class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      >
         <div>
-          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Comprado (USD)</p>
-          <h3 class="text-2xl font-bold text-emerald-700 m-0">
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Total Comprado (USD)
+          </p>
+          <h3 class="m-0 text-2xl font-bold text-emerald-700">
             ${{ purchasesStore.totalPurchasedAmountUSD.toLocaleString() }} USD
           </h3>
           <span class="text-[11px] text-slate-400">Total en dólares</span>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-bold">
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-xl font-bold text-blue-600"
+        >
           💵
         </div>
       </div>
 
       <!-- Facturas Pendientes de Recibir -->
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+      <div
+        class="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      >
         <div>
-          <p class="text-xs font-semibold text-amber-600 uppercase tracking-wider">Por Recibir</p>
-          <h3 class="text-2xl font-bold text-amber-600 m-0">{{ purchasesStore.pendingInvoicesCount }} facturas</h3>
-          <span class="text-[11px] text-amber-500 font-medium">Pendientes de confirmar</span>
+          <p class="text-xs font-semibold uppercase tracking-wider text-amber-600">Por Recibir</p>
+          <h3 class="m-0 text-2xl font-bold text-amber-600">
+            {{ purchasesStore.pendingInvoicesCount }} facturas
+          </h3>
+          <span class="text-[11px] font-medium text-amber-500">Pendientes de confirmar</span>
         </div>
-        <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-bold">
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-xl font-bold text-amber-600"
+        >
           ⏳
         </div>
       </div>
     </div>
 
     <!-- Contenedor Principal: Filtros y Tabla Histórica de Facturas -->
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+    <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <!-- Barra Superior de Controles y Filtros -->
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-5">
-        <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+      <div class="mb-5 flex flex-col items-center justify-between gap-4 sm:flex-row">
+        <div class="flex w-full flex-wrap items-center gap-3 sm:w-auto">
           <!-- Búsqueda rápida por número de factura o nombre de proveedor -->
           <a-input
             v-model:value="purchasesStore.searchQuery"
@@ -93,7 +111,7 @@
         <!-- Botón para Registrar Nueva Factura -->
         <a-button
           type="primary"
-          class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 border-none shadow-sm flex items-center justify-center gap-2 h-10 px-5 text-sm font-semibold"
+          class="flex h-10 w-full items-center justify-center gap-2 border-none bg-emerald-600 px-5 text-sm font-semibold shadow-sm hover:bg-emerald-500 sm:w-auto"
           @click="openCreateDrawer"
         >
           <PlusOutlined class="text-base" />
@@ -109,28 +127,30 @@
         :pagination="{
           pageSize: 8,
           showSizeChanger: true,
-          showTotal: (total: number) => `Total ${total} facturas registradas`
+          showTotal: (total: number) => `Total ${total} facturas registradas`,
         }"
         row-key="id"
         class="overflow-x-auto"
       >
         <!-- Fila expandible con el detalle de productos y la localización asignada -->
         <template #expandedRowRender="{ record }">
-          <div class="p-3 bg-slate-50/80 rounded-lg border border-slate-200">
-            <h5 class="text-xs font-bold text-slate-700 uppercase mb-2">
+          <div class="rounded-lg border border-slate-200 bg-slate-50/80 p-3">
+            <h5 class="mb-2 text-xs font-bold uppercase text-slate-700">
               Artículos en el documento y localización física de entrada:
             </h5>
             <div class="space-y-1.5 text-xs text-slate-700">
               <div
                 v-for="item in record.items"
                 :key="item.id"
-                class="flex items-center justify-between py-1 border-b border-slate-200/50 last:border-0"
+                class="flex items-center justify-between border-b border-slate-200/50 py-1 last:border-0"
               >
                 <div class="flex items-center gap-2">
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                   <strong>{{ item.cantidad }} {{ item.unit }}</strong> de {{ item.productName }}
-                  <span class="text-slate-400 font-mono text-[10px]">({{ item.producto }})</span>
-                  <span class="text-[11px] font-mono bg-blue-50 text-blue-700 px-1.5 py-0.2 rounded border border-blue-200">
+                  <span class="font-mono text-[10px] text-slate-400">({{ item.producto }})</span>
+                  <span
+                    class="py-0.2 rounded border border-blue-200 bg-blue-50 px-1.5 font-mono text-[11px] text-blue-700"
+                  >
                     📍 Destino: {{ item.localizacion }}
                   </span>
                 </div>
@@ -141,7 +161,7 @@
               </div>
             </div>
 
-            <div v-if="record.notes" class="mt-2 text-[11px] text-slate-500 italic">
+            <div v-if="record.notes" class="mt-2 text-[11px] italic text-slate-500">
               Nota: {{ record.notes }}
             </div>
           </div>
@@ -162,7 +182,9 @@
 
           <!-- Columna Fecha (DD/MM/YYYY) -->
           <template v-else-if="column.key === 'fechaMovimiento'">
-            <span class="text-xs text-slate-700 font-mono">{{ formatearFecha(record.fechaMovimiento) }}</span>
+            <span class="font-mono text-xs text-slate-700">{{
+              formatearFecha(record.fechaMovimiento)
+            }}</span>
           </template>
 
           <!-- Columna Monto Total -->
@@ -198,12 +220,12 @@
                 <a-button
                   size="small"
                   type="primary"
-                  class="bg-emerald-600 hover:bg-emerald-500 border-none text-xs font-semibold h-7"
+                  class="h-7 border-none bg-emerald-600 text-xs font-semibold hover:bg-emerald-500"
                 >
                   ✓ Recibir Stock
                 </a-button>
               </a-popconfirm>
-              <span v-else class="text-xs text-emerald-700 font-semibold flex items-center gap-1">
+              <span v-else class="flex items-center gap-1 text-xs font-semibold text-emerald-700">
                 <span>✓</span>
                 <span>Procesada</span>
               </span>
@@ -226,11 +248,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import {
-  SearchOutlined,
-  ReloadOutlined,
-  PlusOutlined,
-} from '@ant-design/icons-vue'
+import { SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import usePurchasesStore from '../store/purchasesStore'
 import PurchaseInvoiceDrawer from '../components/PurchaseInvoiceDrawer.vue'
 import { useFormatoMoneda } from '@/shared/composables/useFormatoMoneda'
@@ -261,7 +279,8 @@ const columns = [
     title: 'Fecha',
     key: 'fechaMovimiento',
     dataIndex: 'fechaMovimiento',
-    sorter: (a: PurchaseInvoice, b: PurchaseInvoice) => a.fechaMovimiento.localeCompare(b.fechaMovimiento),
+    sorter: (a: PurchaseInvoice, b: PurchaseInvoice) =>
+      a.fechaMovimiento.localeCompare(b.fechaMovimiento),
     width: 130,
   },
   {

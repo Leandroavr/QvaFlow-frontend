@@ -22,7 +22,9 @@ export const vPermission: Directive = {
         el.parentNode?.removeChild(el)
       }
     } else {
-      throw new Error(`Se requiere especificar el permiso en v-permission. Ejemplo: v-permission="'VIEW_COSTS'"`)
+      throw new Error(
+        `Se requiere especificar el permiso en v-permission. Ejemplo: v-permission="'VIEW_COSTS'"`
+      )
     }
   },
   updated(el: HTMLElement, binding: DirectiveBinding<Permission | Permission[]>) {

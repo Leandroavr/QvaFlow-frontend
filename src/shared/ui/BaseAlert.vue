@@ -3,17 +3,17 @@
     :role="variant === 'error' ? 'alert' : 'status'"
     :aria-live="variant === 'error' ? 'assertive' : 'polite'"
     :class="[
-      'p-3.5 rounded-lg border text-sm flex items-start gap-3 transition-colors',
+      'flex items-start gap-3 rounded-lg border p-3.5 text-sm transition-colors',
       variantStyles[variant].container,
     ]"
   >
     <component
       :is="variantStyles[variant].icon"
-      :class="['w-5 h-5 shrink-0 mt-0.5', variantStyles[variant].iconColor]"
+      :class="['mt-0.5 h-5 w-5 shrink-0', variantStyles[variant].iconColor]"
       aria-hidden="true"
     />
     <div class="flex-1 leading-relaxed">
-      <div v-if="title" class="font-bold mb-0.5" :class="variantStyles[variant].titleColor">
+      <div v-if="title" class="mb-0.5 font-bold" :class="variantStyles[variant].titleColor">
         {{ title }}
       </div>
       <div :class="variantStyles[variant].textColor">

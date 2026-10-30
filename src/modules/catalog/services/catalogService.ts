@@ -15,7 +15,7 @@ const PRODUCTOS_MOCK: Product[] = [
     costPriceUSD: 1.25,
     costPriceCUP: 450,
     costPrice: 450,
-    salePriceUSD: 1.80,
+    salePriceUSD: 1.8,
     salePriceCUP: 650,
     salePrice: 650,
     prices: {
@@ -39,7 +39,7 @@ const PRODUCTOS_MOCK: Product[] = [
       {
         uid: 'img-1',
         name: 'serrano-250g.png',
-        url: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=150',
+        url: '/logo-icon.png',
       },
     ],
   },
@@ -78,10 +78,10 @@ const PRODUCTOS_MOCK: Product[] = [
     barcodes: [{ id: 'bc-4', code: '78910003', isPrimary: true, description: 'Lata 330ml' }],
     name: 'Refresco Tukola Lata 330ml',
     category: 'Bebidas',
-    costPriceUSD: 0.50,
+    costPriceUSD: 0.5,
     costPriceCUP: 180,
     costPrice: 180,
-    salePriceUSD: 0.80,
+    salePriceUSD: 0.8,
     salePriceCUP: 280,
     salePrice: 280,
     prices: {

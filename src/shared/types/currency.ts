@@ -1,6 +1,6 @@
 /**
  * Tipos de moneda e importes en QvaFlow.
- * 
+ *
  * Regla arquitectural de precisión financiera:
  * Los importes monetarios se manejan como string decimal (ej: "1250.50", "0.00")
  * para evitar imprecisiones de coma flotante en JavaScript (0.1 + 0.2 !== 0.3).

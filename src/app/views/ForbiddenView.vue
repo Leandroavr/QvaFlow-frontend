@@ -1,36 +1,35 @@
 <template>
-  <div class="min-h-screen bg-surface-app flex flex-col items-center justify-center p-6 text-center select-none">
-    <div class="max-w-md w-full bg-surface-card border border-border-default rounded-2xl p-8 shadow-card space-y-5">
-      <div class="w-16 h-16 rounded-2xl bg-state-error-bg text-state-error flex items-center justify-center mx-auto border border-state-error-border">
-        <ShieldAlert class="w-8 h-8" aria-hidden="true" />
+  <div
+    class="flex min-h-screen select-none flex-col items-center justify-center bg-surface-app p-6 text-center"
+  >
+    <div
+      class="border-border-default w-full max-w-md space-y-5 rounded-2xl border bg-surface-card p-8 shadow-card"
+    >
+      <div
+        class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-state-error-border bg-state-error-bg text-state-error"
+      >
+        <ShieldAlert class="h-8 w-8" aria-hidden="true" />
       </div>
 
       <div class="space-y-2">
-        <h1 class="text-xl font-bold text-content-primary tracking-tight">
+        <h1 class="text-xl font-bold tracking-tight text-content-primary">
           Acceso no autorizado (403)
         </h1>
-        <p class="text-xs text-content-muted leading-relaxed">
+        <p class="text-xs leading-relaxed text-content-muted">
           Su cuenta no dispone de los permisos requeridos para acceder a este módulo del sistema.
         </p>
       </div>
 
-      <div class="p-3 bg-surface-subtle border border-border-subtle rounded-lg text-xs font-mono text-content-secondary">
-        Permiso requerido: <span class="font-bold text-state-error">{{ requiredPermission || 'Restringido' }}</span>
+      <div
+        class="rounded-lg border border-border-subtle bg-surface-subtle p-3 font-mono text-xs text-content-secondary"
+      >
+        Permiso requerido:
+        <span class="font-bold text-state-error">{{ requiredPermission || 'Restringido' }}</span>
       </div>
 
-      <div class="pt-2 flex flex-col sm:flex-row gap-2 justify-center">
-        <BaseButton
-          variant="secondary"
-          size="md"
-          @click="router.back()"
-        >
-          Volver atrás
-        </BaseButton>
-        <BaseButton
-          variant="primary"
-          size="md"
-          @click="router.push('/')"
-        >
+      <div class="flex flex-col justify-center gap-2 pt-2 sm:flex-row">
+        <BaseButton variant="secondary" size="md" @click="router.back()"> Volver atrás </BaseButton>
+        <BaseButton variant="primary" size="md" @click="router.push('/')">
           Ir al Inicio
         </BaseButton>
       </div>

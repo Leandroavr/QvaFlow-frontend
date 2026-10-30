@@ -5,12 +5,7 @@
 export type PaymentCurrency = 'CUP' | 'USD' | 'MLC' | 'EUR'
 export type PaymentMethod = 'CASH' | 'TRANSFER_QR'
 export type TransferGateway = 'TRANSFERMOVIL' | 'ENZONA'
-export type PosPaymentMode =
-  | 'CUP_CASH'
-  | 'CUP_TRANSFER'
-  | 'USD_CASH'
-  | 'EUR_CASH'
-  | 'MLC_TRANSFER'
+export type PosPaymentMode = 'CUP_CASH' | 'CUP_TRANSFER' | 'USD_CASH' | 'EUR_CASH' | 'MLC_TRANSFER'
 
 export interface PosProduct {
   id: number

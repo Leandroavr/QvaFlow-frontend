@@ -10,9 +10,12 @@
     @cancel="handleCancel"
   >
     <!-- MODO 1: APERTURA DE TURNO -->
-    <div v-if="!isClosingMode" class="py-2 space-y-4">
-      <div class="p-3.5 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-800">
-        <strong>Fondo Inicial de Caja:</strong> Ingrese el dinero en efectivo entregado al inicio del turno para cambio y operaciones iniciales.
+    <div v-if="!isClosingMode" class="space-y-4 py-2">
+      <div
+        class="rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-xs text-emerald-800"
+      >
+        <strong>Fondo Inicial de Caja:</strong> Ingrese el dinero en efectivo entregado al inicio
+        del turno para cambio y operaciones iniciales.
       </div>
 
       <a-form layout="vertical">
@@ -51,7 +54,7 @@
         </a-row>
 
         <!-- Tasa de Cambio Diaria Obligatoria -->
-        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 mt-2">
+        <div class="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
           <a-form-item label="Tasa de Cambio Diaria (CUP x USD)" class="mb-0">
             <a-input-number
               v-model:value="openForm.dailyRateUSD"
@@ -63,34 +66,46 @@
               placeholder="360"
             />
           </a-form-item>
-          <span class="text-[11px] text-slate-500 mt-1 block">
-            Fija el valor oficial del turno. El canje en mostrador aplicará automáticamente el margen de -10 CUP (tasa de canje = {{ openForm.dailyRateUSD - 10 }} CUP).
+          <span class="mt-1 block text-[11px] text-slate-500">
+            Fija el valor oficial del turno. El canje en mostrador aplicará automáticamente el
+            margen de -10 CUP (tasa de canje = {{ openForm.dailyRateUSD - 10 }} CUP).
           </span>
         </div>
       </a-form>
     </div>
 
     <!-- MODO 2: CIERRE Y ARQUEO DE CAJA -->
-    <div v-else class="py-2 space-y-4">
+    <div v-else class="space-y-4 py-2">
       <!-- Desglose de totales calculados por el sistema -->
-      <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
+      <div class="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs">
         <div class="flex justify-between text-slate-500">
           <span>Turno Activo:</span>
           <span class="font-bold text-slate-800">
-            {{ shift?.id }} (Iniciado: {{ shift?.openedAt }}) • Tasa Turno: 1 USD = {{ shift?.dailyRateUSD || 360 }} CUP
+            {{ shift?.id }} (Iniciado: {{ shift?.openedAt }}) • Tasa Turno: 1 USD =
+            {{ shift?.dailyRateUSD || 360 }} CUP
           </span>
         </div>
 
-        <div class="border-t border-slate-200 pt-2 grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4 border-t border-slate-200 pt-2">
           <!-- Columna CUP -->
           <div>
-            <span class="font-bold text-slate-700 block mb-1">Pesos Cubanos (CUP):</span>
-            <div class="text-[11px] text-slate-500 space-y-0.5">
+            <span class="mb-1 block font-bold text-slate-700">Pesos Cubanos (CUP):</span>
+            <div class="space-y-0.5 text-[11px] text-slate-500">
               <div>Fondo Inicial: {{ formatearMoneda(shift?.initialFunds.CUP, 'CUP') }}</div>
-              <div>Ventas en Efectivo: +{{ formatearMoneda(shift?.salesTotals.cupCash ?? shift?.salesTotals.CUP, 'CUP') }}</div>
-              <div class="text-blue-700 font-medium">Ventas por Transf.: {{ formatearMoneda(shift?.salesTotals.cupTransfer || 0, 'CUP') }} (En cuenta banco)</div>
-              <div>Canjes en Mostrador: {{ (shift?.exchangeAdjustments.CUP || 0) >= 0 ? '+' : '' }}{{ formatearMoneda(shift?.exchangeAdjustments.CUP, 'CUP') }}</div>
-              <div class="font-bold text-slate-900 border-t border-slate-200 pt-0.5">
+              <div>
+                Ventas en Efectivo: +{{
+                  formatearMoneda(shift?.salesTotals.cupCash ?? shift?.salesTotals.CUP, 'CUP')
+                }}
+              </div>
+              <div class="font-medium text-blue-700">
+                Ventas por Transf.:
+                {{ formatearMoneda(shift?.salesTotals.cupTransfer || 0, 'CUP') }} (En cuenta banco)
+              </div>
+              <div>
+                Canjes en Mostrador: {{ (shift?.exchangeAdjustments.CUP || 0) >= 0 ? '+' : ''
+                }}{{ formatearMoneda(shift?.exchangeAdjustments.CUP, 'CUP') }}
+              </div>
+              <div class="border-t border-slate-200 pt-0.5 font-bold text-slate-900">
                 Total Físico en Gaveta: {{ formatearMoneda(expectedCUP, 'CUP') }}
               </div>
             </div>
@@ -98,12 +113,17 @@
 
           <!-- Columna USD -->
           <div>
-            <span class="font-bold text-slate-700 block mb-1">Dólares (USD):</span>
-            <div class="text-[11px] text-slate-500 space-y-0.5">
+            <span class="mb-1 block font-bold text-slate-700">Dólares (USD):</span>
+            <div class="space-y-0.5 text-[11px] text-slate-500">
               <div>Fondo Inicial: ${{ Math.round(shift?.initialFunds.USD || 0) }} USD</div>
               <div>Ventas en Efectivo: +${{ Math.round(shift?.salesTotals.USD || 0) }} USD</div>
-              <div>Canjes en Mostrador: {{ (shift?.exchangeAdjustments.USD || 0) >= 0 ? '+' : '' }}${{ Math.round(shift?.exchangeAdjustments.USD || 0) }} USD</div>
-              <div class="font-bold text-slate-900 border-t border-slate-200 pt-0.5">
+              <div>
+                Canjes en Mostrador: {{ (shift?.exchangeAdjustments.USD || 0) >= 0 ? '+' : '' }}${{
+                  Math.round(shift?.exchangeAdjustments.USD || 0)
+                }}
+                USD
+              </div>
+              <div class="border-t border-slate-200 pt-0.5 font-bold text-slate-900">
                 Total Físico en Gaveta: ${{ Math.round(expectedUSD) }} USD
               </div>
             </div>
@@ -113,7 +133,7 @@
 
       <!-- Formulario para ingresar el efectivo contado físicamente -->
       <div class="space-y-3">
-        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider m-0">
+        <h4 class="m-0 text-xs font-bold uppercase tracking-wider text-slate-700">
           Efectivo Físico Contado en Caja
         </h4>
 
@@ -129,7 +149,7 @@
               />
             </a-form-item>
             <!-- Diferencia CUP -->
-            <div class="text-xs font-semibold mt-1" :class="getDiffClass(diffCUP)">
+            <div class="mt-1 text-xs font-semibold" :class="getDiffClass(diffCUP)">
               {{ getDiffLabel(diffCUP, 'CUP') }}
             </div>
           </a-col>
@@ -146,7 +166,7 @@
               />
             </a-form-item>
             <!-- Diferencia USD -->
-            <div class="text-xs font-semibold mt-1" :class="getDiffClass(diffUSD)">
+            <div class="mt-1 text-xs font-semibold" :class="getDiffClass(diffUSD)">
               {{ getDiffLabel(diffUSD, 'USD') }}
             </div>
           </a-col>
@@ -155,7 +175,7 @@
         <!-- Alerta visual de Faltante o Sobrante -->
         <div
           v-if="diffCUP < 0 || diffUSD < 0"
-          class="p-2.5 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2"
+          class="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-700"
         >
           <span class="text-base leading-none">⚠️</span>
           <div>
@@ -170,7 +190,7 @@
 
         <div
           v-else-if="diffCUP > 0 || diffUSD > 0"
-          class="p-2.5 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-700 flex items-start gap-2"
+          class="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-2.5 text-xs text-blue-700"
         >
           <span class="text-base leading-none">ℹ️</span>
           <div>
@@ -184,12 +204,20 @@
         </div>
 
         <a-form-item
-          :label="diffCUP !== 0 || diffUSD !== 0 ? 'Motivo / Justificación del Descuadre (Obligatorio)' : 'Observaciones del Arqueo (Opcional)'"
-          class="mt-2 mb-0"
+          :label="
+            diffCUP !== 0 || diffUSD !== 0
+              ? 'Motivo / Justificación del Descuadre (Obligatorio)'
+              : 'Observaciones del Arqueo (Opcional)'
+          "
+          class="mb-0 mt-2"
         >
           <a-textarea
             v-model:value="closeForm.notes"
-            :placeholder="diffCUP < 0 || diffUSD < 0 ? 'Explique detalladamente el motivo del faltante (ej. ajuste por cambio en vueltos, billete deteriorado...)' : 'Justificación de sobrantes/faltantes o notas para la administración...'"
+            :placeholder="
+              diffCUP < 0 || diffUSD < 0
+                ? 'Explique detalladamente el motivo del faltante (ej. ajuste por cambio en vueltos, billete deteriorado...)'
+                : 'Justificación de sobrantes/faltantes o notas para la administración...'
+            "
             :rows="2"
           />
         </a-form-item>

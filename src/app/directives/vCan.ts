@@ -4,11 +4,11 @@ import type { AppPermission } from '../../shared/types/permissions'
 
 /**
  * Directiva personalizada v-can para ocultar elementos del DOM según permisos RBAC.
- * 
+ *
  * Uso:
  * <button v-can="'sales.create'">Nueva Venta</button>
  * <div v-can="['inventory.adjust', 'inventory.transfer']">Acciones de Stock</div>
- * 
+ *
  * NOTA: Control visual de interfaz. La validación definitiva se ejecuta en el servidor.
  */
 export const vCan: Directive<HTMLElement, AppPermission | string | (AppPermission | string)[]> = {
