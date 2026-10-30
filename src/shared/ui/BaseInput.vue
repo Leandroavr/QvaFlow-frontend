@@ -86,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useId } from 'vue'
+import { computed, ref, useId, onMounted, nextTick } from 'vue'
 import { Eye, EyeOff, AlertCircle } from 'lucide-vue-next'
 
 interface Props {
@@ -145,6 +145,14 @@ const onInput = (event: Event) => {
   const target = event.target as HTMLInputElement
   emit('update:modelValue', target.value)
 }
+
+onMounted(() => {
+  if (props.autofocus) {
+    nextTick(() => {
+      inputRef.value?.focus()
+    })
+  }
+})
 
 defineExpose({
   focus: () => inputRef.value?.focus(),

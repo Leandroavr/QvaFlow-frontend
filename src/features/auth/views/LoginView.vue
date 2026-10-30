@@ -28,9 +28,9 @@
       />
     </div>
 
-    <!-- Barra superior con selector segmentado de tema -->
+    <!-- Barra superior con alternador de tema optimizado para fondo oscuro -->
     <header class="z-10 flex w-full max-w-5xl items-center justify-end pb-2 pt-1">
-      <ThemeToggle />
+      <ThemeToggle on-dark />
     </header>
 
     <!-- Contenedor Central: Tarjeta de Acceso -->

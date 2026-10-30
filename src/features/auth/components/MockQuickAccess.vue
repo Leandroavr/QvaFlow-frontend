@@ -1,15 +1,15 @@
 <template>
   <div class="mx-auto mt-2 w-full max-w-md">
-    <!-- Botón discreto para colapsar / expandir el panel mock con contraste AA verificado -->
+    <!-- Botón discreto para colapsar / expandir el panel mock (colores claros sobre fondo oscuro en ambos temas) -->
     <div class="text-center">
       <button
         type="button"
         :aria-expanded="isExpanded"
         aria-controls="mock-quick-access-panel"
-        class="inline-flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-black/5 hover:text-slate-900 dark:text-slate-200 dark:hover:bg-white/10 dark:hover:text-white"
+        class="inline-flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-white/80 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#162e56]"
         @click="isExpanded = !isExpanded"
       >
-        <FlaskConical class="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+        <FlaskConical class="h-3.5 w-3.5 text-amber-400" aria-hidden="true" />
         <span>Acceso rápido (modo mock)</span>
         <ChevronDown
           class="h-3.5 w-3.5 transition-transform duration-200"
@@ -19,15 +19,15 @@
       </button>
     </div>
 
-    <!-- Contenido colapsable -->
+    <!-- Contenido colapsable (conserva superficie y tokens del tema) -->
     <div
       v-show="isExpanded"
       id="mock-quick-access-panel"
-      class="bg-surface-card/95 border-border-default backdrop-blur-xs mt-2 rounded-xl border p-4 shadow-md transition-all dark:bg-surface-card"
+      class="border-border-default mt-2 rounded-xl border bg-surface-card p-4 shadow-xl transition-all"
     >
       <div class="mb-2.5 flex items-center justify-between">
         <span
-          class="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200"
+          class="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-100"
         >
           <span>Perfiles de Demostración:</span>
         </span>
