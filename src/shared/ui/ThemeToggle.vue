@@ -1,34 +1,74 @@
 <template>
-  <div class="relative inline-block text-left">
+  <div
+    role="radiogroup"
+    aria-label="Selector de tema visual"
+    class="inline-flex items-center p-1 rounded-lg bg-surface-subtle/90 dark:bg-[#151F3A]/90 border border-border-default shadow-xs backdrop-blur-xs"
+  >
+    <!-- Opción: Claro -->
     <button
       type="button"
+      role="radio"
+      :aria-checked="theme === 'light'"
+      aria-label="Tema Claro"
+      title="Claro"
       :class="[
-        'h-9 px-2.5 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer',
-        'bg-surface-card/80 hover:bg-surface-card border-border-default/60 hover:border-border-default text-content-secondary hover:text-content-primary',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary backdrop-blur-xs shadow-xs',
+        'flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-150 cursor-pointer',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+        theme === 'light'
+          ? 'bg-surface-card text-content-primary shadow-xs font-semibold border border-border-subtle'
+          : 'text-content-muted hover:text-content-primary hover:bg-surface-card/40 border border-transparent',
       ]"
-      :title="`Tema actual: ${currentLabel}. Clic para cambiar.`"
-      :aria-label="`Tema actual: ${currentLabel}. Clic para cambiar.`"
-      @click="toggleTheme"
+      @click="setTheme('light')"
     >
-      <Sun v-if="theme === 'light'" class="w-4 h-4 text-amber-500" aria-hidden="true" />
-      <Moon v-else-if="theme === 'dark'" class="w-4 h-4 text-sky-400" aria-hidden="true" />
-      <Monitor v-else class="w-4 h-4 text-content-muted" aria-hidden="true" />
-      <span class="hidden sm:inline">{{ currentLabel }}</span>
+      <Sun class="w-3.5 h-3.5 text-amber-500" aria-hidden="true" />
+      <span class="hidden sm:inline">Claro</span>
+    </button>
+
+    <!-- Opción: Oscuro -->
+    <button
+      type="button"
+      role="radio"
+      :aria-checked="theme === 'dark'"
+      aria-label="Tema Oscuro"
+      title="Oscuro"
+      :class="[
+        'flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-150 cursor-pointer',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+        theme === 'dark'
+          ? 'bg-surface-card dark:bg-[#222E52] text-content-primary shadow-xs font-semibold border border-border-subtle'
+          : 'text-content-muted hover:text-content-primary hover:bg-surface-card/40 border border-transparent',
+      ]"
+      @click="setTheme('dark')"
+    >
+      <Moon class="w-3.5 h-3.5 text-sky-400" aria-hidden="true" />
+      <span class="hidden sm:inline">Oscuro</span>
+    </button>
+
+    <!-- Opción: Sistema -->
+    <button
+      type="button"
+      role="radio"
+      :aria-checked="theme === 'system'"
+      aria-label="Tema del Sistema"
+      title="Sistema"
+      :class="[
+        'flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-150 cursor-pointer',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+        theme === 'system'
+          ? 'bg-surface-card dark:bg-[#222E52] text-content-primary shadow-xs font-semibold border border-border-subtle'
+          : 'text-content-muted hover:text-content-primary hover:bg-surface-card/40 border border-transparent',
+      ]"
+      @click="setTheme('system')"
+    >
+      <Monitor class="w-3.5 h-3.5 text-content-muted" aria-hidden="true" />
+      <span class="hidden sm:inline">Sistema</span>
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { Sun, Moon, Monitor } from 'lucide-vue-next'
 import { useTheme } from '../composables/useTheme'
 
-const { theme, toggleTheme } = useTheme()
-
-const currentLabel = computed(() => {
-  if (theme.value === 'light') return 'Claro'
-  if (theme.value === 'dark') return 'Oscuro'
-  return 'Sistema'
-})
+const { theme, setTheme } = useTheme()
 </script>

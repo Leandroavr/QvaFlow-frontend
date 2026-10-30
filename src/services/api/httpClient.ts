@@ -48,7 +48,7 @@ httpClient.interceptors.response.use(
       return Promise.reject(
         new ApiError({
           code: 'SERVER_UNAVAILABLE',
-          message: 'No se puede conectar con el servidor local Symfony. Verifique que Docker o Apache estén activos.',
+          message: 'No se puede conectar con el servidor local. Verifique que esté encendido.',
         })
       )
     }

@@ -1,35 +1,35 @@
 <template>
   <main
-    class="min-h-screen w-full flex flex-col justify-between items-center p-4 relative overflow-hidden select-none"
+    class="min-h-dvh w-full flex flex-col justify-between items-center py-3 px-4 relative overflow-y-auto sm:overflow-hidden select-none"
     :class="[
       'bg-gradient-to-br from-[#0F2347] via-[#162E56] to-[#1E3A6B]',
       'dark:from-[#070D1E] dark:via-[#0B1530] dark:to-[#111E44]',
     ]"
   >
-    <!-- Fondo con formas geométricas sutiles de baja opacidad (SVG vectorial, 0 KB de imágenes externas) -->
+    <!-- Fondo con formas geométricas sutiles de baja opacidad (sin formas recortadas incómodas, opacidad <= 6%) -->
     <div class="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
       <svg
-        class="absolute -top-32 -left-32 w-96 h-96 opacity-10 text-white"
+        class="absolute -top-16 -left-16 w-80 h-80 opacity-[0.04] text-white"
         fill="currentColor"
         viewBox="0 0 200 200"
       >
-        <polygon points="100,10 40,190 190,75 10,75 160,190" />
+        <circle cx="100" cy="100" r="90" />
       </svg>
       <svg
-        class="absolute -bottom-36 -right-36 w-[32rem] h-[32rem] opacity-5 text-white"
+        class="absolute -bottom-20 -right-20 w-96 h-96 opacity-[0.05] text-white"
         fill="currentColor"
         viewBox="0 0 200 200"
       >
-        <circle cx="100" cy="100" r="80" />
+        <circle cx="100" cy="100" r="90" />
       </svg>
-      <!-- Cuadrícula sutil de fondo -->
+      <!-- Patrón sutil de cuadrícula de puntos -->
       <div
         class="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.06)_1px,transparent_1px)] [background-size:24px_24px] opacity-40"
       />
     </div>
 
-    <!-- Barra superior con selector de tema -->
-    <header class="w-full max-w-5xl flex justify-end items-center z-10 pt-2 pb-4">
+    <!-- Barra superior con selector segmentado de tema -->
+    <header class="w-full max-w-5xl flex justify-end items-center z-10 pt-1 pb-2">
       <ThemeToggle />
     </header>
 
@@ -37,41 +37,34 @@
     <div
       ref="cardRef"
       :class="[
-        'w-full max-w-md bg-surface-card rounded-2xl shadow-card border border-border-default/60 overflow-hidden z-10 transition-transform duration-200',
+        'w-full max-w-md bg-surface-card rounded-2xl shadow-card border border-border-default overflow-hidden z-10 transition-transform duration-200',
         hasShakeError ? 'animate-card-shake' : '',
       ]"
     >
       <!-- Encabezado con Identidad Visual QvaFlow -->
-      <div class="pt-8 pb-6 px-8 text-center bg-surface-subtle border-b border-border-subtle">
-        <div class="flex items-center justify-center mb-3">
-          <!-- Logo de QvaFlow con respaldo para alto contraste -->
-          <img
-            src="/logo.png"
-            alt="QvaFlow"
-            class="h-20 w-auto object-contain drop-shadow-xs"
-            onerror="this.src='/logo-horizontal-white.png'"
-          />
+      <div class="pt-5 pb-4 px-6 text-center bg-surface-subtle border-b border-border-subtle">
+        <div class="flex items-center justify-center mb-2">
+          <!-- Logo sobre placa clara en modo oscuro para garantizar óptimo contraste del texto azul -->
+          <div class="inline-flex items-center justify-center dark:bg-neutral-50 dark:px-3 dark:py-1.5 dark:rounded-md dark:shadow-xs transition-colors">
+            <img
+              src="/logo.png"
+              alt="QvaFlow"
+              class="h-14 w-auto object-contain"
+              onerror="this.src='/logo-horizontal.png'"
+            />
+          </div>
         </div>
-        <h1 class="text-base font-bold text-content-primary tracking-tight mb-1">
-          QvaFlow
-        </h1>
+        <!-- Título accesible oculto visualmente para evitar duplicidad con el logo -->
+        <h1 class="sr-only">QvaFlow</h1>
         <p class="text-xs text-content-muted font-medium mb-0 leading-normal">
           Sistema de gestión y punto de venta para MIPYMES
         </p>
       </div>
 
       <!-- Formulario de Acceso -->
-      <div class="p-6 sm:p-8">
-        <form @submit.prevent="handleSubmit" novalidate class="space-y-4">
-          <!-- Alerta de Error General Inline con aria-live -->
-          <BaseAlert
-            v-if="errorMessage"
-            variant="error"
-            :message="errorMessage"
-            class="mb-2"
-          />
-
-          <!-- Campo Usuario -->
+      <div class="p-5 sm:p-6">
+        <form @submit.prevent="handleSubmit" novalidate class="space-y-3.5">
+          <!-- Campo Usuario (Autofocus y Autocomplete correcto) -->
           <BaseInput
             id="login-username"
             name="username"
@@ -107,8 +100,18 @@
             </template>
           </BaseInput>
 
+          <!-- Alerta de Error con espacio reservado para evitar saltos de interfaz -->
+          <div class="min-h-[46px] flex items-center justify-center transition-all duration-200">
+            <BaseAlert
+              v-if="errorMessage"
+              variant="error"
+              :message="errorMessage"
+              class="w-full text-xs"
+            />
+          </div>
+
           <!-- Botón de Entrada (48px alto) -->
-          <div class="pt-2">
+          <div>
             <BaseButton
               type="submit"
               variant="primary"
@@ -123,7 +126,7 @@
           </div>
 
           <!-- Mensaje discreto de ayuda para el usuario -->
-          <div class="text-center pt-2">
+          <div class="text-center pt-1">
             <span class="text-xs text-content-muted leading-relaxed">
               ¿Problemas para ingresar? Contacte al administrador.
             </span>
@@ -132,7 +135,7 @@
       </div>
 
       <!-- Pie de la Tarjeta: Versión y Estado del Servidor Local -->
-      <footer class="py-3 px-6 bg-surface-subtle border-t border-border-subtle flex items-center justify-between text-xs text-content-muted">
+      <footer class="py-2.5 px-6 bg-surface-subtle border-t border-border-subtle flex items-center justify-between text-xs text-content-muted">
         <span>Versión {{ appVersion }}</span>
         <StatusDot :status="uiStore.serverStatus" />
       </footer>
@@ -147,7 +150,7 @@
     />
 
     <!-- Espacio inferior responsivo -->
-    <div class="h-6 w-full" aria-hidden="true" />
+    <div class="h-2 w-full" aria-hidden="true" />
   </main>
 </template>
 
@@ -255,7 +258,7 @@ const handleSubmit = async () => {
 
     if (err instanceof ApiError) {
       if (err.code === 'SERVER_UNAVAILABLE') {
-        errorMessage.value = 'No se puede conectar con el servidor local Symfony. Verifique la conexión.'
+        errorMessage.value = 'No se puede conectar con el servidor local. Verifique que esté encendido.'
       } else if (err.code === 'AUTH_INVALID_CREDENTIALS' || err.statusCode === 401) {
         errorMessage.value = 'Usuario o contraseña incorrectos. Verifique sus credenciales.'
       } else {
