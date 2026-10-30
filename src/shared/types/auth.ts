@@ -1,4 +1,5 @@
 import type { AppPermission } from './permissions'
+import type { Id } from './api'
 
 /**
  * Entidad de Usuario autenticado.
@@ -6,7 +7,7 @@ import type { AppPermission } from './permissions'
  * toda autorización funcional se realiza evaluando el array `permissions`.
  */
 export interface User {
-  id: string
+  id: Id
   username: string
   fullName: string
   role: string // Solo título descriptivo (ej: "Superadministrador", "Cajero", "Almacenero")

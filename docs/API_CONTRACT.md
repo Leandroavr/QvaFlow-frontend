@@ -1,6 +1,6 @@
 # Contrato de API REST - QvaFlow (Symfony Backend <-> Frontend SPA)
 
-Este documento define el contrato de comunicación formal entre el frontend (SPA Vue 3) y el backend (Symfony / PHP). Ha sido diseñado para permitir una integración desacoplada y directa mediante reemplazo de la capa de servicios sin modificar la interfaz de usuario.
+Este documento define el contrato de comunicación formal entre el frontend (SPA Vue 3) y el backend (Symfony / PHP). Ha sido diseñado para permitir una integración desacoplada y directa mediante reemplazo de la capa de servicios sin modificar la interfaz de usuario ni las vistas.
 
 ---
 
@@ -9,9 +9,9 @@ Este documento define el contrato de comunicación formal entre el frontend (SPA
 * **Protocolo y Formato:** REST sobre HTTP/1.1 o HTTP/2, con intercambio de datos estrictamente en formato `application/json; charset=UTF-8`.
 * **Entorno de Red:** Red de Área Local (LAN) sin conexión a Internet pública. La SPA se sirve desde el mismo host local (Apache/XAMPP o Docker) bajo la ruta base de API configurada en `/api`.
 * **Manejo de Fechas:** Fechas y horas en formato **ISO 8601 UTC** (`YYYY-MM-DDTHH:mm:ssZ`). Ej: `2026-10-30T14:30:00Z`.
-* **Precisión Monetaria y Decimales:** Todos los valores de moneda e importes se transmiten como **string decimal** (ej: `"1250.50"`), **NUNCA** como float de punto flotante para prevenir imprecisiones de redondeo en JavaScript.
+* **Precisión Monetaria y Decimales:** Todos los valores de moneda e importes se transmiten como **string decimal** (ej: `"1250.50"`), **NUNCA** como float de punto flotante para prevenir imprecisiones de redondeo en JavaScript. En la base de datos Symfony, estos campos deben ser de tipo `DECIMAL(12, 2)`.
 * **Autenticación:** Cabecera estándar HTTP `Authorization: Bearer <accessToken>`.
-* **Identificadores:** UUID v4 o cadenas alfanuméricas con prefijo de entidad (ej: `"usr_01HGB..."`).
+* **Identificadores (IDs):** El frontend trata los IDs como valores opacos (`type Id = string | number`). Cada entidad usa el tipo de su clave en la base de datos (códigos string donde la clave natural es un código, como `noDocument` o `codigo` de producto; enteros autoincrementales en catálogos simples como monedas o categorías).
 
 ---
 
@@ -25,13 +25,13 @@ Toda respuesta con código de estado HTTP 4xx o 5xx debe retornar un objeto JSON
   "message": "Usuario o contraseña incorrectos.",
   "details": {
     "username": ["El campo es obligatorio."],
-    "password": ["Debe tener al menos 6 caracteres."]
+    "password": ["El campo es obligatorio."]
   }
 }
 ```
 
-* `code` *(string)*: Código de error legible por máquina en SNAKE_CASE para condicionales del frontend.
-* `message` *(string)*: Mensaje descriptivo y amigable en español apto para mostrar al usuario.
+* `code` *(string)*: Código de error legible por máquina en **UPPER_SNAKE_CASE** para condicionales del frontend (ej: `AUTH_INVALID_CREDENTIALS`, `SERVER_UNAVAILABLE`).
+* `message` *(string)*: Mensaje descriptivo y amigable en español apto para mostrar directamente al usuario.
 * `details` *(object, opcional)*: Diccionario con errores específicos campo por campo (validaciones 422).
 
 ---
@@ -63,7 +63,7 @@ Para futuros endpoints que retornen listas de elementos (productos, ventas, movi
 ### Claims recomendados en el JWT Payload
 ```json
 {
-  "sub": "usr_01HGB845XY...",
+  "sub": "1",
   "username": "carlos_vendedor",
   "roles": ["ROLE_USER"],
   "permissions": [
@@ -90,6 +90,7 @@ Para futuros endpoints que retornen listas de elementos (productos, ventas, movi
 * **Método:** `POST`
 * **Ruta:** `/api/auth/login`
 * **Autenticación requerida:** No (pública).
+* **Duración de sesión:** La sesión dura hasta el cierre explícito por el usuario. Los campos `refreshToken` y `expiresIn` son **OPCIONALES**.
 
 #### Request Body
 ```json
@@ -106,7 +107,7 @@ Para futuros endpoints que retornen listas de elementos (productos, ventas, movi
   "refreshToken": "7f8b9c0d1e2f3a4b...",
   "expiresIn": 86400,
   "user": {
-    "id": "usr_superadmin_01",
+    "id": 1,
     "username": "superadmin",
     "fullName": "Administrador General",
     "role": "Superadministrador",
@@ -157,7 +158,7 @@ Para futuros endpoints que retornen listas de elementos (productos, ventas, movi
 #### Response 200 OK
 ```json
 {
-  "id": "usr_superadmin_01",
+  "id": 1,
   "username": "superadmin",
   "fullName": "Administrador General",
   "role": "Superadministrador",
@@ -172,7 +173,7 @@ Para futuros endpoints que retornen listas de elementos (productos, ventas, movi
 ```
 
 #### Errores Posibles
-* `401 Unauthorized`: Token ausente, inválido o expirado (`code: "AUTH_EXPIRED_TOKEN"`). La SPA automáticamente cerrará la sesión y redirigirá a `/login`.
+* `401 Unauthorized`: Token ausente, inválido o expirado (`code: "AUTH_EXPIRED_TOKEN"`). La SPA automáticamente cerrará la sesión local, limpiará el almacenamiento y mostrará el mensaje *"Su sesión ha expirado"*, redirigiendo a `/login`.
 
 ---
 
@@ -180,7 +181,8 @@ Para futuros endpoints que retornen listas de elementos (productos, ventas, movi
 * **Método:** `POST`
 * **Ruta:** `/api/auth/logout`
 * **Autenticación requerida:** Sí (`Authorization: Bearer <token>`).
-* **Propósito:** Revocar el token o sesión activa en Symfony.
+* **Propósito:** Notificar el cierre de sesión al servidor.
+* **Nota Arquitectural:** Revocar activamente un token JWT sin estado requiere mantener una lista negra (blacklist) en el backend (ej: en Redis o base de datos). Si el backend Symfony no implementa lista negra, el logout puede resolverse de forma puramente cliente eliminando el token de `localStorage`. La decisión queda a criterio de la arquitectura backend.
 
 #### Request Body
 Vacío `{}`.
@@ -213,12 +215,95 @@ Vacío `{}`.
 
 ---
 
-## 6. Pendiente por Definir con el Backend
+## 6. Permisos y Roles (BORRADOR - Módulo Usuarios y Roles)
 
-1. **Estrategia de Refresh Token:**
-   * ¿El backend expondrá `POST /api/auth/refresh` con rotación de tokens o el `accessToken` tendrá una expiración prolongada (ej: 12-24h) acorde al entorno de red local y jornada laboral?
-   * *Recomendación Frontend:* En redes locales aisladas de MIPYMES, tokens de 12 horas o `POST /api/auth/refresh` con `refreshToken` recibido en cookie HttpOnly o cuerpo JSON.
-2. **Cierre de Caja por Turno vs Logout:**
-   * Al cerrar sesión, ¿se debe advertir si el cajero tiene un turno de caja abierto sin cuadre previo? (La interfaz ya cuenta con la verificación, se coordinará con el endpoint de cuadre).
-3. **Manejo de CORS en Desarrollo:**
-   * Durante desarrollo con Vite (`localhost:5173`) y Symfony (`localhost:8000`), el proxy reverso ya está configurado en `vite.config.ts`. En producción, al servirse desde el mismo Apache/Nginx, el origen es idéntico y no requiere cabeceras CORS.
+> **Nota:** Esta sección es un borrador de diseño a detallar e implementar en la fase del módulo de Usuarios y Roles.
+
+El frontend **NUNCA** hardcodea el catálogo de permisos disponibles en el sistema: lo solicita dinámicamente al backend para renderizar la matriz de asignación al crear o editar roles.
+
+### 6.1 Catálogo de Permisos del Sistema
+* **Método:** `GET`
+* **Ruta:** `/api/permissions`
+* **Autenticación requerida:** Sí (`users.manage` o `roles.manage`).
+
+#### Response 200 OK
+```json
+[
+  {
+    "module": "Ventas y Caja",
+    "permissions": [
+      {
+        "code": "sales.create",
+        "label": "Registrar Ventas",
+        "description": "Permite emitir tickets de venta en el terminal POS."
+      },
+      {
+        "code": "sales.cancel",
+        "label": "Anular Ventas",
+        "description": "Permite cancelar tickets y devolver mercancía."
+      },
+      {
+        "code": "cash.manage",
+        "label": "Gestión de Caja",
+        "description": "Permite aperturar turnos, canjes de divisas y cuadres."
+      }
+    ]
+  },
+  {
+    "module": "Inventario",
+    "permissions": [
+      {
+        "code": "inventory.view",
+        "label": "Consultar Stock",
+        "description": "Visualizar existencias por almacén y localización."
+      },
+      {
+        "code": "products.view_cost",
+        "label": "Ver Costos de Compra",
+        "description": "Visualizar precios de adquisición y márgenes comerciales."
+      }
+    ]
+  }
+]
+```
+
+### 6.2 CRUD de Roles Dinámicos
+* `GET /api/roles`: Listado de roles con cantidad de usuarios asignados.
+* `POST /api/roles`: Crear nuevo rol.
+* `GET /api/roles/{id}`: Detalle de un rol y sus permisos.
+* `PUT /api/roles/{id}`: Modificar nombre, descripción o permisos de un rol.
+* `DELETE /api/roles/{id}`: Eliminar rol (si no tiene usuarios vinculados).
+
+#### Estructura de Rol
+```json
+{
+  "id": 2,
+  "name": "Cajero Principal",
+  "description": "Atención al cliente en mostrador con cobro multimoneda",
+  "permissions": [
+    "sales.create",
+    "sales.view",
+    "cash.manage",
+    "products.view"
+  ]
+}
+```
+
+---
+
+## 7. Pendiente por Definir con el Backend
+
+1. **El Contrato es una PROPUESTA Adaptable:**
+   * Esta especificación es una propuesta de arquitectura limpia. Si el backend Symfony ya implementa otra estructura (por ejemplo el bundle estándar `LexikJWTAuthenticationBundle` respondiendo `{ "token": "..." }` en `POST /api/login_check`), **la adaptación se realiza en `HttpAuthService`**, sin necesidad de modificar ningún componente visual, store ni vista del frontend.
+2. **Estrategia de Sesión y Expiración en Red Local (LAN):**
+   * Al operar en una red local privada y aislada de MIPYMES, existen dos alternativas para el backend:
+     * **Opción (A) [Recomendada]:** Token JWT de larga duración (ej: 12 a 24 horas, coincidente con la jornada de operación), sin necesidad de refresh token ni rotación compleja.
+     * **Opción (B):** Token de corta duración (ej: 60 minutos) con endpoint `POST /api/auth/refresh` y `refreshToken`.
+   * En cualquiera de los dos casos, si el backend responde con código HTTP `401 Unauthorized`, el frontend cierra la sesión de inmediato, limpia `localStorage` y notifica al usuario: *"Su sesión ha expirado"*.
+3. **Almacenamiento de Token en Cliente:**
+   * El token se almacena en `localStorage` del navegador bajo la clave `qvaflow_token`. En el contexto de una red local interna de negocio (sin riesgos de XSS de scripts externos), esta estrategia es estándar, simple y permite persistencia fluida entre recargas.
+4. **Precisión Numérica en Base de Datos:**
+   * Los importes de ventas, precios de coste y totales deben ser de tipo `DECIMAL` en la base de datos (PostgreSQL/MySQL) y viajar por la API estrictamente como `string` decimal (`"1250.50"`), evitando el uso de tipos float o double.
+5. **Catálogo de Monedas y Tasas de Cambio:**
+   * El sistema contempla cuatro monedas operativas: `USD` (moneda base de referencia), `CUP` (efectivo cubano), `CUP_TRANSFER` (transferencia electrónica EnZona / Transfermóvil) y `MLC` (tarjeta magnética).
+   * Los endpoints para registrar y consultar la tasa de cambio diaria de caja (`GET /api/exchange-rates/today`, `POST /api/exchange-rates`) se detallarán en la especificación del módulo de Ventas y Caja (POS).

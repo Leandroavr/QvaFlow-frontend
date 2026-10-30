@@ -1,6 +1,8 @@
 /**
- * Contrato de tipos y estructura de respuesta de la API REST de QvaFlow.
+ * Identificador opaco de entidades. Cada entidad usa el tipo de su clave en la base de datos
+ * (códigos string como noDocument o codigo de producto, o enteros autoincrementales).
  */
+export type Id = string | number
 
 export interface ApiErrorPayload {
   code: string
