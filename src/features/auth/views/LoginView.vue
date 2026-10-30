@@ -75,6 +75,7 @@
             placeholder="Ingrese su nombre de usuario"
             autocomplete="username"
             :autofocus="true"
+            density="comfortable"
             :model-value="username"
             :error="usernameError"
             :disabled="authStore.isLoading"
@@ -93,6 +94,7 @@
             label="Contraseña"
             placeholder="Ingrese su contraseña"
             autocomplete="current-password"
+            density="comfortable"
             :model-value="password"
             :error="passwordError"
             :disabled="authStore.isLoading"
@@ -125,7 +127,7 @@
             <BaseButton
               type="submit"
               variant="primary"
-              size="md"
+              density="comfortable"
               block
               :loading="authStore.isLoading"
               loading-text="Ingresando..."

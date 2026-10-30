@@ -3,7 +3,6 @@ import {
   createWebHashHistory,
   createWebHistory,
   type RouteRecordRaw,
-  type NavigationGuardNext,
   type RouteLocationNormalized,
 } from 'vue-router'
 import { useAuthStore } from '../../features/auth/stores/authStore'
@@ -65,11 +64,11 @@ if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCKS !== 'false') {
 
 /**
  * Navigation Guard para control de sesión y validación de permisos RBAC dinámicos.
+ * Utiliza retorno de valores (Vue Router 4 return-value mode) para eliminar VUE_ROUTER_R0025.
  */
 export async function setupNavigationGuard(
   to: RouteLocationNormalized,
-  _from: RouteLocationNormalized,
-  next: NavigationGuardNext
+  _from: RouteLocationNormalized
 ) {
   const authStore = useAuthStore()
 
@@ -83,28 +82,25 @@ export async function setupNavigationGuard(
 
   // 1. Redirigir a /login si no hay sesión y la ruta es protegida
   if (!isPublicRoute && !isAuthenticated) {
-    next({
+    return {
       name: 'login',
       query: to.fullPath !== '/' ? { redirect: to.fullPath } : undefined,
-    })
-    return
+    }
   }
 
   // 2. Si ya hay sesión y se intenta ir a /login, redirigir a /
   if (to.name === 'login' && isAuthenticated) {
-    next({ name: 'home' })
-    return
+    return { name: 'home' }
   }
 
   // 3. Control de permisos RBAC si la ruta define meta.permission
   if (to.meta.permission && isAuthenticated) {
     const requiredPermission = to.meta.permission as string
     if (!authStore.hasPermission(requiredPermission)) {
-      next({
+      return {
         name: 'forbidden',
         query: { permission: requiredPermission },
-      })
-      return
+      }
     }
   }
 
@@ -119,7 +115,7 @@ export async function setupNavigationGuard(
     document.title = String(to.meta.title)
   }
 
-  next()
+  return true
 }
 
 router.beforeEach(setupNavigationGuard)

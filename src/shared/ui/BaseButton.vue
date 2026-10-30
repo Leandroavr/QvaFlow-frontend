@@ -8,7 +8,7 @@
       'disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none',
       'active:scale-[0.98]',
       variantClasses[variant],
-      sizeClasses[size],
+      densityClasses[density],
       block ? 'w-full' : '',
     ]"
     v-bind="$attrs"
@@ -16,7 +16,7 @@
     <!-- Spinner en estado Loading -->
     <BaseSpinner
       v-if="loading"
-      :size="size === 'sm' ? 'sm' : 'md'"
+      :size="density === 'compact' ? 'sm' : 'md'"
       :color="variant === 'primary' || variant === 'danger' ? 'white' : 'primary'"
       class="mr-2"
     />
@@ -41,9 +41,12 @@
 <script setup lang="ts">
 import BaseSpinner from './BaseSpinner.vue'
 
+export type ControlDensity = 'comfortable' | 'compact'
+
 interface Props {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
   size?: 'sm' | 'md' | 'lg'
+  density?: ControlDensity
   type?: 'button' | 'submit' | 'reset'
   disabled?: boolean
   loading?: boolean
@@ -51,9 +54,10 @@ interface Props {
   block?: boolean
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   variant: 'primary',
   size: 'md',
+  density: 'compact',
   type: 'button',
   disabled: false,
   loading: false,
@@ -72,9 +76,10 @@ const variantClasses: Record<string, string> = {
     'bg-accent hover:bg-accent-hover text-white shadow-md shadow-accent/20 border border-transparent',
 }
 
-const sizeClasses: Record<string, string> = {
-  sm: 'h-9 px-3 text-xs rounded-md',
-  md: 'h-12 min-h-12 px-5 text-sm rounded-lg', // 48px para accesibilidad táctil y desktop
-  lg: 'h-14 min-h-14 px-6 text-base rounded-xl',
+const densityClasses: Record<ControlDensity, string> = {
+  comfortable:
+    'h-[var(--control-height-comfortable,48px)] min-h-[var(--control-height-comfortable,48px)] px-5 text-sm rounded-lg',
+  compact:
+    'h-[var(--control-height-compact,36px)] min-h-[var(--control-height-compact,36px)] px-3 text-xs rounded-md',
 }
 </script>

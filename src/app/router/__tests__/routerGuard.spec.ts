@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { setupNavigationGuard } from '../index'
 import { useAuthStore } from '../../../features/auth/stores/authStore'
@@ -18,11 +18,10 @@ describe('Router Navigation Guard', () => {
     } as unknown as RouteLocationNormalized
 
     const from = {} as RouteLocationNormalized
-    const next = vi.fn()
 
-    await setupNavigationGuard(to, from, next)
+    const result = await setupNavigationGuard(to, from)
 
-    expect(next).toHaveBeenCalledWith({
+    expect(result).toEqual({
       name: 'login',
       query: { redirect: '/dashboard' },
     })
@@ -36,11 +35,10 @@ describe('Router Navigation Guard', () => {
     } as unknown as RouteLocationNormalized
 
     const from = {} as RouteLocationNormalized
-    const next = vi.fn()
 
-    await setupNavigationGuard(to, from, next)
+    const result = await setupNavigationGuard(to, from)
 
-    expect(next).toHaveBeenCalledWith()
+    expect(result).toBe(true)
   })
 
   it('redirige a / (home) si un usuario ya autenticado intenta acceder a /login', async () => {
@@ -54,11 +52,10 @@ describe('Router Navigation Guard', () => {
     } as unknown as RouteLocationNormalized
 
     const from = {} as RouteLocationNormalized
-    const next = vi.fn()
 
-    await setupNavigationGuard(to, from, next)
+    const result = await setupNavigationGuard(to, from)
 
-    expect(next).toHaveBeenCalledWith({ name: 'home' })
+    expect(result).toEqual({ name: 'home' })
   })
 
   it('redirige a /forbidden cuando el usuario carece del permiso requerido por la ruta', async () => {
@@ -73,11 +70,10 @@ describe('Router Navigation Guard', () => {
     } as unknown as RouteLocationNormalized
 
     const from = {} as RouteLocationNormalized
-    const next = vi.fn()
 
-    await setupNavigationGuard(to, from, next)
+    const result = await setupNavigationGuard(to, from)
 
-    expect(next).toHaveBeenCalledWith({
+    expect(result).toEqual({
       name: 'forbidden',
       query: { permission: 'system.config' },
     })
