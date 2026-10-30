@@ -7,6 +7,7 @@ import {
   type RouteLocationNormalized,
 } from 'vue-router'
 import { useAuthStore } from '../../features/auth/stores/authStore'
+import { syncLegacyAuthSession } from '../legacy/legacyAuthBridge'
 
 const routerMode = import.meta.env.VITE_ROUTER_MODE || 'hash'
 
@@ -52,6 +53,16 @@ export const router = createRouter({
   routes,
 })
 
+// Registro condicional de desarrollo con carga diferida.
+// En el build de producción (vite build), Rollup elimina este bloque por completo
+// y ninguna vista /legacy entra en el bundle.
+if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCKS !== 'false') {
+  const { legacyRoutes } = await import('./legacyRoutes')
+  legacyRoutes.forEach((route) => {
+    router.addRoute(route)
+  })
+}
+
 /**
  * Navigation Guard para control de sesión y validación de permisos RBAC dinámicos.
  */
@@ -95,6 +106,12 @@ export async function setupNavigationGuard(
       })
       return
     }
+  }
+
+  // 4. Sincronizar sesión con store legado si se navega a una ruta /legacy
+  const targetPath = to.path || to.fullPath || ''
+  if (targetPath.startsWith('/legacy') && isAuthenticated) {
+    syncLegacyAuthSession()
   }
 
   // Actualizar título de la ventana
