@@ -51,30 +51,30 @@
       </nav>
     </div>
 
-    <!-- Zona Derecha: Estado de Servidor, ThemeToggle y Menú de Usuario -->
-    <div class="flex items-center gap-3">
-      <!-- Estado del Servidor Local (Reutiliza StatusDot) -->
+    <!-- Zona Derecha: Estado de Servidor, ThemeToggle y Menú de Usuario (densidad compacta 36px) -->
+    <div class="flex items-center gap-2.5">
+      <!-- Estado del Servidor Local (Reutiliza StatusDot con altura 36px) -->
       <div
-        class="bg-surface-subtle/50 hidden items-center rounded-lg border border-border-subtle px-2.5 py-1 sm:flex"
+        class="bg-surface-sunken/60 hidden h-9 items-center rounded-lg border border-border-subtle px-2.5 sm:flex"
         :title="'Conexión con el backend Symfony en red local'"
       >
         <StatusDot :status="serverStatus" :show-label="true" />
       </div>
 
       <!-- Icono simplificado en pantallas muy pequeñas -->
-      <div class="flex items-center sm:hidden" title="Conexión de servidor">
+      <div class="flex h-9 items-center sm:hidden" title="Conexión de servidor">
         <StatusDot :status="serverStatus" :show-label="false" />
       </div>
 
-      <!-- Selector de Tema (onDark=false según especificación) -->
+      <!-- Selector de Tema (altura 36px, onDark=false) -->
       <ThemeToggle :on-dark="false" />
 
-      <!-- Menú desplegable de usuario -->
+      <!-- Menú desplegable de usuario (altura 36px, densidad compacta) -->
       <div ref="userMenuRef" class="relative">
         <button
           type="button"
           :class="[
-            'flex items-center gap-2 rounded-lg p-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+            'flex h-9 items-center gap-2 rounded-lg px-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
             userMenuOpen ? 'bg-topbar-hover' : 'hover:bg-topbar-hover',
           ]"
           :aria-expanded="userMenuOpen"
@@ -85,23 +85,27 @@
         >
           <!-- Avatar con iniciales -->
           <div
-            class="bg-primary/10 border-primary/20 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-xs font-bold text-primary"
+            class="bg-primary/10 border-primary/20 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold text-primary"
           >
             {{ initials }}
           </div>
 
           <!-- Nombre y Rol (visible en escritorio) -->
           <div class="hidden flex-col text-left leading-tight md:flex">
-            <span class="max-w-[130px] truncate text-xs font-semibold text-topbar-text">
-              {{ authStore.user?.fullName || authStore.user?.username }}
+            <!-- Primer nombre (o nombre completo si hay espacio en pantallas grandes) -->
+            <span class="text-xs font-medium text-topbar-text">
+              <span class="inline xl:hidden">{{ firstName }}</span>
+              <span class="hidden xl:inline">{{
+                authStore.user?.fullName || authStore.user?.username
+              }}</span>
             </span>
-            <span class="max-w-[130px] truncate text-[10px] text-topbar-text-muted">
+            <span class="text-[11px] leading-none text-content-secondary">
               {{ authStore.user?.role }}
             </span>
           </div>
 
           <ChevronDown
-            class="hidden h-3.5 w-3.5 text-topbar-text-muted md:block"
+            class="hidden h-3.5 w-3.5 text-content-secondary md:block"
             aria-hidden="true"
           />
         </button>
@@ -109,7 +113,7 @@
         <!-- Dropdown del usuario -->
         <div
           v-if="userMenuOpen"
-          class="border-border-default animate-in fade-in zoom-in-95 absolute right-0 z-50 mt-1.5 w-56 rounded-xl border bg-surface-card p-2 text-content-primary shadow-lg ring-1 ring-black/5 duration-100"
+          class="animate-in fade-in zoom-in-95 absolute right-0 z-50 mt-1.5 w-56 rounded-xl border border-border-subtle bg-surface-card p-2 text-content-primary shadow-lg ring-1 ring-black/5 duration-100"
           role="menu"
           aria-orientation="vertical"
         >
@@ -123,7 +127,7 @@
             </p>
             <div class="mt-1.5">
               <span
-                class="bg-primary/10 inline-block rounded px-2 py-0.5 text-[10px] font-semibold text-primary"
+                class="inline-block rounded-md border border-border-subtle bg-surface-sunken px-2 py-0.5 text-[10px] font-medium text-content-secondary"
                 title="Rol asignado (solo informativo en el frontend)"
               >
                 {{ authStore.user?.role }}
@@ -199,6 +203,12 @@ const initials = computed(() => {
     .slice(0, 2)
     .join('')
     .toUpperCase()
+})
+
+// Primer nombre (nombre de pila) para visualización compacta
+const firstName = computed(() => {
+  const name = authStore.user?.fullName || authStore.user?.username || ''
+  return name.trim().split(' ')[0] || ''
 })
 
 // Control del menú desplegable de usuario
