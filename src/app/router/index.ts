@@ -26,14 +26,6 @@ export const routes: RouteRecordRaw[] = [
     },
   },
   {
-    path: '/',
-    name: 'home',
-    component: () => import('../views/AppHomeView.vue'),
-    meta: {
-      title: 'Inicio - QvaFlow POS',
-    },
-  },
-  {
     path: '/forbidden',
     name: 'forbidden',
     component: () => import('../views/ForbiddenView.vue'),
@@ -42,8 +34,213 @@ export const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/',
+    component: () => import('../layouts/AppLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'home',
+        component: () => import('../views/AppHomeView.vue'),
+        meta: {
+          title: 'Inicio - QvaFlow POS',
+          breadcrumb: 'Inicio',
+        },
+      },
+      // Ventas
+      {
+        path: 'sales/pos',
+        name: 'sales-pos',
+        component: () => import('../views/ModulePlaceholderView.vue'),
+        meta: {
+          permission: 'sales.create',
+          title: 'Punto de Venta - QvaFlow',
+          breadcrumb: 'Punto de venta',
+          parentBreadcrumb: 'Ventas',
+        },
+      },
+      {
+        path: 'sales/history',
+        name: 'sales-history',
+        component: () => import('../views/ModulePlaceholderView.vue'),
+        meta: {
+          permission: 'sales.view',
+          title: 'Historial de Ventas - QvaFlow',
+          breadcrumb: 'Historial de ventas',
+          parentBreadcrumb: 'Ventas',
+        },
+      },
+      // Caja
+      {
+        path: 'cash/shift',
+        name: 'cash-shift',
+        component: () => import('../views/ModulePlaceholderView.vue'),
+        meta: {
+          permission: 'cash.manage',
+          title: 'Turno y Arqueo - QvaFlow',
+          breadcrumb: 'Turno y arqueo',
+          parentBreadcrumb: 'Caja',
+        },
+      },
+      {
+        path: 'cash/exchange',
+        name: 'cash-exchange',
+        component: () => import('../views/ModulePlaceholderView.vue'),
+        meta: {
+          permission: 'cash.exchange',
+          title: 'Tasa de Cambio y Canje - QvaFlow',
+          breadcrumb: 'Tasa de cambio y canje',
+          parentBreadcrumb: 'Caja',
+        },
+      },
+      {
+        path: 'cash/history',
+        name: 'cash-history',
+        component: () => import('../views/ModulePlaceholderView.vue'),
+        meta: {
+          permission: 'cash.view_history',
+          title: 'Cuadres de Caja - QvaFlow',
+          breadcrumb: 'Cuadres de caja',
+          parentBreadcrumb: 'Caja',
+        },
+      },
+      // Inventario
+      {
+        path: 'inventory/stock',
+        name: 'inventory-stock',
+        component: () => import('../views/ModulePlaceholderView.vue'),
+        meta: {
+          permission: 'inventory.view',
+          title: 'Stock de Inventario - QvaFlow',
+          breadcrumb: 'Stock',
+          parentBreadcrumb: 'Inventario',
+        },
+      },
+      {
+        path: 'inventory/warehouses',
+        name: 'inventory-warehouses',
+        component: () => import('../views/ModulePlaceholderView.vue'),
+        meta: {
+          permission: 'inventory.view',
+          title: 'Almacenes y Localizaciones - QvaFlow',
+          breadcrumb: 'Almacenes y localizaciones',
+          parentBreadcrumb: 'Inventario',
+        },
+      },
+      {
+        path: 'inventory/transfers',
+        name: 'inventory-transfers',
+        component: () => import('../views/ModulePlaceholderView.vue'),
+        meta: {
+          permission: 'inventory.transfer',
+          title: 'Movimientos y Traslados - QvaFlow',
+          breadcrumb: 'Movimientos y traslados',
+          parentBreadcrumb: 'Inventario',
+        },
+      },
+      {
+        path: 'inventory/adjustments',
+        name: 'inventory-adjustments',
+        component: () => import('../views/ModulePlaceholderView.vue'),
+        meta: {
+          permission: 'inventory.adjust',
+          title: 'Ajustes de Inventario - QvaFlow',
+          breadcrumb: 'Ajustes de inventario',
+          parentBreadcrumb: 'Inventario',
+        },
+      },
+      // Productos
+      {
+        path: 'products/catalog',
+        name: 'products-catalog',
+        component: () => import('../views/ModulePlaceholderView.vue'),
+        meta: {
+          permission: 'products.view',
+          title: 'Catálogo de Productos - QvaFlow',
+          breadcrumb: 'Catálogo de productos',
+          parentBreadcrumb: 'Productos',
+        },
+      },
+      // Compras
+      {
+        path: 'purchases/invoices',
+        name: 'purchases-invoices',
+        component: () => import('../views/ModulePlaceholderView.vue'),
+        meta: {
+          permission: 'purchases.view',
+          title: 'Facturas de Compra - QvaFlow',
+          breadcrumb: 'Facturas de compra',
+          parentBreadcrumb: 'Compras',
+        },
+      },
+      // Reportes
+      {
+        path: 'reports',
+        name: 'reports-dashboard',
+        component: () => import('../views/ModulePlaceholderView.vue'),
+        meta: {
+          permission: 'reports.view',
+          title: 'Reportes - QvaFlow',
+          breadcrumb: 'Reportes',
+          parentBreadcrumb: 'Reportes',
+        },
+      },
+      // Administración
+      {
+        path: 'admin/users',
+        name: 'admin-users',
+        component: () => import('../views/ModulePlaceholderView.vue'),
+        meta: {
+          permission: 'users.manage',
+          title: 'Gestión de Usuarios - QvaFlow',
+          breadcrumb: 'Usuarios',
+          parentBreadcrumb: 'Administración',
+        },
+      },
+      {
+        path: 'admin/roles',
+        name: 'admin-roles',
+        component: () => import('../views/ModulePlaceholderView.vue'),
+        meta: {
+          permission: 'roles.manage',
+          title: 'Roles y Permisos - QvaFlow',
+          breadcrumb: 'Roles y permisos',
+          parentBreadcrumb: 'Administración',
+        },
+      },
+      {
+        path: 'admin/backups',
+        name: 'admin-backups',
+        component: () => import('../views/ModulePlaceholderView.vue'),
+        meta: {
+          permission: 'backups.manage',
+          title: 'Respaldos de Datos - QvaFlow',
+          breadcrumb: 'Respaldos',
+          parentBreadcrumb: 'Administración',
+        },
+      },
+      {
+        path: 'admin/settings',
+        name: 'admin-settings',
+        component: () => import('../views/ModulePlaceholderView.vue'),
+        meta: {
+          permission: 'system.config',
+          title: 'Configuración General - QvaFlow',
+          breadcrumb: 'Configuración',
+          parentBreadcrumb: 'Administración',
+        },
+      },
+    ],
+  },
+  // Ruta 404 No Encontrado
+  {
     path: '/:pathMatch(.*)*',
-    redirect: '/',
+    name: 'not-found',
+    component: () => import('../views/NotFoundView.vue'),
+    meta: {
+      public: true,
+      title: '404 No Encontrado - QvaFlow',
+      breadcrumb: 'No encontrado',
+    },
   },
 ]
 
