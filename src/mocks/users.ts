@@ -58,6 +58,7 @@ export const MOCK_USERS: Record<string, MockUserCredential> = {
         'inventory.create',
         'inventory.adjust',
         'inventory.transfer',
+        'warehouses.manage', // Gestión de almacenes y localizaciones físicas
         'products.view',
         'products.create',
         'products.edit',

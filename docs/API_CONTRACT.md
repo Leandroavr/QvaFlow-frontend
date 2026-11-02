@@ -342,19 +342,231 @@ El frontend **NUNCA** hardcodea el catálogo de permisos disponibles en el siste
 
 ---
 
-## 7. Pendiente por Definir con el Backend
+---
+
+## 7. Módulo de Inventario y Almacenes [PROPUESTA]
+
+Esta sección define el contrato de API para la gestión de almacenes físicos, zonas/localizaciones y control de existencias de inventario.
+
+### 7.1 Permisos RBAC Asociados
+* `inventory.view`: Consultar existencias de stock y listados de almacenes/localizaciones.
+* `inventory.adjust`: Registrar cuadraturas y ajustes de conteo físico.
+* `inventory.transfer`: Registrar traslados de mercancía entre almacenes y localizaciones.
+* `warehouses.manage`: **[PROPUESTA]** Crear, modificar y eliminar almacenes y localizaciones físicas.
+* `products.view_cost`: Permiso sensible para visualizar importes de costo unitario y capital invertido.
+
+> [!IMPORTANT] SEGURIDAD Y CONFIDENCIALIDAD DE COSTOS (`products.view_cost`)
+> Si el usuario autenticado **NO** posee el permiso `products.view_cost` en sus claims JWT, el backend Symfony **NUNCA DEBE INCLUIR** los campos `cost` (en cada ítem de stock) ni `costValue` (en el resumen) en los JSONs retornados. El frontend oculta estas columnas y tarjetas por ergonomía visual, pero la seguridad de la información financiera sensible depende estrictamente de que el backend filtre estos campos en la respuesta.
+
+---
+
+### 7.2 Endpoints de Almacenes (`/api/warehouses`)
+
+#### 7.2.1 Listar Almacenes
+* **Método:** `GET`
+* **Ruta:** `/api/warehouses`
+* **Respuesta Exitosa (200 OK):**
+```json
+[
+  {
+    "code": "ALM-CENTRAL",
+    "name": "Almacén Central",
+    "locationsCount": 3,
+    "stockUnits": 1500
+  },
+  {
+    "code": "ALM-TIENDA",
+    "name": "Tienda Principal",
+    "locationsCount": 2,
+    "stockUnits": 320
+  }
+]
+```
+
+#### 7.2.2 Crear Almacén
+* **Método:** `POST`
+* **Ruta:** `/api/warehouses`
+* **Permiso requerido:** `warehouses.manage`
+* **Request Body:**
+```json
+{
+  "code": "ALM-PLAYA",
+  "name": "Punto de Venta Playa"
+}
+```
+* **Validaciones:**
+  * `code`: Obligatorio, string alfanumérico en mayúsculas sin espacios, máx. 32 caracteres. Único.
+  * `name`: Obligatorio, máx. 60 caracteres.
+* **Respuesta Exitosa (201 Created):** Retorna el objeto `Warehouse` creado.
+* **Errores específicos:**
+  * `409 Conflict`: `{ "code": "CODE_ALREADY_EXISTS", "message": "Ya existe un almacén con el código ALM-PLAYA." }`
+  * `422 Unprocessable Entity`: `{ "code": "VALIDATION_FAILED", "message": "Datos inválidos", "details": { "name": ["El nombre es obligatorio."] } }`
+
+#### 7.2.3 Obtener Almacén
+* **Método:** `GET`
+* **Ruta:** `/api/warehouses/{code}`
+
+#### 7.2.4 Actualizar Almacén
+* **Método:** `PUT`
+* **Ruta:** `/api/warehouses/{code}`
+* **Permiso requerido:** `warehouses.manage`
+* **Request Body:** `{ "name": "Almacén Central Principal" }`
+
+#### 7.2.5 Eliminar Almacén
+* **Método:** `DELETE`
+* **Ruta:** `/api/warehouses/{code}`
+* **Permiso requerido:** `warehouses.manage`
+* **Regla de Integridad (409):** Si el almacén tiene existencias físicas asignadas (`stockUnits > 0`), el backend debe responder con código HTTP 409:
+```json
+{
+  "code": "WAREHOUSE_HAS_STOCK",
+  "message": "No se puede eliminar el almacén porque contiene existencias asignadas."
+}
+```
+
+---
+
+### 7.3 Endpoints de Localizaciones Físicas (`/api/locations`)
+
+#### 7.3.1 Listar Localizaciones de un Almacén
+* **Método:** `GET`
+* **Ruta:** `/api/warehouses/{code}/locations`
+* **Respuesta Exitosa (200 OK):**
+```json
+[
+  {
+    "code": "LOC-CEN-P1",
+    "warehouseCode": "ALM-CENTRAL",
+    "name": "Pasillo 1 - Secos",
+    "stockUnits": 850
+  },
+  {
+    "code": "LOC-CEN-EA",
+    "warehouseCode": "ALM-CENTRAL",
+    "name": "Estante A - Enlatados",
+    "stockUnits": 650
+  }
+]
+```
+
+#### 7.3.2 Crear Localización
+* **Método:** `POST`
+* **Ruta:** `/api/locations`
+* **Permiso requerido:** `warehouses.manage`
+* **Request Body:**
+```json
+{
+  "code": "LOC-CEN-EB",
+  "warehouseCode": "ALM-CENTRAL",
+  "name": "Estante B - Licores"
+}
+```
+* **Errores:**
+  * `409 Conflict`: `{ "code": "CODE_ALREADY_EXISTS", "message": "Ya existe una localización con este código." }`
+
+#### 7.3.3 Modificar Localización
+* **Método:** `PUT`
+* **Ruta:** `/api/locations/{code}`
+* **Request Body:** `{ "name": "Estante B - Licores Finos" }`
+
+#### 7.3.4 Eliminar Localización
+* **Método:** `DELETE`
+* **Ruta:** `/api/locations/{code}`
+* **Permiso requerido:** `warehouses.manage`
+* **Regla de Integridad (409):**
+```json
+{
+  "code": "LOCATION_HAS_STOCK",
+  "message": "No se puede eliminar la localización porque contiene existencias de productos."
+}
+```
+
+---
+
+### 7.4 Endpoints de Existencias y Stock (`/api/inventory`)
+
+#### 7.4.1 Listado Paginado de Stock
+* **Método:** `GET`
+* **Ruta:** `/api/inventory/stock`
+* **Parámetros de consulta (Query Params):**
+  * `page`: int (base 1, defecto 1).
+  * `perPage`: int (defecto 10, opciones 10, 20, 50, 100).
+  * `sort`: string con formato `campo:asc` o `campo:desc` (ej. `productName:asc`, `quantity:desc`).
+  * `search`: string de búsqueda por código o nombre de producto.
+  * `warehouse`: string (código de almacén opcional).
+  * `location`: string (código de localización opcional).
+  * `category`: string (categoría opcional).
+  * `status`: string (`'ok'` | `'low'` | `'out'`).
+* **Respuesta Exitosa (200 OK):**
+```json
+{
+  "items": [
+    {
+      "productCode": "78910001",
+      "productName": "Café Serrano Clásico 250g",
+      "category": "Alimentos",
+      "unit": "pqte",
+      "warehouseCode": "ALM-TIENDA",
+      "warehouseName": "Tienda Principal",
+      "locationCode": "LOC-TND-E1",
+      "locationName": "Estantería Expositora",
+      "quantity": "24.00",
+      "cost": "450.00",
+      "price": "650.00",
+      "minStock": "10.00",
+      "status": "ok",
+      "updatedAt": "2026-10-25T10:30:00Z"
+    },
+    {
+      "productCode": "78910005",
+      "productName": "Cigarros H. Upmann Selecto",
+      "category": "Tabacos",
+      "unit": "cajetilla",
+      "warehouseCode": "ALM-TIENDA",
+      "warehouseName": "Tienda Principal",
+      "locationCode": "LOC-TND-M1",
+      "locationName": "Mostrador de Cobro",
+      "quantity": "8.00",
+      "cost": "210.00",
+      "price": "300.00",
+      "minStock": "10.00",
+      "status": "low",
+      "updatedAt": "2026-10-23T11:45:00Z"
+    }
+  ],
+  "total": 24,
+  "page": 1,
+  "perPage": 10
+}
+```
+*(Nota: Si el usuario carece de `products.view_cost`, el campo `cost` es omitido).*
+
+#### 7.4.2 Resumen Global de Stock
+* **Método:** `GET`
+* **Ruta:** `/api/inventory/summary`
+* **Respuesta Exitosa (200 OK):**
+```json
+{
+  "totalUnits": 1820,
+  "lowStockCount": 4,
+  "outOfStockCount": 2,
+  "costValue": "145200.00"
+}
+```
+*(Nota: Si el usuario carece de `products.view_cost`, el campo `costValue` es omitido).*
+
+---
+
+## 8. Pendiente por Definir con el Backend
 
 1. **El Contrato es una PROPUESTA Adaptable:**
-   * Esta especificación es una propuesta de arquitectura limpia. Si el backend Symfony ya implementa otra estructura (por ejemplo el bundle estándar `LexikJWTAuthenticationBundle` respondiendo `{ "token": "..." }` en `POST /api/login_check`), **la adaptación se realiza en `HttpAuthService`**, sin necesidad de modificar ningún componente visual, store ni vista del frontend.
-2. **Estrategia de Sesión y Expiración en Red Local (LAN):**
-   * Al operar en una red local privada y aislada de MIPYMES, existen dos alternativas para el backend:
-     * **Opción (A) [Recomendada]:** Token JWT de larga duración (ej: 12 a 24 horas, coincidente con la jornada de operación), sin necesidad de refresh token ni rotación compleja.
-     * **Opción (B):** Token de corta duración (ej: 60 minutos) con endpoint `POST /api/auth/refresh` y `refreshToken`.
-   * En cualquiera de los dos casos, si el backend responde con código HTTP `401 Unauthorized`, el frontend cierra la sesión de inmediato, limpia `localStorage` y notifica al usuario: *"Su sesión ha expirado"*.
-3. **Almacenamiento de Token en Cliente:**
-   * El token se almacena en `localStorage` del navegador bajo la clave `qvaflow_token`. En el contexto de una red local interna de negocio (sin riesgos de XSS de scripts externos), esta estrategia es estándar, simple y permite persistencia fluida entre recargas.
+   * Esta especificación es una propuesta de arquitectura limpia. Si el backend Symfony ya implementa otra estructura (por ejemplo el bundle estándar `LexikJWTAuthenticationBundle` respondiendo `{ "token": "..." }` en `POST /api/login_check`), **la adaptación se realiza en la capa de servicios HTTP**, sin necesidad de modificar ningún componente visual, store ni vista del frontend.
+2. **Cálculo de Estado de Stock (`status: 'ok' | 'low' | 'out'`):**
+   * **Propuesta recomendada:** El backend calcula e incluye el campo `status` en cada registro de `/api/inventory/stock` evaluando `quantity <= 0 ? 'out' : quantity <= minStock ? 'low' : 'ok'`.
+   * **Alternativa:** Si el backend prefiere no calcularlo, el frontend puede derivarlo en tiempo de ejecución comparando `quantity` con `minStock`. Se deja como punto abierto a coordinar.
+3. **Estrategia de Sesión y Expiración en Red Local (LAN):**
+   * Token JWT de larga duración (ej: 12 a 24 horas, coincidente con la jornada de operación), sin necesidad de refresh token ni rotación compleja.
 4. **Precisión Numérica en Base de Datos:**
-   * Los importes de ventas, precios de coste y totales deben ser de tipo `DECIMAL` en la base de datos (PostgreSQL/MySQL) y viajar por la API estrictamente como `string` decimal (`"1250.50"`), evitando el uso de tipos float o double.
+   * Todos los importes y cantidades de inventario deben viajar como `DecimalString` (`"24.00"`, `"1250.50"`), mapeados en Symfony a columnas `DECIMAL(12,2)`.
 5. **Catálogo de Monedas y Tasas de Cambio:**
-   * El sistema contempla cuatro monedas operativas: `USD` (moneda base de referencia), `CUP` (efectivo cubano), `CUP_TRANSFER` (transferencia electrónica EnZona / Transfermóvil) y `MLC` (tarjeta magnética).
-   * Los endpoints para registrar y consultar la tasa de cambio diaria de caja (`GET /api/exchange-rates/today`, `POST /api/exchange-rates`) se detallarán en la especificación del módulo de Ventas y Caja (POS).
+   * Monedas admitidas: `USD`, `CUP`, `CUP_TRANSFER` y `MLC`.
