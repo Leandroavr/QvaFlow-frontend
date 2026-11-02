@@ -36,23 +36,64 @@ Toda respuesta con código de estado HTTP 4xx o 5xx debe retornar un objeto JSON
 
 ---
 
-## 3. Formato Estándar de Paginación
+## 3. Formato Estándar de Paginación y Listados
 
-Para futuros endpoints que retornen listas de elementos (productos, ventas, movimientos):
+Para todos los endpoints que retornen colecciones paginadas de elementos (productos, ventas, inventario, clientes, movimientos de caja):
 
-* **Parámetros de consulta (Query Params):**
-  * `page`: Número de página actual (base 1, por defecto `1`).
-  * `perPage`: Cantidad de elementos por página (por defecto `20`, máx `100`).
-  * `sort`: Campo y dirección de ordenación (ej: `createdAt:desc`, `name:asc`).
-  * `search`: Texto de búsqueda general.
+### 3.1 Parámetros de Consulta (Query Params)
 
-* **Cuerpo de Respuesta:**
+El frontend (`DataTable`, `FilterBar` y `useDataTableQuery`) emite de forma estandarizada los siguientes parámetros en la URL:
+
+| Parámetro | Tipo | Requerido | Descripción | Ejemplo |
+| :--- | :--- | :--- | :--- | :--- |
+| `page` | `integer` | No | Número de página (base 1, por defecto `1`). | `page=2` |
+| `perPage` | `integer` | No | Cantidad de elementos por página (por defecto `10`, opciones estándar: `10`, `20`, `50`, `100`). | `perPage=20` |
+| `sort` | `string` | No | Campo y dirección separados por dos puntos con formato `campo:asc` o `campo:desc`. | `sort=price:desc` |
+| `search` | `string` | No | Término de búsqueda general (insensible a mayúsculas/minúsculas). | `search=cerveza` |
+| *(filtros)* | `string/number` | No | Filtros paramétricos adicionales específicos de cada módulo. | `category=Bebidas&warehouse=wh-1&stockStatus=low` |
+
+### 3.2 Ejemplo de Petición HTTP
+```http
+GET /api/catalog/products?page=2&perPage=10&sort=price:asc&search=cristal&category=Bebidas&warehouse=wh-central HTTP/1.1
+Host: localhost:8000
+Authorization: Bearer <accessToken>
+Accept: application/json
+```
+
+### 3.3 Estructura Estándar del Cuerpo de Respuesta (JSON)
+Todo listado paginado debe retornar una estructura con las claves exactas `items`, `total`, `page` y `perPage`. Los importes monetarios deben enviarse siempre como **string decimal** con 2 decimales (`"220.00"`):
+
 ```json
 {
-  "items": [],
-  "total": 145,
-  "page": 1,
-  "perPage": 20
+  "items": [
+    {
+      "id": 2,
+      "code": "PRD-002",
+      "name": "Cerveza Cristal 355ml",
+      "category": "Bebidas",
+      "warehouse": "Almacén Central",
+      "cost": "120.00",
+      "price": "220.00",
+      "stock": 45,
+      "stockStatus": "normal",
+      "createdAt": "2026-10-15T08:30:00Z"
+    },
+    {
+      "id": 3,
+      "code": "PRD-003",
+      "name": "Cerveza Bucanero 355ml",
+      "category": "Bebidas",
+      "warehouse": "Punto de Venta Playa",
+      "cost": "125.00",
+      "price": "230.00",
+      "stock": 8,
+      "stockStatus": "low",
+      "createdAt": "2026-10-16T11:15:00Z"
+    }
+  ],
+  "total": 42,
+  "page": 2,
+  "perPage": 10
 }
 ```
 

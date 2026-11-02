@@ -284,3 +284,128 @@ const toast = useToast()
 toast.success('Venta #1042 registrada exitosamente.')
 toast.error('No se pudo conectar con el servidor local.')
 ```
+
+---
+
+## 3. Componentes de Datos y Tablas Avanzadas
+
+### DataTable
+Tabla de datos de alto rendimiento construida sobre `@tanstack/vue-table` v9, compatible con modos de procesamiento en memoria (`client`) y paginación/ordenación remota (`server`). Incluye cabecera fija (sticky) con tokens `--surface-sunken`, filas compactas (~40px), soporte de selección múltiple con acciones en lote, menú desplegable de acciones por fila mediante `BaseDropdownMenu`, renderizado de estados (`loading`, `empty`, `error` con reintento) y navegación accesible por teclado (flechas ↑ y ↓, Enter para acción principal) **sin robar el foco al montarse**.
+
+- **Props**:
+  - `mode`: `'client' | 'server'` (por defecto `'client'`).
+  - `data`: `T[] | ServerDataResponse<T>` (`{ items, total, page, perPage }`).
+  - `columns`: `DataTableColumn<T>[]` (definición tipada: `key`, `title`, `currency?`, `width?`, `align?`, `sortable?`, `visible?`, etc.).
+  - `total?`: `number` (total de filas en modo servidor).
+  - `page?`: `number` (página actual base 1).
+  - `perPage?`: `number` (filas por página, por defecto `10`).
+  - `sort?`: `string` (formato del contrato API `"campo:asc"` o `"campo:desc"`).
+  - `loading?`: `boolean` (activa esqueleto de filas compactas con `BaseSkeleton`).
+  - `error?`: `string | Error | null` (muestra estado de error accesible).
+  - `selectable?`: `boolean` (activa columna de casillas de selección múltiple).
+  - `selectedKeys?`: `(string | number)[]` (claves de filas seleccionadas con soporte `v-model:selected-keys`).
+  - `rowKey?`: `string | ((row: T) => string | number)` (identificador de fila, por defecto `'id'`).
+  - `emptyTitle?`: `string` (título para `EmptyState`).
+  - `emptyDescription?`: `string` (descripción para `EmptyState`).
+  - `actions?`: `(row: T) => DropdownMenuItemConfig[]` (resuelve los items del menú "⋯" por fila).
+  - `primaryAction?`: `(row: T) => void` (disparada al pulsar Enter sobre la fila activa).
+- **Eventos**:
+  - `update:page`: `(page: number)`
+  - `update:perPage`: `(perPage: number)`
+  - `update:sort`: `(sort: string)`
+  - `update:selectedKeys`: `(keys: (string | number)[])`
+  - `query-change`: `({ page: number, perPage: number, sort: string })`
+  - `row-click`: `(row: T)`
+  - `row-action`: `({ actionId: string, row: T })`
+  - `retry`: `()`
+- **Slots**:
+  - `#cell-{key}`: Scoped slot personalizado para cada celda (`{ row, value, column, index }`).
+  - `#batch-actions`: Barra de acciones en lote mostrada cuando hay filas seleccionadas (`{ selectedRows, selectedKeys, clearSelection }`).
+  - `#empty-actions`: Botones o controles dentro del estado vacío.
+- **Ejemplo**:
+```vue
+<DataTable
+  mode="server"
+  :data="serverData"
+  :columns="columns"
+  :page="query.page"
+  :per-page="query.perPage"
+  :sort="query.sort"
+  selectable
+  v-model:selected-keys="selectedIds"
+  :actions="getRowActions"
+  @query-change="query.handleQueryChange"
+/>
+```
+
+---
+
+### MoneyCell
+Celda monetaria formateada para listados financieros basada en `formatMoney`. Garantiza el uso seguro de string decimal (`"1250.50"`), alineación a la derecha y tipografía tabular (`font-mono tabular-nums`). Cumple la directriz del sistema de diseño de no repetir la divisa en cada fila cuando esta ya figura en la cabecera de la columna.
+
+- **Props**:
+  - `value`: `DecimalString | number | null` (importe a formatear).
+  - `currency?`: `Currency` (divisa soportada, ej: `'CUP'`, `'USD'`).
+  - `showCurrency?`: `boolean` (por defecto `false` para no saturar las celdas de datos).
+  - `class?`: `string` (estilos CSS adicionales).
+- **Ejemplo**:
+```vue
+<MoneyCell :value="row.cost" currency="CUP" />
+```
+
+---
+
+### FilterBar
+Barra de filtros de una sola fila con comportamiento responsivo (`wrap` en pantallas estrechas), buscador con debounce integrado, selects compactos para filtrado paramétrico, botón "Limpiar filtros" (solo visible cuando existen filtros activos o búsqueda) y slot para acciones principales a la derecha ("Nuevo producto", etc.). Incluye chips de filtros activos opcionales con botón de descarte individual.
+
+- **Props**:
+  - `search`: `string` (texto del buscador, `v-model:search`).
+  - `searchPlaceholder?`: `string` (por defecto `'Buscar...'`).
+  - `debounceMs?`: `number` (retraso en ms, por defecto `300`).
+  - `hasActiveFilters?`: `boolean` (indica si hay filtros activos más allá del buscador).
+  - `chips?`: `FilterChip[]` (`Array<{ id: string, label: string, onRemove: () => void }>`).
+- **Eventos**:
+  - `update:search`: `(value: string)`
+  - `clear`: `()` (disparado al pulsar "Limpiar filtros").
+- **Slots**:
+  - `#filters` / default: Selectores y controles de filtro (`BaseSelect`).
+  - `#actions`: Botones de acción principales (ej. `BaseButton` "Nuevo").
+  - `#chips`: Personalización libre de la tira de chips activos.
+- **Ejemplo**:
+```vue
+<FilterBar
+  v-model:search="query.search"
+  :has-active-filters="query.hasActiveFilters"
+  :chips="activeChips"
+  @clear="query.resetFilters"
+>
+  <template #filters>
+    <div class="w-44">
+      <BaseSelect v-model="query.filters.category" :options="categoryOptions" />
+    </div>
+  </template>
+  <template #actions>
+    <BaseButton variant="primary" density="compact">Nuevo Producto</BaseButton>
+  </template>
+</FilterBar>
+```
+
+---
+
+### useDataTableQuery (Composable)
+Composable para gestión de estado de listados tabulares con sincronización bidireccional en la query string de la URL (compatible con modo hash `/#/ruta?page=2&sort=name:asc`), normalización de parámetros y generación del objeto de consulta listo para la API de Symfony.
+
+- **Opciones (`DataTableQueryOptions`)**:
+  - `initialPage?`: `number` (por defecto `1`).
+  - `initialPerPage?`: `number` (por defecto `10`).
+  - `initialSort?`: `string` (ej. `'name:asc'`).
+  - `initialSearch?`: `string` (por defecto `''`).
+  - `initialFilters?`: `TFilters` (diccionario de filtros específicos).
+  - `syncUrl?`: `boolean` (por defecto `true`).
+- **Retorno**:
+  - `page`, `perPage`, `sort`, `search`, `filters`: Refs reactivos.
+  - `queryParams`: Computed con el objeto final listo para enviar al cliente HTTP: `{ page, perPage, sort?, search?, ...filters }`.
+  - `hasActiveFilters`, `activeFiltersCount`: Banderas de estado de filtros.
+  - `setPage`, `setPerPage`, `setSort`, `setSearch`, `setFilter`, `resetFilters`, `resetAll`.
+  - `handleQueryChange`: Controlador directo para el evento `@query-change` de `DataTable`.
+

@@ -42,4 +42,10 @@ export interface BatchAction<T = any> {
   onClick: (selectedRows: T[], selectedKeys: (string | number)[]) => void
 }
 
+export interface FilterChip {
+  id: string
+  label: string
+  onRemove: () => void
+}
+
 export type RowActionsResolver<T = any> = (row: T) => DropdownMenuItemConfig[]

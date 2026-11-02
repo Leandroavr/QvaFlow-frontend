@@ -1,4 +1,4 @@
-import { ref, computed, watch, shallowRef } from 'vue'
+import { ref, computed, watch, shallowRef, hasInjectionContext } from 'vue'
 import { useRouter, useRoute, type LocationQueryRaw } from 'vue-router'
 
 export interface DataTableQueryOptions<TFilters extends Record<string, any> = Record<string, any>> {
@@ -26,11 +26,13 @@ export function useDataTableQuery<TFilters extends Record<string, any> = Record<
   let router: ReturnType<typeof useRouter> | undefined
   let route: ReturnType<typeof useRoute> | undefined
 
-  try {
-    router = useRouter()
-    route = useRoute()
-  } catch {
-    // Router no disponible en este contexto
+  if (hasInjectionContext()) {
+    try {
+      router = useRouter()
+      route = useRoute()
+    } catch {
+      // Router no disponible en este contexto
+    }
   }
 
   // Leer estado inicial desde la URL si syncUrl está activado y hay ruta

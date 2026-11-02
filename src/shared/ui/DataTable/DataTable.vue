@@ -508,6 +508,17 @@ const tanstackSortingState = computed(() => {
   return [{ id: activeSortKey.value, desc: activeSortDirection.value === 'desc' }]
 })
 
+// Total de registros
+const totalRowsCount = computed(() => {
+  if (isServerMode.value) {
+    if (props.data && typeof (props.data as ServerDataResponse).total === 'number') {
+      return (props.data as ServerDataResponse).total
+    }
+    return props.total
+  }
+  return rawDataArray.value.length
+})
+
 const table = useTable({
   features: {
     ...stockFeatures,
@@ -538,17 +549,6 @@ const displayedRows = computed(() => {
   }
   // En modo cliente, TanStack aplica ordenación y paginación
   return table.getRowModel().rows.map((r) => r.original)
-})
-
-// Total de registros
-const totalRowsCount = computed(() => {
-  if (isServerMode.value) {
-    if (props.data && typeof (props.data as ServerDataResponse).total === 'number') {
-      return (props.data as ServerDataResponse).total
-    }
-    return props.total
-  }
-  return rawDataArray.value.length
 })
 
 // Manejo de ordenación

@@ -470,12 +470,274 @@
           </BaseFormField>
         </div>
       </section>
+
+      <!-- 9. TABLA DE DATOS (DataTable, FilterBar & MoneyCell) -->
+      <section class="space-y-4">
+        <div class="border-b border-border-subtle pb-2">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 class="text-base font-bold text-content-primary">9. DataTable & FilterBar</h2>
+              <p class="text-xs text-content-muted">
+                Tabla de alto rendimiento construida sobre TanStack Table v9 con modos cliente y
+                servidor, cabecera fija, ordenación, MoneyCell alineado a la derecha, acciones por
+                fila con BaseDropdownMenu, navegación por teclado y FilterBar reactiva.
+              </p>
+            </div>
+
+            <!-- Controles de estado de la demo -->
+            <div class="flex flex-wrap items-center gap-2">
+              <!-- Alternar modo cliente / servidor -->
+              <div
+                class="border-border-default flex items-center rounded-lg border bg-surface-card p-0.5 text-xs"
+              >
+                <button
+                  type="button"
+                  :class="[
+                    'rounded-md px-2.5 py-1 font-medium transition-colors',
+                    tableDemoMode === 'client'
+                      ? 'shadow-xs bg-primary text-white'
+                      : 'text-content-secondary hover:text-content-primary',
+                  ]"
+                  @click="tableDemoMode = 'client'"
+                >
+                  Modo Cliente
+                </button>
+                <button
+                  type="button"
+                  :class="[
+                    'rounded-md px-2.5 py-1 font-medium transition-colors',
+                    tableDemoMode === 'server'
+                      ? 'shadow-xs bg-primary text-white'
+                      : 'text-content-secondary hover:text-content-primary',
+                  ]"
+                  @click="tableDemoMode = 'server'"
+                >
+                  Modo Servidor (300ms)
+                </button>
+              </div>
+
+              <!-- Forzar Loading -->
+              <BaseButton
+                :variant="isTableLoading ? 'primary' : 'secondary'"
+                density="compact"
+                @click="isTableLoading = !isTableLoading"
+              >
+                {{ isTableLoading ? 'Quitar Loading' : 'Forzar Loading' }}
+              </BaseButton>
+
+              <!-- Forzar Error -->
+              <BaseButton
+                :variant="tableError ? 'danger' : 'secondary'"
+                density="compact"
+                @click="
+                  tableError = tableError
+                    ? null
+                    : 'Fallo de conexión 500: No se pudo sincronizar con la base de datos local SQLite.'
+                "
+              >
+                {{ tableError ? 'Quitar Error' : 'Forzar Error' }}
+              </BaseButton>
+
+              <!-- Forzar Vacío -->
+              <BaseButton
+                :variant="isTableEmpty ? 'primary' : 'secondary'"
+                density="compact"
+                @click="isTableEmpty = !isTableEmpty"
+              >
+                {{ isTableEmpty ? 'Restaurar Datos' : 'Forzar Vacío' }}
+              </BaseButton>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barra de filtros reactiva -->
+        <FilterBar
+          v-model:search="tableSearchQuery"
+          search-placeholder="Buscar producto por nombre o código..."
+          :has-active-filters="hasActiveTableFilters"
+          :chips="activeFilterChips"
+          @clear="handleClearTableFilters"
+        >
+          <!-- Selector de Categoría -->
+          <template #filters>
+            <div class="w-44">
+              <BaseSelect
+                v-model="selectedCategoryFilter"
+                :options="productCategoryOptions"
+                placeholder="Todas las categorías"
+                include-all-option
+                all-option-label="Todas las categorías"
+                all-option-value=""
+              />
+            </div>
+
+            <!-- Selector de Almacén -->
+            <div class="w-44">
+              <BaseSelect
+                v-model="selectedWarehouseFilter"
+                :options="productWarehouseOptions"
+                placeholder="Todos los almacenes"
+                include-all-option
+                all-option-label="Todos los almacenes"
+                all-option-value=""
+              />
+            </div>
+
+            <!-- Selector de Estado de Stock -->
+            <div class="w-36">
+              <BaseSelect
+                v-model="selectedStockFilter"
+                :options="productStockOptions"
+                placeholder="Cualquier stock"
+                include-all-option
+                all-option-label="Cualquier stock"
+                all-option-value=""
+              />
+            </div>
+          </template>
+
+          <!-- Acciones principales a la derecha -->
+          <template #actions>
+            <BaseButton
+              variant="primary"
+              density="compact"
+              @click="toast.info('Acción disparada: Nuevo Producto')"
+            >
+              <Plus class="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+              Nuevo Producto
+            </BaseButton>
+          </template>
+        </FilterBar>
+
+        <!-- Tabla en Modo Cliente -->
+        <div v-if="tableDemoMode === 'client'" class="space-y-2">
+          <div class="flex items-center justify-between text-xs text-content-muted">
+            <span>Demostración en memoria: ordenación y paginación en el cliente.</span>
+            <span>Usa las flechas ↑ y ↓ para navegar filas; Enter abre la acción principal.</span>
+          </div>
+
+          <DataTable
+            mode="client"
+            :data="isTableEmpty ? [] : clientFilteredProducts"
+            :columns="productColumns"
+            :loading="isTableLoading"
+            :error="tableError"
+            selectable
+            v-model:selected-keys="selectedProductKeys"
+            :actions="getProductRowActions"
+            :primary-action="handlePrimaryProductAction"
+            @retry="tableError = null"
+          >
+            <!-- Slot de acciones en lote -->
+            <template #batch-actions="{ selectedRows }">
+              <BaseButton
+                variant="secondary"
+                density="compact"
+                @click="
+                  toast.success(`Ajuste de inventario aplicado a ${selectedRows.length} productos.`)
+                "
+              >
+                Ajustar stock en lote
+              </BaseButton>
+              <BaseButton
+                variant="danger"
+                density="compact"
+                @click="toast.error(`Eliminación en lote para ${selectedRows.length} productos.`)"
+              >
+                Eliminar lote
+              </BaseButton>
+            </template>
+
+            <!-- Render personalizado de la celda de stock con BaseBadge semántico -->
+            <template #cell-stock="{ row }">
+              <BaseBadge
+                :variant="row.stock > 10 ? 'success' : row.stock > 0 ? 'warning' : 'danger'"
+                size="sm"
+                dot
+              >
+                {{
+                  row.stock > 10
+                    ? `${row.stock} un.`
+                    : row.stock > 0
+                      ? `${row.stock} (Bajo)`
+                      : 'Agotado'
+                }}
+              </BaseBadge>
+            </template>
+          </DataTable>
+        </div>
+
+        <!-- Tabla en Modo Servidor -->
+        <div v-else class="space-y-2">
+          <div class="flex items-center justify-between text-xs text-content-muted">
+            <span>Demostración con servidor simulado (300 ms de latencia y paginación real).</span>
+            <span
+              >Contrato emitido: <code>page={{ serverPage }}</code
+              >, <code>perPage={{ serverPerPage }}</code
+              >, <code>sort={{ serverSort || 'ninguno' }}</code></span
+            >
+          </div>
+
+          <DataTable
+            mode="server"
+            :data="
+              isTableEmpty
+                ? { items: [], total: 0, page: 1, perPage: serverPerPage }
+                : serverProductsResponse
+            "
+            :columns="productColumns"
+            :loading="isServerLoading || isTableLoading"
+            :error="tableError"
+            :page="serverPage"
+            :per-page="serverPerPage"
+            :sort="serverSort"
+            selectable
+            v-model:selected-keys="selectedProductKeys"
+            :actions="getProductRowActions"
+            :primary-action="handlePrimaryProductAction"
+            @update:page="handleServerPageChange"
+            @update:per-page="handleServerPerPageChange"
+            @update:sort="handleServerSortChange"
+            @retry="tableError = null"
+          >
+            <!-- Slot de acciones en lote -->
+            <template #batch-actions="{ selectedRows }">
+              <BaseButton
+                variant="secondary"
+                density="compact"
+                @click="
+                  toast.success(`Ajuste aplicado a ${selectedRows.length} productos del servidor.`)
+                "
+              >
+                Ajustar stock
+              </BaseButton>
+            </template>
+
+            <!-- Render personalizado de la celda de stock -->
+            <template #cell-stock="{ row }">
+              <BaseBadge
+                :variant="row.stock > 10 ? 'success' : row.stock > 0 ? 'warning' : 'danger'"
+                size="sm"
+                dot
+              >
+                {{
+                  row.stock > 10
+                    ? `${row.stock} un.`
+                    : row.stock > 0
+                      ? `${row.stock} (Bajo)`
+                      : 'Agotado'
+                }}
+              </BaseBadge>
+            </template>
+          </DataTable>
+        </div>
+      </section>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import {
   ArrowLeft,
   TrendingUp,
@@ -489,6 +751,7 @@ import {
   Copy,
   Trash2,
   FileSpreadsheet,
+  Eye,
 } from 'lucide-vue-next'
 import BaseBadge from '../../shared/ui/BaseBadge.vue'
 import StatCard from '../../shared/ui/StatCard.vue'
@@ -504,6 +767,13 @@ import BaseFormField from '../../shared/ui/BaseFormField.vue'
 import BaseButton from '../../shared/ui/BaseButton.vue'
 import BaseInput from '../../shared/ui/BaseInput.vue'
 import ThemeToggle from '../../shared/ui/ThemeToggle.vue'
+import {
+  DataTable,
+  FilterBar,
+  type DataTableColumn,
+  type FilterChip,
+  type ServerDataResponse,
+} from '../../shared/ui/DataTable'
 import { useToast } from '../../shared/composables/useToast'
 
 const toast = useToast()
@@ -560,5 +830,437 @@ const dropdownItems: DropdownMenuItemConfig[] = [
 
 const handleDropdownSelect = (id: string) => {
   toast.info(`Acción seleccionada del menú: ${id}`)
+}
+
+// ==========================================
+// SECCIÓN 9: DATATABLE & FILTERBAR DEMO
+// ==========================================
+
+export interface MockProduct {
+  id: number
+  code: string
+  name: string
+  category: string
+  warehouse: string
+  cost: string
+  price: string
+  stock: number
+}
+
+const mockProductsList: MockProduct[] = [
+  {
+    id: 1,
+    code: 'PRD-001',
+    name: 'Refresco Ciego Montero 330ml',
+    category: 'Bebidas',
+    warehouse: 'Almacén Central',
+    cost: '35.00',
+    price: '85.00',
+    stock: 120,
+  },
+  {
+    id: 2,
+    code: 'PRD-002',
+    name: 'Cerveza Cristal 355ml',
+    category: 'Bebidas',
+    warehouse: 'Almacén Central',
+    cost: '120.00',
+    price: '220.00',
+    stock: 45,
+  },
+  {
+    id: 3,
+    code: 'PRD-003',
+    name: 'Cerveza Bucanero 355ml',
+    category: 'Bebidas',
+    warehouse: 'Punto de Venta Playa',
+    cost: '125.00',
+    price: '230.00',
+    stock: 8,
+  },
+  {
+    id: 4,
+    code: 'PRD-004',
+    name: 'Agua Mineral Los Portales 1.5L',
+    category: 'Bebidas',
+    warehouse: 'Bodega Habana Vieja',
+    cost: '40.00',
+    price: '90.00',
+    stock: 0,
+  },
+  {
+    id: 5,
+    code: 'PRD-005',
+    name: 'Arroz Criollo Especial 1kg',
+    category: 'Alimentos',
+    warehouse: 'Almacén Central',
+    cost: '140.00',
+    price: '210.00',
+    stock: 85,
+  },
+  {
+    id: 6,
+    code: 'PRD-006',
+    name: 'Frijoles Negros 1kg',
+    category: 'Alimentos',
+    warehouse: 'Bodega Habana Vieja',
+    cost: '160.00',
+    price: '250.00',
+    stock: 4,
+  },
+  {
+    id: 7,
+    code: 'PRD-007',
+    name: 'Aceite Vegetal Cocinero 1L',
+    category: 'Alimentos',
+    warehouse: 'Almacén Central',
+    cost: '420.00',
+    price: '650.00',
+    stock: 32,
+  },
+  {
+    id: 8,
+    code: 'PRD-008',
+    name: 'Café Serrano Molido 250g',
+    category: 'Alimentos',
+    warehouse: 'Punto de Venta Playa',
+    cost: '280.00',
+    price: '450.00',
+    stock: 0,
+  },
+  {
+    id: 9,
+    code: 'PRD-009',
+    name: 'Jabón de Tocador Nácar 120g',
+    category: 'Aseo',
+    warehouse: 'Almacén Central',
+    cost: '50.00',
+    price: '95.00',
+    stock: 75,
+  },
+  {
+    id: 10,
+    code: 'PRD-010',
+    name: 'Detergente Omo 500g',
+    category: 'Aseo',
+    warehouse: 'Punto de Venta Playa',
+    cost: '180.00',
+    price: '290.00',
+    stock: 12,
+  },
+  {
+    id: 11,
+    code: 'PRD-011',
+    name: 'Pasta Dental Colgate 100ml',
+    category: 'Aseo',
+    warehouse: 'Bodega Habana Vieja',
+    cost: '130.00',
+    price: '220.00',
+    stock: 2,
+  },
+  {
+    id: 12,
+    code: 'PRD-012',
+    name: 'Cigarros H. Upmann Selecto',
+    category: 'Cigarros',
+    warehouse: 'Almacén Central',
+    cost: '110.00',
+    price: '180.00',
+    stock: 150,
+  },
+  {
+    id: 13,
+    code: 'PRD-013',
+    name: 'Cigarros Popular Auténtico',
+    category: 'Cigarros',
+    warehouse: 'Punto de Venta Playa',
+    cost: '100.00',
+    price: '170.00',
+    stock: 60,
+  },
+  {
+    id: 14,
+    code: 'PRD-014',
+    name: 'Ron Havana Club 7 Años 700ml',
+    category: 'Bebidas',
+    warehouse: 'Almacén Central',
+    cost: '850.00',
+    price: '1450.00',
+    stock: 18,
+  },
+  {
+    id: 15,
+    code: 'PRD-015',
+    name: 'Galletas de Sal Soda 200g',
+    category: 'Alimentos',
+    warehouse: 'Bodega Habana Vieja',
+    cost: '65.00',
+    price: '120.00',
+    stock: 0,
+  },
+]
+
+// Definición tipada de columnas
+const productColumns: DataTableColumn<MockProduct>[] = [
+  { key: 'code', title: 'Código', width: '100px', sortable: true },
+  { key: 'name', title: 'Nombre del producto', sortable: true },
+  { key: 'category', title: 'Categoría', width: '130px', sortable: true },
+  { key: 'warehouse', title: 'Almacén', width: '160px' },
+  { key: 'cost', title: 'Coste', currency: 'CUP', align: 'right', width: '110px', sortable: true },
+  {
+    key: 'price',
+    title: 'Precio venta',
+    currency: 'CUP',
+    align: 'right',
+    width: '120px',
+    sortable: true,
+  },
+  { key: 'stock', title: 'Stock', align: 'center', width: '120px', sortable: true },
+]
+
+// Opciones de filtros
+const productCategoryOptions = [
+  { label: 'Bebidas', value: 'Bebidas' },
+  { label: 'Alimentos', value: 'Alimentos' },
+  { label: 'Aseo', value: 'Aseo' },
+  { label: 'Cigarros', value: 'Cigarros' },
+]
+
+const productWarehouseOptions = [
+  { label: 'Almacén Central', value: 'Almacén Central' },
+  { label: 'Punto de Venta Playa', value: 'Punto de Venta Playa' },
+  { label: 'Bodega Habana Vieja', value: 'Bodega Habana Vieja' },
+]
+
+const productStockOptions = [
+  { label: 'Normal (>10)', value: 'normal' },
+  { label: 'Bajo (1–10)', value: 'low' },
+  { label: 'Agotado (0)', value: 'out' },
+]
+
+// Estados de control de la demo
+const tableDemoMode = ref<'client' | 'server'>('client')
+const isTableLoading = ref(false)
+const tableError = ref<string | null>(null)
+const isTableEmpty = ref(false)
+const selectedProductKeys = ref<(string | number)[]>([])
+
+// Filtros reactivos
+const tableSearchQuery = ref('')
+const selectedCategoryFilter = ref('')
+const selectedWarehouseFilter = ref('')
+const selectedStockFilter = ref('')
+
+const hasActiveTableFilters = computed(() => {
+  return (
+    tableSearchQuery.value.trim().length > 0 ||
+    !!selectedCategoryFilter.value ||
+    !!selectedWarehouseFilter.value ||
+    !!selectedStockFilter.value
+  )
+})
+
+const activeFilterChips = computed<FilterChip[]>(() => {
+  const chips: FilterChip[] = []
+  if (tableSearchQuery.value.trim()) {
+    chips.push({
+      id: 'search',
+      label: `Búsqueda: "${tableSearchQuery.value.trim()}"`,
+      onRemove: () => {
+        tableSearchQuery.value = ''
+      },
+    })
+  }
+  if (selectedCategoryFilter.value) {
+    chips.push({
+      id: 'cat',
+      label: `Categoría: ${selectedCategoryFilter.value}`,
+      onRemove: () => {
+        selectedCategoryFilter.value = ''
+      },
+    })
+  }
+  if (selectedWarehouseFilter.value) {
+    chips.push({
+      id: 'wh',
+      label: `Almacén: ${selectedWarehouseFilter.value}`,
+      onRemove: () => {
+        selectedWarehouseFilter.value = ''
+      },
+    })
+  }
+  if (selectedStockFilter.value) {
+    const label =
+      selectedStockFilter.value === 'normal'
+        ? 'Stock: Normal'
+        : selectedStockFilter.value === 'low'
+          ? 'Stock: Bajo'
+          : 'Stock: Agotado'
+    chips.push({
+      id: 'stock',
+      label,
+      onRemove: () => {
+        selectedStockFilter.value = ''
+      },
+    })
+  }
+  return chips
+})
+
+const handleClearTableFilters = () => {
+  tableSearchQuery.value = ''
+  selectedCategoryFilter.value = ''
+  selectedWarehouseFilter.value = ''
+  selectedStockFilter.value = ''
+}
+
+// Filtrado común para ambas demos
+const filterProducts = (products: MockProduct[]) => {
+  return products.filter((p) => {
+    if (tableSearchQuery.value.trim()) {
+      const q = tableSearchQuery.value.toLowerCase().trim()
+      const matchName = p.name.toLowerCase().includes(q)
+      const matchCode = p.code.toLowerCase().includes(q)
+      if (!matchName && !matchCode) return false
+    }
+    if (selectedCategoryFilter.value && p.category !== selectedCategoryFilter.value) {
+      return false
+    }
+    if (selectedWarehouseFilter.value && p.warehouse !== selectedWarehouseFilter.value) {
+      return false
+    }
+    if (selectedStockFilter.value) {
+      if (selectedStockFilter.value === 'normal' && p.stock <= 10) return false
+      if (selectedStockFilter.value === 'low' && (p.stock === 0 || p.stock > 10)) return false
+      if (selectedStockFilter.value === 'out' && p.stock !== 0) return false
+    }
+    return true
+  })
+}
+
+// Datos filtrados en modo cliente (TanStack se encarga de paginación y ordenación)
+const clientFilteredProducts = computed(() => {
+  return filterProducts(mockProductsList)
+})
+
+// Simulación de servidor con 300 ms de latencia
+const serverPage = ref(1)
+const serverPerPage = ref(10)
+const serverSort = ref('')
+const isServerLoading = ref(false)
+const serverProductsResponse = ref<ServerDataResponse<MockProduct>>({
+  items: [],
+  total: 0,
+  page: 1,
+  perPage: 10,
+})
+
+let serverFetchTimer: ReturnType<typeof setTimeout> | null = null
+
+const executeServerFetch = () => {
+  if (serverFetchTimer) {
+    clearTimeout(serverFetchTimer)
+  }
+
+  isServerLoading.value = true
+
+  serverFetchTimer = setTimeout(() => {
+    let result = filterProducts([...mockProductsList])
+
+    // Ordenación según el contrato "campo:asc|desc"
+    if (serverSort.value) {
+      const [field, dir] = serverSort.value.split(':')
+      const isDesc = dir === 'desc'
+      result.sort((a: any, b: any) => {
+        let valA = a[field]
+        let valB = b[field]
+        if (field === 'cost' || field === 'price' || field === 'stock') {
+          valA = Number(valA)
+          valB = Number(valB)
+        }
+        if (valA < valB) return isDesc ? 1 : -1
+        if (valA > valB) return isDesc ? -1 : 1
+        return 0
+      })
+    }
+
+    const total = result.length
+    const start = (serverPage.value - 1) * serverPerPage.value
+    const sliced = result.slice(start, start + serverPerPage.value)
+
+    serverProductsResponse.value = {
+      items: sliced,
+      total,
+      page: serverPage.value,
+      perPage: serverPerPage.value,
+    }
+
+    isServerLoading.value = false
+  }, 300)
+}
+
+watch(
+  [
+    serverPage,
+    serverPerPage,
+    serverSort,
+    tableSearchQuery,
+    selectedCategoryFilter,
+    selectedWarehouseFilter,
+    selectedStockFilter,
+  ],
+  () => {
+    if (tableDemoMode.value === 'server') {
+      executeServerFetch()
+    }
+  },
+  { immediate: true }
+)
+
+const handleServerPageChange = (p: number) => {
+  serverPage.value = p
+}
+
+const handleServerPerPageChange = (pp: number) => {
+  serverPerPage.value = pp
+  serverPage.value = 1
+}
+
+const handleServerSortChange = (s: string) => {
+  serverSort.value = s
+}
+
+// Acciones por fila
+const getProductRowActions = (row: MockProduct): DropdownMenuItemConfig[] => [
+  {
+    id: 'view',
+    label: `Ver detalle (${row.code})`,
+    icon: Eye,
+    onClick: () => toast.info(`Detalles del producto: ${row.name}`),
+  },
+  {
+    id: 'edit',
+    label: 'Editar producto',
+    icon: Edit,
+    onClick: () => toast.info(`Modificar: ${row.name}`),
+  },
+  {
+    id: 'adjust',
+    label: 'Ajuste de inventario',
+    icon: FileSpreadsheet,
+    onClick: () => toast.success(`Ajuste de inventario abierto para ${row.code}`),
+  },
+  {
+    id: 'delete',
+    label: 'Eliminar producto',
+    icon: Trash2,
+    danger: true,
+    separator: true,
+    onClick: () => toast.error(`Eliminar producto: ${row.name}`),
+  },
+]
+
+const handlePrimaryProductAction = (row: MockProduct) => {
+  toast.info(`Acción primaria disparada por tecla Enter: ${row.name}`)
 }
 </script>
