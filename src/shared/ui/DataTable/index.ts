@@ -1,4 +1,5 @@
 export { default as DataTable } from './DataTable.vue'
 export { default as MoneyCell } from './MoneyCell.vue'
 export { default as DataTablePagination } from './DataTablePagination.vue'
+export { default as FilterBar } from './FilterBar.vue'
 export * from './types'
