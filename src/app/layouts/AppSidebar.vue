@@ -1,0 +1,317 @@
+<template>
+  <div>
+    <!-- Backdrop móvil (pantallas < 1024px) -->
+    <div
+      v-if="mobileOpen"
+      class="backdrop-blur-xs fixed inset-0 z-40 bg-black/60 transition-opacity lg:hidden"
+      aria-hidden="true"
+      @click="$emit('close-mobile')"
+    />
+
+    <!-- Panel Sidebar -->
+    <aside
+      :class="[
+        'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-sidebar-border bg-sidebar-bg text-sidebar-text shadow-xl transition-all duration-200 ease-in-out',
+        // Comportamiento en escritorio (>= 1024px)
+        'lg:static lg:z-auto lg:shadow-none',
+        collapsed ? 'lg:w-16' : 'lg:w-60',
+        // Comportamiento en móvil (< 1024px)
+        mobileOpen ? 'w-60 translate-x-0' : '-translate-x-full lg:translate-x-0',
+      ]"
+      aria-label="Navegación principal"
+    >
+      <!-- Cabecera del Sidebar: Logo y botón de cerrar en móvil -->
+      <div
+        class="flex h-14 min-h-[56px] items-center border-b border-sidebar-border px-3"
+        :class="collapsed ? 'justify-center' : 'justify-between'"
+      >
+        <!-- Logo expandido -->
+        <router-link
+          v-if="!collapsed || mobileOpen"
+          to="/"
+          class="flex items-center gap-2 rounded-md p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar-bg"
+          title="QvaFlow - Inicio"
+        >
+          <img :src="logoHorizontalWhite" alt="QvaFlow Logo" class="h-7 w-auto object-contain" />
+        </router-link>
+
+        <!-- Emblema / Icono colapsado (en placa redondeada) -->
+        <router-link
+          v-else
+          to="/"
+          class="shadow-xs flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 p-1 transition-colors hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar-bg"
+          title="QvaFlow - Inicio"
+        >
+          <img :src="logoIcon" alt="QvaFlow" class="h-6 w-6 object-contain" />
+        </router-link>
+
+        <!-- Botón cerrar para vista móvil -->
+        <button
+          v-if="mobileOpen"
+          type="button"
+          class="flex h-8 w-8 items-center justify-center rounded-lg text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white lg:hidden"
+          aria-label="Cerrar menú"
+          @click="$emit('close-mobile')"
+        >
+          <X class="h-5 w-5" aria-hidden="true" />
+        </button>
+      </div>
+
+      <!-- Navegación con scroll interno -->
+      <nav class="flex-1 overflow-y-auto px-2 py-3" aria-label="Menú de módulos">
+        <ul class="space-y-1">
+          <li v-for="item in menu" :key="item.id">
+            <!-- 1. Ítem simple directo (ej: Inicio) -->
+            <template v-if="!item.children || item.children.length === 0">
+              <router-link
+                :to="item.to || '/'"
+                :class="[
+                  'group relative flex items-center gap-3 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors',
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
+                  isActiveRoute(item.to)
+                    ? 'shadow-xs bg-sidebar-active font-semibold text-white'
+                    : 'text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white',
+                  collapsed && !mobileOpen ? 'justify-center' : '',
+                ]"
+                :aria-current="isActiveRoute(item.to) ? 'page' : undefined"
+                :title="collapsed && !mobileOpen ? item.label : undefined"
+                @click="handleItemClick"
+              >
+                <!-- Indicador activo lateral -->
+                <span
+                  v-if="isActiveRoute(item.to)"
+                  class="absolute bottom-1.5 left-0 top-1.5 w-1 rounded-r bg-sky-400"
+                  aria-hidden="true"
+                />
+
+                <component
+                  :is="item.icon"
+                  class="h-4 w-4 shrink-0 transition-transform group-hover:scale-105"
+                  :class="
+                    isActiveRoute(item.to)
+                      ? 'text-sky-300'
+                      : 'text-sidebar-text-muted group-hover:text-white'
+                  "
+                  aria-hidden="true"
+                />
+
+                <span v-if="!collapsed || mobileOpen" class="truncate">
+                  {{ item.label }}
+                </span>
+              </router-link>
+            </template>
+
+            <!-- 2. Grupo con hijos (ej: Ventas, Caja, Inventario) -->
+            <template v-else>
+              <!-- Cabecera del grupo -->
+              <div>
+                <button
+                  type="button"
+                  :class="[
+                    'group relative flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors',
+                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
+                    isGroupActive(item)
+                      ? 'text-white'
+                      : 'text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white',
+                    collapsed && !mobileOpen ? 'justify-center' : 'justify-between',
+                  ]"
+                  :aria-expanded="isGroupOpen(item.id)"
+                  :title="collapsed && !mobileOpen ? item.label : undefined"
+                  @click="toggleGroup(item.id)"
+                  @keydown.enter.prevent="toggleGroup(item.id)"
+                  @keydown.space.prevent="toggleGroup(item.id)"
+                >
+                  <div
+                    class="flex min-w-0 items-center gap-3"
+                    :class="collapsed && !mobileOpen ? 'justify-center' : ''"
+                  >
+                    <component
+                      :is="item.icon"
+                      class="h-4 w-4 shrink-0 transition-transform group-hover:scale-105"
+                      :class="
+                        isGroupActive(item)
+                          ? 'text-sky-300'
+                          : 'text-sidebar-text-muted group-hover:text-white'
+                      "
+                      aria-hidden="true"
+                    />
+                    <span v-if="!collapsed || mobileOpen" class="truncate">
+                      {{ item.label }}
+                    </span>
+                  </div>
+
+                  <!-- Flecha Chevron expandible -->
+                  <div v-if="!collapsed || mobileOpen" class="shrink-0">
+                    <ChevronDown
+                      v-if="isGroupOpen(item.id)"
+                      class="h-3.5 w-3.5 text-sidebar-text-muted transition-transform"
+                      aria-hidden="true"
+                    />
+                    <ChevronRight
+                      v-else
+                      class="h-3.5 w-3.5 text-sidebar-text-muted transition-transform"
+                      aria-hidden="true"
+                    />
+                  </div>
+                </button>
+
+                <!-- Submenú de hijos (cuando no está colapsado o cuando se expande) -->
+                <ul
+                  v-if="(!collapsed || mobileOpen) && isGroupOpen(item.id)"
+                  class="ml-4 mt-1 space-y-0.5 border-l border-sidebar-border pl-6"
+                >
+                  <li v-for="subItem in item.children" :key="subItem.id">
+                    <router-link
+                      :to="subItem.to || '/'"
+                      :class="[
+                        'group relative flex items-center gap-2.5 rounded-md px-2 py-1.5 text-xs transition-colors',
+                        'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
+                        isActiveRoute(subItem.to)
+                          ? 'shadow-xs bg-sidebar-active font-medium text-white'
+                          : 'text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white',
+                      ]"
+                      :aria-current="isActiveRoute(subItem.to) ? 'page' : undefined"
+                      @click="handleItemClick"
+                    >
+                      <!-- Indicador activo de submódulo -->
+                      <span
+                        v-if="isActiveRoute(subItem.to)"
+                        class="absolute -left-[17px] bottom-2 top-2 w-1 rounded-r bg-sky-400"
+                        aria-hidden="true"
+                      />
+
+                      <component
+                        :is="subItem.icon"
+                        class="h-3.5 w-3.5 shrink-0"
+                        :class="
+                          isActiveRoute(subItem.to)
+                            ? 'text-sky-300'
+                            : 'text-sidebar-text-muted group-hover:text-white'
+                        "
+                        aria-hidden="true"
+                      />
+                      <span class="truncate">{{ subItem.label }}</span>
+                    </router-link>
+                  </li>
+                </ul>
+              </div>
+            </template>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Pie del Sidebar: Botón colapsar y versión de la app -->
+      <div
+        class="bg-sidebar-bg/60 flex items-center justify-between border-t border-sidebar-border p-2.5"
+        :class="collapsed ? 'flex-col gap-2' : ''"
+      >
+        <!-- Versión de la app -->
+        <span
+          class="font-mono text-[11px] text-sidebar-text-muted"
+          :title="'QvaFlow POS Desktop v1.0.0 (Modo Red Local)'"
+        >
+          {{ collapsed && !mobileOpen ? 'v1.0' : 'v1.0.0 (Local)' }}
+        </span>
+
+        <!-- Botón de colapsar / expandir (Escritorio) -->
+        <button
+          type="button"
+          class="hidden h-7 w-7 items-center justify-center rounded-md text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 lg:flex"
+          :aria-label="
+            collapsed ? 'Expandir barra lateral (Ctrl+B)' : 'Colapsar barra lateral (Ctrl+B)'
+          "
+          :title="collapsed ? 'Expandir (Ctrl+B)' : 'Colapsar (Ctrl+B)'"
+          @click="$emit('toggle-collapse')"
+        >
+          <PanelLeftOpen v-if="collapsed" class="h-4 w-4" aria-hidden="true" />
+          <PanelLeftClose v-else class="h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
+    </aside>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { X, ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next'
+import { useNavigationMenu, type MenuItem } from '../navigation/menu'
+import logoHorizontalWhite from '../../assets/logo-horizontal-white.png'
+import logoIcon from '../../assets/logo-icon.png'
+
+interface Props {
+  collapsed: boolean
+  mobileOpen: boolean
+}
+
+const props = defineProps<Props>()
+
+const emit = defineEmits<{
+  (e: 'toggle-collapse'): void
+  (e: 'close-mobile'): void
+}>()
+
+const route = useRoute()
+const menu = useNavigationMenu()
+
+// Estado reactivo de grupos abiertos
+const openGroups = ref<Set<string>>(new Set())
+
+const isGroupOpen = (groupId: string): boolean => {
+  return openGroups.value.has(groupId)
+}
+
+const toggleGroup = (groupId: string) => {
+  if (props.collapsed && !props.mobileOpen) {
+    // Si está colapsado, al hacer clic en un grupo expandimos el sidebar
+    emit('toggle-collapse')
+    openGroups.value.add(groupId)
+    return
+  }
+
+  const newSet = new Set(openGroups.value)
+  if (newSet.has(groupId)) {
+    newSet.delete(groupId)
+  } else {
+    newSet.add(groupId)
+  }
+  openGroups.value = newSet
+}
+
+const isActiveRoute = (path?: string): boolean => {
+  if (!path) return false
+  if (path === '/') return route.path === '/'
+  return route.path === path || route.path.startsWith(`${path}/`)
+}
+
+const isGroupActive = (item: MenuItem): boolean => {
+  if (!item.children) return false
+  return item.children.some((child) => isActiveRoute(child.to))
+}
+
+// Abrir automáticamente el grupo que contiene la ruta activa
+const autoExpandActiveGroup = () => {
+  menu.value.forEach((item) => {
+    if (item.children && isGroupActive(item)) {
+      openGroups.value.add(item.id)
+    }
+  })
+}
+
+onMounted(() => {
+  autoExpandActiveGroup()
+})
+
+watch(
+  () => route.path,
+  () => {
+    autoExpandActiveGroup()
+  }
+)
+
+const handleItemClick = () => {
+  if (props.mobileOpen) {
+    emit('close-mobile')
+  }
+}
+</script>

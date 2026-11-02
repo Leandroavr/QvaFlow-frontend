@@ -57,6 +57,23 @@
   --gradient-login-via: #162e56;
   --gradient-login-to: #1e3a6b;
 
+  /* Sidebar Tokens (Azul Marino de marca en ambos temas con contraste AA) */
+  --sidebar-bg: #0f2347;
+  --sidebar-border: #162e56;
+  --sidebar-text: #ffffff;
+  --sidebar-text-muted: #94a3b8;
+  --sidebar-item-hover: rgba(255, 255, 255, 0.08);
+  --sidebar-item-active: #1e3a6b;
+  --sidebar-item-active-border: #38bdf8;
+
+  /* Topbar Tokens (Modo Claro) */
+  --topbar-bg: #ffffff;
+  --topbar-border: #e2e8f0;
+  --topbar-text: #0f172a;
+  --topbar-text-muted: #64748b;
+  --topbar-item-hover: #f1f5f9;
+  --topbar-item-active: #e2e8f0;
+
   /* Radios */
   --radius-sm: 6px;
   --radius-md: 8px;
@@ -131,6 +148,23 @@
   --gradient-login-from: #070d1e;
   --gradient-login-via: #0b1530;
   --gradient-login-to: #111e44;
+
+  /* Sidebar Tokens (Azul Marino más profundo en Modo Oscuro con contraste AA) */
+  --sidebar-bg: #091024;
+  --sidebar-border: #16213e;
+  --sidebar-text: #ffffff;
+  --sidebar-text-muted: #94a3b8;
+  --sidebar-item-hover: rgba(255, 255, 255, 0.07);
+  --sidebar-item-active: #142247;
+  --sidebar-item-active-border: #38bdf8;
+
+  /* Topbar Tokens (Modo Oscuro) */
+  --topbar-bg: #151f3a;
+  --topbar-border: #243054;
+  --topbar-text: #f8fafc;
+  --topbar-text-muted: #94a3b8;
+  --topbar-item-hover: #1c2746;
+  --topbar-item-active: #263359;
 }
 
 /* Tipografía base Inter */

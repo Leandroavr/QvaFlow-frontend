@@ -1,10 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: 'class',
-  content: [
-    "./index.html",
-    "./src/**/*.{vue,js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
   theme: {
     extend: {
       fontFamily: {
@@ -41,6 +38,23 @@ export default {
           DEFAULT: 'var(--color-border-default)',
           hover: 'var(--color-border-hover)',
           focus: 'var(--color-border-focus)',
+        },
+        sidebar: {
+          bg: 'var(--sidebar-bg)',
+          border: 'var(--sidebar-border)',
+          text: 'var(--sidebar-text)',
+          'text-muted': 'var(--sidebar-text-muted)',
+          hover: 'var(--sidebar-item-hover)',
+          active: 'var(--sidebar-item-active)',
+          'active-border': 'var(--sidebar-item-active-border)',
+        },
+        topbar: {
+          bg: 'var(--topbar-bg)',
+          border: 'var(--topbar-border)',
+          text: 'var(--topbar-text)',
+          'text-muted': 'var(--topbar-text-muted)',
+          hover: 'var(--topbar-item-hover)',
+          active: 'var(--topbar-item-active)',
         },
         state: {
           success: 'var(--color-success)',
