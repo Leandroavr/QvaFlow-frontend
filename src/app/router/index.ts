@@ -251,12 +251,24 @@ export const router = createRouter({
 
 // Registro condicional de desarrollo con carga diferida.
 // En el build de producción (vite build), Rollup elimina este bloque por completo
-// y ninguna vista /legacy entra en el bundle.
-if (import.meta.env.DEV && import.meta.env.VITE_USE_MOCKS !== 'false') {
-  const { legacyRoutes } = await import('./legacyRoutes')
-  legacyRoutes.forEach((route) => {
-    router.addRoute(route)
+// y ninguna vista /legacy ni /dev/components entra en el bundle.
+if (import.meta.env.DEV) {
+  router.addRoute({
+    path: '/dev/components',
+    name: 'dev-components',
+    component: () => import('../views/DevComponentsView.vue'),
+    meta: {
+      title: 'Catálogo de Componentes UI - QvaFlow Dev',
+      breadcrumb: 'Componentes UI',
+    },
   })
+
+  if (import.meta.env.VITE_USE_MOCKS !== 'false') {
+    const { legacyRoutes } = await import('./legacyRoutes')
+    legacyRoutes.forEach((route) => {
+      router.addRoute(route)
+    })
+  }
 }
 
 /**
