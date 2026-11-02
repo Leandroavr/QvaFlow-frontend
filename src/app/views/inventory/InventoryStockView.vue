@@ -361,7 +361,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { toast } from 'vue-sonner'
 import {
   Boxes,
@@ -645,11 +646,108 @@ function handleQueryChange(params: { page: number; perPage: number; sort: string
   fetchStock()
 }
 
+// Sincronización con Vue Router (URL query)
+let router: ReturnType<typeof useRouter> | undefined
+let route: ReturnType<typeof useRoute> | undefined
+
+try {
+  router = useRouter()
+  route = useRoute()
+} catch {
+  // Entornos de prueba sin inyección de router
+}
+
+function syncToUrl() {
+  if (!router || !route) return
+  const query: Record<string, string> = {}
+  if (search.value.trim()) query.search = search.value.trim()
+  if (warehouse.value) query.warehouse = warehouse.value
+  if (location.value) query.location = location.value
+  if (category.value) query.category = category.value
+  if (status.value) query.status = status.value
+  if (page.value > 1) query.page = String(page.value)
+  if (perPage.value !== 10) query.perPage = String(perPage.value)
+  if (sort.value && sort.value !== 'productName:asc') query.sort = sort.value
+
+  router.replace({ query }).catch(() => {})
+}
+
+watch([search, warehouse, location, category, status, page, perPage, sort], () => {
+  syncToUrl()
+})
+
+watch(
+  () => route?.query,
+  (q) => {
+    if (!q) return
+    const newSearch = (q.search as string) || ''
+    const newWarehouse = (q.warehouse as string) || ''
+    const newLocation = (q.location as string) || ''
+    const newCategory = (q.category as string) || ''
+    const newStatus = (q.status as StockStatus) || ''
+    const newPage = q.page ? Number(q.page) : 1
+    const newPerPage = q.perPage ? Number(q.perPage) : 10
+    const newSort = (q.sort as string) || 'productName:asc'
+
+    let changed = false
+    if (search.value !== newSearch) {
+      search.value = newSearch
+      changed = true
+    }
+    if (warehouse.value !== newWarehouse) {
+      warehouse.value = newWarehouse
+      changed = true
+    }
+    if (location.value !== newLocation) {
+      location.value = newLocation
+      changed = true
+    }
+    if (category.value !== newCategory) {
+      category.value = newCategory
+      changed = true
+    }
+    if (status.value !== newStatus) {
+      status.value = newStatus
+      changed = true
+    }
+    if (page.value !== newPage) {
+      page.value = newPage
+      changed = true
+    }
+    if (perPage.value !== newPerPage) {
+      perPage.value = newPerPage
+      changed = true
+    }
+    if (sort.value !== newSort) {
+      sort.value = newSort
+      changed = true
+    }
+
+    if (changed) {
+      fetchStock()
+    }
+  }
+)
+
 async function refreshAll() {
   await Promise.all([fetchStock(), fetchSummary(), fetchWarehouses()])
 }
 
 onMounted(async () => {
+  if (route?.query) {
+    if (route.query.search) search.value = String(route.query.search)
+    if (route.query.warehouse) {
+      warehouse.value = String(route.query.warehouse)
+      await fetchLocations(warehouse.value)
+    }
+    if (route.query.location) location.value = String(route.query.location)
+    if (route.query.category) category.value = String(route.query.category)
+    if (route.query.status) status.value = String(route.query.status) as StockStatus
+    if (route.query.page && !isNaN(Number(route.query.page))) page.value = Number(route.query.page)
+    if (route.query.perPage && !isNaN(Number(route.query.perPage)))
+      perPage.value = Number(route.query.perPage)
+    if (route.query.sort) sort.value = String(route.query.sort)
+  }
   await Promise.all([fetchWarehouses(), fetchStock(), fetchSummary()])
 })
 </script>

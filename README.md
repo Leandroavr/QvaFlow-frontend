@@ -198,6 +198,22 @@ La integración entre este frontend y su backend Symfony es **100% transparente*
    ```
    El cliente HTTP del frontend captura este formato y lo presenta de forma accesible al usuario en la tarjeta de login.
 
+## 📦 Módulo de Inventario y Almacenes
+
+El módulo de inventario gestiona existencias físicas, valoraciones financieras y la estructura de almacenes y localizaciones:
+
+- **Stock de Inventario (`/inventory/stock`):**
+  - **4 StatCards:** Total de unidades físicas, capital invertido al costo (filtrado por RBAC sensible `products.view_cost`), productos bajo stock y agotados con interacción directa para filtrar la tabla.
+  - **FilterBar con debounce y selección reactiva:** Búsqueda rápida por nombre/código, filtro encadenado por almacén y localización, categoría y estado (`ok`, `low`, `out`).
+  - **DataTable en modo servidor:** Paginación, ordenación remota, importes formateados con `MoneyCell` (string decimal), badges de estado con punto semántico y menú de acciones por fila.
+  - **Ficha detallada (`BaseDrawer`):** Panel lateral con datos completos del producto, métricas de inventario, auditoría y atajos para traslados o ajustes rápidos.
+  - **Sincronización con URL:** Los filtros, paginación y ordenación se reflejan automáticamente en la URL para permitir recarga y marcadores.
+- **Almacenes y Localizaciones (`/inventory/warehouses`):**
+  - **Layout dual responsivo:** Panel izquierdo con listado de almacenes físicos y panel derecho con sus zonas/estanterías dependientes.
+  - **Validación robusta:** Esquemas Zod y formularios validados con mensajes contextuales y normalización automática a mayúsculas sin espacios para códigos.
+  - **Protección RBAC:** Botones de creación y menús de edición/eliminación protegidos por el permiso `warehouses.manage`. Perfiles como vendedores tienen acceso de solo lectura.
+  - **Integridad referencial:** Diálogos de confirmación destructiva (`ConfirmDialog`) con manejo tipado de errores de integridad del backend (409 si el almacén o localización posee existencias).
+
 ---
 
 ## 🎨 Tokens de Diseño y Accesibilidad

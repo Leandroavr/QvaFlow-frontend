@@ -1,5 +1,11 @@
 <template>
-  <BaseModal :open="open" :title="title" :size="size" @update:open="handleOpenUpdate">
+  <BaseModal
+    :open="open"
+    :title="title"
+    :description="message"
+    :size="size"
+    @update:open="handleOpenUpdate"
+  >
     <div class="flex items-start gap-3.5 py-1">
       <div
         class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
