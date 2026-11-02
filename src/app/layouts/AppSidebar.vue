@@ -105,8 +105,12 @@
 
             <!-- 2. Grupo con hijos (ej: Ventas, Caja, Inventario) -->
             <template v-else>
-              <!-- Cabecera del grupo -->
-              <div>
+              <div
+                class="relative"
+                @mouseenter="handleGroupMouseEnter($event, item.id)"
+                @mouseleave="handleGroupMouseLeave"
+              >
+                <!-- Botón de cabecera del grupo -->
                 <button
                   type="button"
                   :class="[
@@ -118,11 +122,22 @@
                     collapsed && !mobileOpen ? 'justify-center' : 'justify-between',
                   ]"
                   :aria-expanded="isGroupOpen(item.id)"
+                  :aria-haspopup="collapsed && !mobileOpen ? 'menu' : undefined"
                   :title="collapsed && !mobileOpen ? item.label : undefined"
                   @click="toggleGroup(item.id)"
+                  @focusin="handleGroupFocusIn($event, item.id)"
+                  @focusout="handleGroupFocusOut"
                   @keydown.enter.prevent="toggleGroup(item.id)"
                   @keydown.space.prevent="toggleGroup(item.id)"
+                  @keydown.escape="closePopover"
                 >
+                  <!-- Indicador de grupo activo si está colapsado -->
+                  <span
+                    v-if="collapsed && !mobileOpen && isGroupActive(item)"
+                    class="absolute bottom-1.5 left-0 top-1.5 w-1 rounded-r bg-sky-400"
+                    aria-hidden="true"
+                  />
+
                   <div
                     class="flex min-w-0 items-center gap-3"
                     :class="collapsed && !mobileOpen ? 'justify-center' : ''"
@@ -157,45 +172,105 @@
                   </div>
                 </button>
 
-                <!-- Submenú de hijos (cuando no está colapsado o cuando se expande) -->
-                <ul
-                  v-if="(!collapsed || mobileOpen) && isGroupOpen(item.id)"
-                  class="ml-4 mt-1 space-y-0.5 border-l border-sidebar-border pl-6"
-                >
-                  <li v-for="subItem in item.children" :key="subItem.id">
-                    <router-link
-                      :to="subItem.to || '/'"
-                      :class="[
-                        'group relative flex items-center gap-2.5 rounded-md px-2 py-1.5 text-xs transition-colors',
-                        'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
-                        isActiveRoute(subItem.to)
-                          ? 'shadow-xs bg-sidebar-active font-medium text-white'
-                          : 'text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white',
-                      ]"
-                      :aria-current="isActiveRoute(subItem.to) ? 'page' : undefined"
-                      @click="handleItemClick"
-                    >
-                      <!-- Indicador activo de submódulo -->
-                      <span
-                        v-if="isActiveRoute(subItem.to)"
-                        class="absolute -left-[17px] bottom-2 top-2 w-1 rounded-r bg-sky-400"
-                        aria-hidden="true"
-                      />
-
-                      <component
-                        :is="subItem.icon"
-                        class="h-3.5 w-3.5 shrink-0"
-                        :class="
+                <!-- Submenú de hijos en Modo Expandido (con animación suave y sangría) -->
+                <transition name="submenu">
+                  <ul
+                    v-if="(!collapsed || mobileOpen) && isGroupOpen(item.id)"
+                    class="ml-4 mt-1 space-y-0.5 border-l border-sidebar-border pl-4"
+                  >
+                    <li v-for="subItem in item.children" :key="subItem.id">
+                      <router-link
+                        :to="subItem.to || '/'"
+                        :class="[
+                          'group relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs transition-colors',
+                          'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
                           isActiveRoute(subItem.to)
-                            ? 'text-sky-300'
-                            : 'text-sidebar-text-muted group-hover:text-white'
-                        "
-                        aria-hidden="true"
-                      />
-                      <span class="truncate">{{ subItem.label }}</span>
-                    </router-link>
-                  </li>
-                </ul>
+                            ? 'shadow-xs bg-sidebar-active font-medium text-white'
+                            : 'text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white',
+                        ]"
+                        :aria-current="isActiveRoute(subItem.to) ? 'page' : undefined"
+                        @click="handleItemClick"
+                      >
+                        <!-- Indicador activo de submódulo -->
+                        <span
+                          v-if="isActiveRoute(subItem.to)"
+                          class="absolute -left-[17px] bottom-1.5 top-1.5 w-1 rounded-r bg-sky-400"
+                          aria-hidden="true"
+                        />
+
+                        <component
+                          :is="subItem.icon"
+                          class="h-3.5 w-3.5 shrink-0"
+                          :class="
+                            isActiveRoute(subItem.to)
+                              ? 'text-sky-300'
+                              : 'text-sidebar-text-muted group-hover:text-white'
+                          "
+                          aria-hidden="true"
+                        />
+                        <span class="truncate">{{ subItem.label }}</span>
+                      </router-link>
+                    </li>
+                  </ul>
+                </transition>
+
+                <!-- Popover flotante en Modo Colapsado (hover o foco de teclado) -->
+                <div
+                  v-if="activePopoverId === item.id && collapsed && !mobileOpen"
+                  class="fixed left-16 z-50 ml-1.5 w-52 rounded-xl border border-border-subtle bg-sidebar-bg p-2 text-sidebar-text shadow-2xl ring-1 ring-black/20"
+                  :style="{ top: `${popoverTop}px` }"
+                  role="menu"
+                  :aria-label="item.label"
+                  @mouseenter="cancelPopoverClose"
+                  @mouseleave="handleGroupMouseLeave"
+                  @keydown.escape="closePopover"
+                >
+                  <!-- Cabecera del popover -->
+                  <div
+                    class="mb-1.5 flex items-center justify-between border-b border-sidebar-border px-2.5 py-1"
+                  >
+                    <span class="text-xs font-bold text-white">{{ item.label }}</span>
+                    <span class="text-[10px] text-sidebar-text-muted"
+                      >{{ item.children?.length }} opciones</span
+                    >
+                  </div>
+
+                  <!-- Lista de submódulos -->
+                  <ul class="space-y-0.5">
+                    <li v-for="subItem in item.children" :key="subItem.id">
+                      <router-link
+                        :to="subItem.to || '/'"
+                        :class="[
+                          'group relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs transition-colors',
+                          'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
+                          isActiveRoute(subItem.to)
+                            ? 'shadow-xs bg-sidebar-active font-medium text-white'
+                            : 'text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white',
+                        ]"
+                        :aria-current="isActiveRoute(subItem.to) ? 'page' : undefined"
+                        role="menuitem"
+                        @click="closePopover"
+                      >
+                        <span
+                          v-if="isActiveRoute(subItem.to)"
+                          class="absolute bottom-1.5 left-0 top-1.5 w-1 rounded-r bg-sky-400"
+                          aria-hidden="true"
+                        />
+                        <component
+                          :is="subItem.icon"
+                          class="h-4 w-4 shrink-0"
+                          :class="
+                            isActiveRoute(subItem.to)
+                              ? 'text-sky-300'
+                              : 'text-sidebar-text-muted group-hover:text-white'
+                          "
+                          aria-hidden="true"
+                        />
+                        <span class="truncate">{{ subItem.label }}</span>
+                      </router-link>
+                    </li>
+                  </ul>
+                </div>
               </div>
             </template>
           </li>
@@ -256,8 +331,13 @@ const emit = defineEmits<{
 const route = useRoute()
 const menu = useNavigationMenu()
 
-// Estado reactivo de grupos abiertos
+// Estado reactivo de grupos abiertos en modo expandido
 const openGroups = ref<Set<string>>(new Set())
+
+// Estado reactivo de popovers flotantes en modo colapsado
+const activePopoverId = ref<string | null>(null)
+const popoverTop = ref<number>(0)
+let closeTimeout: ReturnType<typeof setTimeout> | null = null
 
 const isGroupOpen = (groupId: string): boolean => {
   return openGroups.value.has(groupId)
@@ -268,6 +348,7 @@ const toggleGroup = (groupId: string) => {
     // Si está colapsado, al hacer clic en un grupo expandimos el sidebar
     emit('toggle-collapse')
     openGroups.value.add(groupId)
+    activePopoverId.value = null
     return
   }
 
@@ -308,7 +389,9 @@ watch(
   () => route.path,
   () => {
     autoExpandActiveGroup()
-  }
+    closePopover()
+  },
+  { immediate: true }
 )
 
 const handleItemClick = () => {
@@ -316,4 +399,77 @@ const handleItemClick = () => {
     emit('close-mobile')
   }
 }
+
+// Control del Popover en modo colapsado
+const handleGroupMouseEnter = (event: MouseEvent, groupId: string) => {
+  if (!props.collapsed || props.mobileOpen) return
+  if (closeTimeout) clearTimeout(closeTimeout)
+
+  const trigger = event.currentTarget as HTMLElement
+  const rect = trigger.getBoundingClientRect()
+  popoverTop.value = Math.max(8, rect.top)
+  activePopoverId.value = groupId
+}
+
+const handleGroupMouseLeave = () => {
+  if (!props.collapsed || props.mobileOpen) return
+  closeTimeout = setTimeout(() => {
+    activePopoverId.value = null
+  }, 150)
+}
+
+const cancelPopoverClose = () => {
+  if (closeTimeout) clearTimeout(closeTimeout)
+}
+
+const handleGroupFocusIn = (event: FocusEvent, groupId: string) => {
+  if (!props.collapsed || props.mobileOpen) return
+  if (closeTimeout) clearTimeout(closeTimeout)
+
+  const trigger = event.currentTarget as HTMLElement
+  const rect = trigger.getBoundingClientRect()
+  popoverTop.value = Math.max(8, rect.top)
+  activePopoverId.value = groupId
+}
+
+const handleGroupFocusOut = (event: FocusEvent) => {
+  if (!props.collapsed || props.mobileOpen) return
+  // Si el foco se mueve a un hijo dentro del popover, mantener abierto
+  const relatedTarget = event.relatedTarget as HTMLElement | null
+  if (relatedTarget && relatedTarget.closest('[role="menu"]')) {
+    return
+  }
+  closeTimeout = setTimeout(() => {
+    activePopoverId.value = null
+  }, 150)
+}
+
+const closePopover = () => {
+  if (closeTimeout) clearTimeout(closeTimeout)
+  activePopoverId.value = null
+}
 </script>
+
+<style scoped>
+/* Animación suave de apertura de submódulos respetando prefers-reduced-motion */
+.submenu-enter-active,
+.submenu-leave-active {
+  transition: all 0.2s ease-in-out;
+  max-height: 400px;
+  overflow: hidden;
+}
+
+.submenu-enter-from,
+.submenu-leave-to {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .submenu-enter-active,
+  .submenu-leave-active {
+    transition: none !important;
+  }
+}
+</style>
