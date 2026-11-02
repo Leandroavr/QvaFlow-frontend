@@ -1,3 +1,9 @@
 node_modules
 dist
 .git
+
+# legado: se formatea al migrarlo
+src/modules
+src/core
+src/shared/layouts
+src/shared/directives
