@@ -17,6 +17,8 @@ export const KNOWN_PERMISSIONS = [
   'sales.view',
   'cash.manage',
   'cash.open_close',
+  'cash.exchange', // [PROPUESTA] Tasa de cambio diaria y canje de divisas
+  'cash.view_history', // [PROPUESTA] Historial y consulta de cuadres de caja
 
   // Inventario y Almacenes
   'inventory.view',

@@ -246,6 +246,16 @@ El frontend **NUNCA** hardcodea el catálogo de permisos disponibles en el siste
         "code": "cash.manage",
         "label": "Gestión de Caja",
         "description": "Permite aperturar turnos, canjes de divisas y cuadres."
+      },
+      {
+        "code": "cash.exchange",
+        "label": "Tasa de Cambio y Canje de Divisas",
+        "description": "Permite registrar la tasa diaria de cambio y canje de divisas. [PROPUESTA]"
+      },
+      {
+        "code": "cash.view_history",
+        "label": "Historial de Cuadres de Caja",
+        "description": "Permite consultar cierres de turno y arqueos históricos de caja. [PROPUESTA]"
       }
     ]
   },
