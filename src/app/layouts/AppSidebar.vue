@@ -1,5 +1,7 @@
 <template>
-  <div>
+  <div
+    :class="['shrink-0 transition-all duration-200 ease-in-out', collapsed ? 'lg:w-16' : 'lg:w-60']"
+  >
     <!-- Backdrop móvil (pantallas < 1024px) -->
     <div
       v-if="mobileOpen"
@@ -8,21 +10,21 @@
       @click="$emit('close-mobile')"
     />
 
-    <!-- Panel Sidebar -->
+    <!-- Panel Sidebar (100% de la altura del viewport) -->
     <aside
       :class="[
-        'fixed inset-y-0 left-0 z-50 flex flex-col border-r border-sidebar-border bg-sidebar-bg text-sidebar-text shadow-xl transition-all duration-200 ease-in-out',
+        'fixed inset-y-0 left-0 z-50 flex h-dvh flex-col border-r border-sidebar-border bg-sidebar-bg text-sidebar-text shadow-xl transition-all duration-200 ease-in-out',
         // Comportamiento en escritorio (>= 1024px)
         'lg:static lg:z-auto lg:shadow-none',
-        collapsed ? 'lg:w-16' : 'lg:w-60',
+        collapsed ? 'w-60 lg:w-16' : 'w-60',
         // Comportamiento en móvil (< 1024px)
-        mobileOpen ? 'w-60 translate-x-0' : '-translate-x-full lg:translate-x-0',
+        mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
       ]"
       aria-label="Navegación principal"
     >
-      <!-- Cabecera del Sidebar: Logo y botón de cerrar en móvil -->
+      <!-- Cabecera del Sidebar: Logo y botón de cerrar en móvil (56px) -->
       <div
-        class="flex h-14 min-h-[56px] items-center border-b border-sidebar-border px-3"
+        class="flex h-14 min-h-[56px] shrink-0 items-center border-b border-sidebar-border px-3"
         :class="collapsed ? 'justify-center' : 'justify-between'"
       >
         <!-- Logo expandido -->
@@ -200,9 +202,9 @@
         </ul>
       </nav>
 
-      <!-- Pie del Sidebar: Botón colapsar y versión de la app -->
+      <!-- Pie del Sidebar: Botón colapsar y versión de la app pegado abajo -->
       <div
-        class="bg-sidebar-bg/60 flex items-center justify-between border-t border-sidebar-border p-2.5"
+        class="bg-sidebar-bg/60 mt-auto flex shrink-0 items-center justify-between border-t border-sidebar-border p-2.5"
         :class="collapsed ? 'flex-col gap-2' : ''"
       >
         <!-- Versión de la app -->

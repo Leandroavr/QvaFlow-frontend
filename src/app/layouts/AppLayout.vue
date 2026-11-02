@@ -1,11 +1,11 @@
 <template>
   <!-- Soporte futuro de modo Kiosco (layout: 'fullscreen' en meta de ruta) -->
-  <div v-if="isFullscreen" class="min-h-screen bg-surface-app text-content-primary">
+  <div v-if="isFullscreen" class="h-dvh overflow-auto bg-surface-app text-content-primary">
     <router-view />
   </div>
 
-  <!-- Layout Estándar de Aplicación Desktop -->
-  <div v-else class="flex min-h-screen overflow-x-hidden bg-surface-app text-content-primary">
+  <!-- Layout Estándar de Aplicación Desktop (100% Viewport Height) -->
+  <div v-else class="flex h-dvh overflow-hidden bg-surface-app text-content-primary">
     <!-- Skip Link para Accesibilidad WCAG -->
     <a
       href="#main-content"
@@ -22,18 +22,20 @@
       @close-mobile="mobileOpen = false"
     />
 
-    <!-- Contenedor Derecho: Topbar + Main Content -->
-    <div class="flex min-w-0 flex-1 flex-col overflow-x-hidden">
+    <!-- Contenedor Derecho: Topbar fija + Main Content scrolleable -->
+    <div class="flex h-dvh min-w-0 flex-1 flex-col overflow-hidden">
       <!-- Barra superior (Topbar) con polling único compartido -->
       <AppTopbar :server-status="serverStatus" @open-mobile="mobileOpen = true" />
 
-      <!-- Contenido Principal con ancho máximo razonable -->
+      <!-- Contenido Principal con scroll propio independiente -->
       <main
         id="main-content"
         tabindex="-1"
-        class="mx-auto w-full max-w-7xl flex-1 p-4 focus:outline-none sm:p-6 lg:p-8"
+        class="flex-1 overflow-y-auto overflow-x-hidden p-4 focus:outline-none sm:p-6 lg:p-8"
       >
-        <router-view />
+        <div class="mx-auto w-full max-w-7xl">
+          <router-view />
+        </div>
       </main>
     </div>
   </div>
