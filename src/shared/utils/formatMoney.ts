@@ -8,9 +8,14 @@ import { SUPPORTED_CURRENCIES } from '../types/currency'
  * @param currency Código de moneda admitida ('USD' | 'CUP' | 'CUP_TRANSFER' | 'MLC')
  * @returns Cadena con formato visual (ej: "$ 1,200.50", "₱ 450.00")
  */
+export interface FormatMoneyOptions {
+  showCurrency?: boolean
+}
+
 export function formatMoney(
   amount: DecimalString | number | null | undefined,
-  currency: Currency = 'USD'
+  currency: Currency = 'USD',
+  options: FormatMoneyOptions = { showCurrency: true }
 ): string {
   if (amount === null || amount === undefined || amount === '') {
     return '—'
@@ -34,6 +39,10 @@ export function formatMoney(
 
   const currencyConfig = SUPPORTED_CURRENCIES[currency] || { symbol: currency }
   const sign = isNegative ? '-' : ''
+
+  if (options.showCurrency === false) {
+    return `${sign}${formattedInt}.${formattedDec}`
+  }
 
   return `${sign}${currencyConfig.symbol} ${formattedInt}.${formattedDec}`
 }
