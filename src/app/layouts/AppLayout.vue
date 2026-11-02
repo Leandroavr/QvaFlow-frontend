@@ -38,17 +38,28 @@
         </div>
       </main>
     </div>
+
+    <!-- Contenedor global de Notificaciones Toast (vue-sonner) -->
+    <Toaster
+      :theme="isDark ? 'dark' : 'light'"
+      position="top-right"
+      :rich-colors="true"
+      :close-button="true"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { Toaster } from 'vue-sonner'
 import AppSidebar from './AppSidebar.vue'
 import AppTopbar from './AppTopbar.vue'
 import { useServerStatus } from '../../shared/composables/useServerStatus'
+import { useTheme } from '../../shared/composables/useTheme'
 
 const route = useRoute()
+const { isDark } = useTheme()
 
 // Modo kiosco / fullscreen
 const isFullscreen = computed(() => route.meta.layout === 'fullscreen')
