@@ -339,6 +339,7 @@ const activePopoverId = ref<string | null>(null)
 const popoverTop = ref<number>(0)
 let closeTimeout: ReturnType<typeof setTimeout> | null = null
 
+// Funciones de navegación y estado de grupos
 const isGroupOpen = (groupId: string): boolean => {
   return openGroups.value.has(groupId)
 }
@@ -381,19 +382,6 @@ const autoExpandActiveGroup = () => {
   })
 }
 
-onMounted(() => {
-  autoExpandActiveGroup()
-})
-
-watch(
-  () => route.path,
-  () => {
-    autoExpandActiveGroup()
-    closePopover()
-  },
-  { immediate: true }
-)
-
 const handleItemClick = () => {
   if (props.mobileOpen) {
     emit('close-mobile')
@@ -401,6 +389,11 @@ const handleItemClick = () => {
 }
 
 // Control del Popover en modo colapsado
+const closePopover = () => {
+  if (closeTimeout) clearTimeout(closeTimeout)
+  activePopoverId.value = null
+}
+
 const handleGroupMouseEnter = (event: MouseEvent, groupId: string) => {
   if (!props.collapsed || props.mobileOpen) return
   if (closeTimeout) clearTimeout(closeTimeout)
@@ -444,10 +437,19 @@ const handleGroupFocusOut = (event: FocusEvent) => {
   }, 150)
 }
 
-const closePopover = () => {
-  if (closeTimeout) clearTimeout(closeTimeout)
-  activePopoverId.value = null
-}
+// Ciclo de vida y observadores (declarados al final tras todas las funciones que invocan)
+onMounted(() => {
+  autoExpandActiveGroup()
+})
+
+watch(
+  () => route.path,
+  () => {
+    autoExpandActiveGroup()
+    closePopover()
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>
