@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <PageHeader :title="pageTitle" :description="pageDescription" />
 
-    <div class="border-border-default rounded-xl border bg-surface-card p-10 text-center shadow-sm">
+    <div class="shadow-xs rounded-xl border border-border-subtle bg-surface-card p-10 text-center">
       <div
         class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400"
       >
@@ -17,7 +17,7 @@
 
       <div
         v-if="requiredPermission"
-        class="border-border-default mt-6 inline-flex items-center gap-2 rounded-lg border bg-surface-subtle px-3 py-1.5 text-xs text-content-secondary"
+        class="mt-6 inline-flex items-center gap-2 rounded-lg border border-border-subtle bg-surface-sunken px-3 py-1.5 text-xs text-content-secondary"
       >
         <span class="font-medium text-content-muted">Permiso requerido:</span>
         <code class="rounded bg-surface-muted px-1.5 py-0.5 font-mono text-[11px] text-primary">

@@ -16,10 +16,14 @@
   --qvaflow-accent-hover: #b81d2d;
   --qvaflow-accent-subtle: #fdf2f3;
 
-  /* Superficies y Fondos (Modo Claro) */
-  --color-bg-app: #f8fafc;
-  --color-bg-card: #ffffff;
-  --color-bg-subtle: #f1f5f9;
+  /* Tres niveles de superficie (Modo Claro) */
+  --surface-page: #f8fafc;
+  --surface-card: #ffffff;
+  --surface-sunken: #f1f5f9;
+
+  --color-bg-app: var(--surface-page);
+  --color-bg-card: var(--surface-card);
+  --color-bg-subtle: var(--surface-sunken);
   --color-bg-muted: #e2e8f0;
   --color-bg-elevated: #ffffff;
 
@@ -30,9 +34,13 @@
   --color-text-inverse: #ffffff;
 
   /* Bordes y Anillos (Modo Claro) */
-  --color-border-subtle: #e2e8f0;
-  --color-border-default: #cbd5e1;
-  --color-border-hover: #94a3b8;
+  --border-subtle: rgba(15, 23, 42, 0.08);
+  --border-default: #cbd5e1;
+  --border-strong: #94a3b8;
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+  --color-border-hover: #64748b;
   --color-border-focus: #1e3a6b;
 
   /* Semántica (Modo Claro) */
@@ -68,7 +76,7 @@
 
   /* Topbar Tokens (Modo Claro) */
   --topbar-bg: #ffffff;
-  --topbar-border: #e2e8f0;
+  --topbar-border: var(--border-subtle);
   --topbar-text: #0f172a;
   --topbar-text-muted: #64748b;
   --topbar-item-hover: #f1f5f9;
@@ -108,12 +116,16 @@
   --qvaflow-accent-hover: #dc2626;
   --qvaflow-accent-subtle: #311517;
 
-  /* Superficies y Fondos (Modo Oscuro) */
-  --color-bg-app: #0b132b;
-  --color-bg-card: #151f3a;
-  --color-bg-subtle: #1c2746;
-  --color-bg-muted: #263359;
-  --color-bg-elevated: #222e52;
+  /* Tres niveles de superficie en Modo Oscuro */
+  --surface-page: #0d1527;
+  --surface-card: #18233c;
+  --surface-sunken: #090f1d;
+
+  --color-bg-app: var(--surface-page);
+  --color-bg-card: var(--surface-card);
+  --color-bg-subtle: var(--surface-sunken);
+  --color-bg-muted: #24304f;
+  --color-bg-elevated: #1e2c4a;
 
   /* Textos (Modo Oscuro) */
   --color-text-primary: #f8fafc;
@@ -122,9 +134,13 @@
   --color-text-inverse: #0f172a;
 
   /* Bordes y Anillos (Modo Oscuro) */
-  --color-border-subtle: #243054;
-  --color-border-default: #334168;
-  --color-border-hover: #475569;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-default: rgba(255, 255, 255, 0.14);
+  --border-strong: #475569;
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+  --color-border-hover: #64748b;
   --color-border-focus: #2f6fd6;
 
   /* Semántica (Modo Oscuro) */
@@ -159,8 +175,8 @@
   --sidebar-item-active-border: #38bdf8;
 
   /* Topbar Tokens (Modo Oscuro) */
-  --topbar-bg: #151f3a;
-  --topbar-border: #243054;
+  --topbar-bg: #121c32;
+  --topbar-border: var(--border-subtle);
   --topbar-text: #f8fafc;
   --topbar-text-muted: #94a3b8;
   --topbar-item-hover: #1c2746;

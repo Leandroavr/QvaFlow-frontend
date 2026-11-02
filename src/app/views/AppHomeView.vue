@@ -11,12 +11,12 @@
       <div
         v-for="card in skeletonCards"
         :key="card.id"
-        class="border-border-default shadow-xs rounded-xl border bg-surface-card p-5"
+        class="shadow-xs rounded-xl border border-border-subtle bg-surface-card p-5"
       >
         <div class="flex items-center justify-between">
           <span class="text-xs font-medium text-content-muted">{{ card.label }}</span>
           <div
-            class="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-subtle text-content-muted"
+            class="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-sunken text-content-muted"
           >
             <component :is="card.icon" class="h-4 w-4" aria-hidden="true" />
           </div>
@@ -24,14 +24,14 @@
 
         <!-- Barras de carga esqueleto animadas -->
         <div class="mt-4 animate-pulse space-y-2">
-          <div class="h-7 w-24 rounded-md bg-surface-muted"></div>
-          <div class="h-3 w-36 rounded-md bg-surface-subtle"></div>
+          <div class="h-7 w-24 rounded-md bg-surface-sunken"></div>
+          <div class="bg-surface-sunken/80 h-3 w-36 rounded-md"></div>
         </div>
       </div>
     </div>
 
     <!-- Panel de bienvenida e información de sesión -->
-    <div class="border-border-default shadow-xs rounded-xl border bg-surface-card p-6">
+    <div class="shadow-xs rounded-xl border border-border-subtle bg-surface-card p-6">
       <div class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div class="flex items-center gap-4">
           <div
