@@ -139,7 +139,7 @@ describe('AppLayout Smoke Tests', () => {
     const text = wrapper.text()
     expect(text).toContain('Inventario')
     expect(text).toContain('Stock')
-    expect(text).toContain('Almacenes y localizaciones')
+    expect(text).toContain('Almacenes')
 
     wrapper.unmount()
   })

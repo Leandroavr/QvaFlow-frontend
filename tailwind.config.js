@@ -24,6 +24,7 @@ export default {
           page: 'var(--surface-page)',
           card: 'var(--surface-card)',
           sunken: 'var(--surface-sunken)',
+          skeleton: 'var(--surface-skeleton)',
           app: 'var(--surface-page)',
           subtle: 'var(--surface-sunken)',
           muted: 'var(--color-bg-muted)',

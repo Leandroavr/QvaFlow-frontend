@@ -20,6 +20,7 @@
   --surface-page: #f8fafc;
   --surface-card: #ffffff;
   --surface-sunken: #f1f5f9;
+  --surface-skeleton: #e2e8f0;
 
   --color-bg-app: var(--surface-page);
   --color-bg-card: var(--surface-card);
@@ -120,6 +121,7 @@
   --surface-page: #0d1527;
   --surface-card: #18233c;
   --surface-sunken: #090f1d;
+  --surface-skeleton: #233352;
 
   --color-bg-app: var(--surface-page);
   --color-bg-card: var(--surface-card);

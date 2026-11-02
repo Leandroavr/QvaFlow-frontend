@@ -31,27 +31,27 @@
         <router-link
           v-if="!collapsed || mobileOpen"
           to="/"
-          class="flex items-center gap-2 rounded-md p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar-bg"
+          class="flex items-center gap-2 rounded-md p-1 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar-bg"
           title="QvaFlow - Inicio"
         >
           <img :src="logoHorizontalWhite" alt="QvaFlow Logo" class="h-7 w-auto object-contain" />
         </router-link>
 
-        <!-- Emblema / Icono colapsado (en placa redondeada) -->
+        <!-- Emblema / Icono colapsado (en placa clara redondeada de 32px y alto contraste) -->
         <router-link
           v-else
           to="/"
-          class="shadow-xs flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 p-1 transition-colors hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar-bg"
+          class="shadow-xs flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white p-1 ring-1 ring-white/20 transition-all hover:bg-slate-100 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar-bg"
           title="QvaFlow - Inicio"
         >
-          <img :src="logoIcon" alt="QvaFlow" class="h-6 w-6 object-contain" />
+          <img :src="logoIcon" alt="QvaFlow" class="h-8 w-8 object-contain" />
         </router-link>
 
         <!-- Botón cerrar para vista móvil -->
         <button
           v-if="mobileOpen"
           type="button"
-          class="flex h-8 w-8 items-center justify-center rounded-lg text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white lg:hidden"
+          class="flex h-8 w-8 items-center justify-center rounded-lg text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 lg:hidden"
           aria-label="Cerrar menú"
           @click="$emit('close-mobile')"
         >
@@ -69,14 +69,14 @@
                 :to="item.to || '/'"
                 :class="[
                   'group relative flex items-center gap-3 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors',
-                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
+                  'focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
                   isActiveRoute(item.to)
                     ? 'shadow-xs bg-sidebar-active font-semibold text-white'
                     : 'text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white',
                   collapsed && !mobileOpen ? 'justify-center' : '',
                 ]"
                 :aria-current="isActiveRoute(item.to) ? 'page' : undefined"
-                :title="collapsed && !mobileOpen ? item.label : undefined"
+                :title="item.label"
                 @click="handleItemClick"
               >
                 <!-- Indicador activo lateral -->
@@ -97,7 +97,7 @@
                   aria-hidden="true"
                 />
 
-                <span v-if="!collapsed || mobileOpen" class="truncate">
+                <span v-if="!collapsed || mobileOpen" class="truncate" :title="item.label">
                   {{ item.label }}
                 </span>
               </router-link>
@@ -115,7 +115,7 @@
                   type="button"
                   :class="[
                     'group relative flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors',
-                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
+                    'focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
                     isGroupActive(item)
                       ? 'text-white'
                       : 'text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white',
@@ -123,7 +123,7 @@
                   ]"
                   :aria-expanded="isGroupOpen(item.id)"
                   :aria-haspopup="collapsed && !mobileOpen ? 'menu' : undefined"
-                  :title="collapsed && !mobileOpen ? item.label : undefined"
+                  :title="item.label"
                   @click="toggleGroup(item.id)"
                   @focusin="handleGroupFocusIn($event, item.id)"
                   @focusout="handleGroupFocusOut"
@@ -183,12 +183,13 @@
                         :to="subItem.to || '/'"
                         :class="[
                           'group relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs transition-colors',
-                          'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
+                          'focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
                           isActiveRoute(subItem.to)
                             ? 'shadow-xs bg-sidebar-active font-medium text-white'
                             : 'text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white',
                         ]"
                         :aria-current="isActiveRoute(subItem.to) ? 'page' : undefined"
+                        :title="subItem.label"
                         @click="handleItemClick"
                       >
                         <!-- Indicador activo de submódulo -->
@@ -208,7 +209,7 @@
                           "
                           aria-hidden="true"
                         />
-                        <span class="truncate">{{ subItem.label }}</span>
+                        <span class="truncate" :title="subItem.label">{{ subItem.label }}</span>
                       </router-link>
                     </li>
                   </ul>
@@ -242,12 +243,13 @@
                         :to="subItem.to || '/'"
                         :class="[
                           'group relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs transition-colors',
-                          'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
+                          'focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
                           isActiveRoute(subItem.to)
                             ? 'shadow-xs bg-sidebar-active font-medium text-white'
                             : 'text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white',
                         ]"
                         :aria-current="isActiveRoute(subItem.to) ? 'page' : undefined"
+                        :title="subItem.label"
                         role="menuitem"
                         @click="closePopover"
                       >
@@ -266,7 +268,7 @@
                           "
                           aria-hidden="true"
                         />
-                        <span class="truncate">{{ subItem.label }}</span>
+                        <span class="truncate" :title="subItem.label">{{ subItem.label }}</span>
                       </router-link>
                     </li>
                   </ul>
@@ -293,7 +295,7 @@
         <!-- Botón de colapsar / expandir (Escritorio) -->
         <button
           type="button"
-          class="hidden h-7 w-7 items-center justify-center rounded-md text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 lg:flex"
+          class="hidden h-7 w-7 items-center justify-center rounded-md text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 lg:flex"
           :aria-label="
             collapsed ? 'Expandir barra lateral (Ctrl+B)' : 'Colapsar barra lateral (Ctrl+B)'
           "

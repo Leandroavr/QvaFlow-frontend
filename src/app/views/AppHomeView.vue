@@ -24,8 +24,8 @@
 
         <!-- Barras de carga esqueleto animadas -->
         <div class="mt-4 animate-pulse space-y-2">
-          <div class="h-7 w-24 rounded-md bg-surface-sunken"></div>
-          <div class="bg-surface-sunken/80 h-3 w-36 rounded-md"></div>
+          <div class="h-7 w-24 rounded-md bg-surface-skeleton"></div>
+          <div class="bg-surface-skeleton/80 h-3 w-36 rounded-md"></div>
         </div>
       </div>
     </div>

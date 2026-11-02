@@ -81,7 +81,7 @@ export const APP_MENU: MenuItem[] = [
       },
       {
         id: 'cash-exchange',
-        label: 'Tasa de cambio y canje de divisas',
+        label: 'Cambio y canje de divisas',
         icon: ArrowLeftRight,
         to: '/cash/exchange',
         permission: 'cash.exchange',
@@ -109,7 +109,7 @@ export const APP_MENU: MenuItem[] = [
       },
       {
         id: 'inventory-warehouses',
-        label: 'Almacenes y localizaciones',
+        label: 'Almacenes',
         icon: Warehouse,
         to: '/inventory/warehouses',
         permission: 'inventory.view',

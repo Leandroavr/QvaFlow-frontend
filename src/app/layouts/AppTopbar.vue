@@ -8,7 +8,7 @@
       <!-- Botón de menú móvil (< 1024px) -->
       <button
         type="button"
-        class="flex h-9 w-9 items-center justify-center rounded-lg text-topbar-text-muted hover:bg-topbar-hover hover:text-topbar-text focus:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:hidden"
+        class="flex h-9 w-9 items-center justify-center rounded-lg text-topbar-text-muted hover:bg-topbar-hover hover:text-topbar-text focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary lg:hidden"
         aria-label="Abrir menú de navegación"
         @click="$emit('open-mobile')"
       >
@@ -19,7 +19,7 @@
       <nav class="flex items-center gap-1.5 text-xs font-medium" aria-label="Migas de pan">
         <router-link
           to="/"
-          class="flex items-center gap-1 rounded px-1 py-0.5 text-topbar-text-muted transition-colors hover:text-topbar-text focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          class="flex items-center gap-1 rounded px-1 py-0.5 text-topbar-text-muted transition-colors hover:text-topbar-text focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           title="Ir a Inicio"
         >
           <Home class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -74,7 +74,7 @@
         <button
           type="button"
           :class="[
-            'flex h-9 items-center gap-2 rounded-lg px-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+            'flex h-9 items-center gap-2 rounded-lg px-2 transition-colors focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
             userMenuOpen ? 'bg-topbar-hover' : 'hover:bg-topbar-hover',
           ]"
           :aria-expanded="userMenuOpen"
@@ -139,7 +139,7 @@
           <div class="py-1">
             <button
               type="button"
-              class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-state-error transition-colors hover:bg-state-error-bg focus:outline-none focus-visible:ring-2 focus-visible:ring-state-error"
+              class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-state-error transition-colors hover:bg-state-error-bg focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-state-error"
               role="menuitem"
               @click="handleLogout"
             >
