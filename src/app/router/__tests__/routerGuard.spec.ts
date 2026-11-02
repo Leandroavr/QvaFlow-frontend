@@ -78,4 +78,24 @@ describe('Router Navigation Guard', () => {
       query: { permission: 'system.config' },
     })
   })
+
+  it('redirige a /forbidden cuando un vendedor sin permiso intenta acceder a /admin/users', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'vendedor', password: 'password123' })
+
+    const to = {
+      name: 'admin-users',
+      fullPath: '/admin/users',
+      meta: { permission: 'users.manage' },
+    } as unknown as RouteLocationNormalized
+
+    const from = {} as RouteLocationNormalized
+
+    const result = await setupNavigationGuard(to, from)
+
+    expect(result).toEqual({
+      name: 'forbidden',
+      query: { permission: 'users.manage' },
+    })
+  })
 })
