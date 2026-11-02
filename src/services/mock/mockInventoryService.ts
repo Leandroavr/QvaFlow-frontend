@@ -548,7 +548,9 @@ export class MockInventoryService implements InventoryService {
 
   async updateWarehouse(code: string, dto: UpdateWarehouseDto): Promise<Warehouse> {
     await this.delay(200)
-    const index = this.warehouses.findIndex((w) => w.code.toUpperCase() === code.trim().toUpperCase())
+    const index = this.warehouses.findIndex(
+      (w) => w.code.toUpperCase() === code.trim().toUpperCase()
+    )
     if (index === -1) {
       throw new ApiError({ code: 'WAREHOUSE_NOT_FOUND', message: 'Almacén no encontrado.' }, 404)
     }
@@ -616,7 +618,10 @@ export class MockInventoryService implements InventoryService {
     await this.delay(150)
     const found = this.locations.find((l) => l.code.toUpperCase() === code.trim().toUpperCase())
     if (!found) {
-      throw new ApiError({ code: 'LOCATION_NOT_FOUND', message: 'Localización no encontrada.' }, 404)
+      throw new ApiError(
+        { code: 'LOCATION_NOT_FOUND', message: 'Localización no encontrada.' },
+        404
+      )
     }
     return {
       ...found,
@@ -665,9 +670,14 @@ export class MockInventoryService implements InventoryService {
 
   async updateLocation(code: string, dto: UpdateLocationDto): Promise<Location> {
     await this.delay(200)
-    const index = this.locations.findIndex((l) => l.code.toUpperCase() === code.trim().toUpperCase())
+    const index = this.locations.findIndex(
+      (l) => l.code.toUpperCase() === code.trim().toUpperCase()
+    )
     if (index === -1) {
-      throw new ApiError({ code: 'LOCATION_NOT_FOUND', message: 'Localización no encontrada.' }, 404)
+      throw new ApiError(
+        { code: 'LOCATION_NOT_FOUND', message: 'Localización no encontrada.' },
+        404
+      )
     }
 
     if (dto.name !== undefined) {
@@ -692,7 +702,10 @@ export class MockInventoryService implements InventoryService {
     const cleanCode = code.trim().toUpperCase()
     const index = this.locations.findIndex((l) => l.code.toUpperCase() === cleanCode)
     if (index === -1) {
-      throw new ApiError({ code: 'LOCATION_NOT_FOUND', message: 'Localización no encontrada.' }, 404)
+      throw new ApiError(
+        { code: 'LOCATION_NOT_FOUND', message: 'Localización no encontrada.' },
+        404
+      )
     }
 
     // Regla de integridad 409: no se puede borrar si tiene stock
