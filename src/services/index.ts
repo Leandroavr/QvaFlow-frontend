@@ -2,6 +2,10 @@ import type { AuthService } from './interfaces/authService'
 import { MockAuthService } from './mock/mockAuthService'
 import { HttpAuthService } from './http/httpAuthService'
 
+import type { InventoryService } from './interfaces/inventoryService'
+import { MockInventoryService } from './mock/mockInventoryService'
+import { HttpInventoryService } from './http/httpInventoryService'
+
 const useMocks = import.meta.env.VITE_USE_MOCKS !== 'false'
 
 /**
@@ -12,5 +16,16 @@ const useMocks = import.meta.env.VITE_USE_MOCKS !== 'false'
  */
 export const authService: AuthService = useMocks ? new MockAuthService() : new HttpAuthService()
 
+/**
+ * Instancia singleton de InventoryService.
+ * Se alterna automáticamente según la variable de entorno VITE_USE_MOCKS:
+ * - VITE_USE_MOCKS=true  -> MockInventoryService (datos mock en memoria)
+ * - VITE_USE_MOCKS=false -> HttpInventoryService (llamadas HTTP a Symfony /api)
+ */
+export const inventoryService: InventoryService = useMocks
+  ? new MockInventoryService()
+  : new HttpInventoryService()
+
 export * from './interfaces/authService'
+export * from './interfaces/inventoryService'
 export * from './interfaces/baseService'
