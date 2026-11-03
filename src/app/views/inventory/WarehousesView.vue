@@ -6,10 +6,10 @@
       description="Configuración de espacios físicos de almacenamiento, pasillos y estanterías."
     />
 
-    <!-- Layout a Dos Paneles (Desktop: ~40% / ~60%) -->
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
-      <!-- PANEL IZQUIERDO: Almacenes (5 cols en lg) -->
-      <div class="flex flex-col gap-3 lg:col-span-5">
+    <!-- Layout a Dos Paneles (Desktop: ~55% / ~45%, apilado bajo 1280px) -->
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-12">
+      <!-- PANEL IZQUIERDO: Almacenes (7 cols en xl ~58%) -->
+      <div class="flex flex-col gap-3 xl:col-span-7">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <h2 class="text-sm font-bold text-content-primary">Almacenes</h2>
@@ -48,7 +48,7 @@
         >
           <!-- Celda de Código -->
           <template #cell-code="{ value, row }">
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1.5 whitespace-nowrap">
               <span
                 v-if="selectedWarehouseCode === row.code"
                 class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
@@ -60,9 +60,11 @@
             </div>
           </template>
 
-          <!-- Celda de Nombre -->
+          <!-- Celda de Nombre con truncate y title -->
           <template #cell-name="{ value }">
-            <span class="font-medium text-content-primary">{{ value }}</span>
+            <span class="block truncate font-medium text-content-primary" :title="value">
+              {{ value }}
+            </span>
           </template>
 
           <!-- Celda de Zonas -->
@@ -77,8 +79,8 @@
         </DataTable>
       </div>
 
-      <!-- PANEL DERECHO: Localizaciones del almacén seleccionado (7 cols en lg) -->
-      <div class="flex flex-col gap-3 lg:col-span-7">
+      <!-- PANEL DERECHO: Localizaciones del almacén seleccionado (5 cols en xl ~42%) -->
+      <div class="flex flex-col gap-3 xl:col-span-5">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <h2 class="text-sm font-bold text-content-primary">
@@ -147,6 +149,19 @@
           <!-- Celda de Stock -->
           <template #cell-stockUnits="{ value }">
             <span class="font-semibold tabular-nums text-content-primary">{{ value ?? 0 }}</span>
+          </template>
+
+          <!-- Acción en estado vacío de localizaciones: Nueva localización con v-can -->
+          <template #empty-actions>
+            <BaseButton
+              v-if="can('warehouses.manage')"
+              variant="primary"
+              density="compact"
+              :icon="Plus"
+              @click="openCreateLocation"
+            >
+              Nueva localización
+            </BaseButton>
           </template>
         </DataTable>
       </div>
@@ -313,8 +328,8 @@
     <!-- DIÁLOGO DE CONFIRMACIÓN: Eliminar Almacén -->
     <ConfirmDialog
       :open="isDeleteWarehouseOpen"
-      title="¿Eliminar almacén?"
-      :message="`¿Está seguro de que desea eliminar el almacén '${warehouseToDelete?.name}'? Esta acción no se puede deshacer.`"
+      title="Eliminar almacén"
+      :message="`Se eliminará el almacén '${warehouseToDelete?.name}'. Esta acción no se puede deshacer.`"
       confirm-text="Eliminar almacén"
       variant="danger"
       :loading="isDeletingWarehouse"
@@ -326,8 +341,8 @@
     <!-- DIÁLOGO DE CONFIRMACIÓN: Eliminar Localización -->
     <ConfirmDialog
       :open="isDeleteLocationOpen"
-      title="¿Eliminar localización?"
-      :message="`¿Está seguro de que desea eliminar la localización '${locationToDelete?.name || locationToDelete?.code}'?`"
+      title="Eliminar localización"
+      :message="`Se eliminará la localización '${locationToDelete?.name || locationToDelete?.code}'. Esta acción no se puede deshacer.`"
       confirm-text="Eliminar localización"
       variant="danger"
       :loading="isDeletingLocation"
@@ -386,17 +401,18 @@ const warehouseColumns: DataTableColumn<Warehouse>[] = [
   {
     key: 'code',
     title: 'Código',
-    width: '120px',
+    width: '130px',
   },
   {
     key: 'name',
     title: 'Nombre',
+    minWidth: '180px',
   },
   {
     key: 'locationsCount',
     title: 'Zonas',
     align: 'right',
-    width: '80px',
+    width: '70px',
   },
   {
     key: 'stockUnits',

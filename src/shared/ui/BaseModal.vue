@@ -13,6 +13,7 @@
           'animate-in fade-in zoom-in-95 max-h-[85vh]',
           sizeClasses[size],
         ]"
+        @open-auto-focus="handleOpenAutoFocus"
       >
         <!-- Cabecera del modal -->
         <div
@@ -72,11 +73,13 @@ interface Props {
   title: string
   description?: string
   size?: ModalSize
+  autoFocusFirstInput?: boolean
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   description: '',
   size: 'md',
+  autoFocusFirstInput: true,
 })
 
 const emit = defineEmits<{
@@ -89,6 +92,19 @@ const sizeClasses: Record<ModalSize, string> = {
   md: 'max-w-md',
   lg: 'max-w-lg',
   xl: 'max-w-2xl',
+}
+
+const handleOpenAutoFocus = (e: Event) => {
+  if (!props.autoFocusFirstInput) return
+  const el = e.currentTarget as HTMLElement | null
+  if (!el) return
+  const input = el.querySelector<HTMLElement>(
+    'input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [data-autofocus]'
+  )
+  if (input) {
+    e.preventDefault()
+    input.focus()
+  }
 }
 
 const handleOpenUpdate = (val: boolean) => {

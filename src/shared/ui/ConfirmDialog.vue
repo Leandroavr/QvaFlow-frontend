@@ -2,8 +2,8 @@
   <BaseModal
     :open="open"
     :title="title"
-    :description="message"
     :size="size"
+    :auto-focus-first-input="false"
     @update:open="handleOpenUpdate"
   >
     <div class="flex items-start gap-3.5 py-1">
@@ -15,11 +15,13 @@
         <component :is="iconComponent" class="h-5 w-5" :class="iconClasses[variant]" />
       </div>
 
-      <div class="flex-1 text-xs text-content-primary sm:text-sm">
-        <slot>
-          <p>{{ message }}</p>
-        </slot>
-      </div>
+      <DialogDescription as-child>
+        <div class="flex-1 text-xs text-content-primary sm:text-sm">
+          <slot>
+            <p>{{ message }}</p>
+          </slot>
+        </div>
+      </DialogDescription>
     </div>
 
     <template #actions>
@@ -47,6 +49,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
+import { DialogDescription } from 'reka-ui'
 import { AlertTriangle, AlertCircle, HelpCircle } from 'lucide-vue-next'
 import BaseModal from './BaseModal.vue'
 import type { ModalSize } from './BaseModal.vue'
