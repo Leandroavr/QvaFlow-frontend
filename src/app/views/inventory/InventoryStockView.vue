@@ -649,6 +649,7 @@ function handleQueryChange(params: { page: number; perPage: number; sort: string
 // Sincronización con Vue Router (URL query)
 let router: ReturnType<typeof useRouter> | undefined
 let route: ReturnType<typeof useRoute> | undefined
+let isUpdatingUrl = false
 
 try {
   router = useRouter()
@@ -658,7 +659,7 @@ try {
 }
 
 function syncToUrl() {
-  if (!router || !route) return
+  if (!router || !route || isUpdatingUrl) return
   const query: Record<string, string> = {}
   if (search.value.trim()) query.search = search.value.trim()
   if (warehouse.value) query.warehouse = warehouse.value
@@ -669,17 +670,34 @@ function syncToUrl() {
   if (perPage.value !== 10) query.perPage = String(perPage.value)
   if (sort.value && sort.value !== 'productName:asc') query.sort = sort.value
 
-  router.replace({ query }).catch(() => {})
+  const currentQuery = route.query || {}
+  const isDifferent =
+    Object.keys(query).length !== Object.keys(currentQuery).length ||
+    Object.entries(query).some(([k, v]) => String(currentQuery[k] ?? '') !== String(v))
+
+  if (isDifferent) {
+    isUpdatingUrl = true
+    router
+      .replace({ query })
+      .finally(() => {
+        isUpdatingUrl = false
+      })
+      .catch(() => {
+        isUpdatingUrl = false
+      })
+  }
 }
 
 watch([search, warehouse, location, category, status, page, perPage, sort], () => {
-  syncToUrl()
+  if (!isUpdatingUrl) {
+    syncToUrl()
+  }
 })
 
 watch(
   () => route?.query,
   (q) => {
-    if (!q) return
+    if (!q || isUpdatingUrl) return
     const newSearch = (q.search as string) || ''
     const newWarehouse = (q.warehouse as string) || ''
     const newLocation = (q.location as string) || ''

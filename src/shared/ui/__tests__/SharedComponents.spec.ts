@@ -12,7 +12,8 @@ import BaseTabs from '../BaseTabs.vue'
 import BaseDropdownMenu from '../BaseDropdownMenu.vue'
 import BaseTooltip from '../BaseTooltip.vue'
 import BaseFormField from '../BaseFormField.vue'
-import { TrendingUp, Package } from 'lucide-vue-next'
+import BaseButton from '../BaseButton.vue'
+import { TrendingUp, Package, Plus } from 'lucide-vue-next'
 
 describe('Componentes Primitivos UI (src/shared/ui)', () => {
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>
@@ -318,6 +319,33 @@ describe('Componentes Primitivos UI (src/shared/ui)', () => {
       wrapper.setProps({ error: 'El campo es obligatorio' })
       expect(consoleErrorSpy).not.toHaveBeenCalled()
       expect(consoleWarnSpy).not.toHaveBeenCalled()
+      wrapper.unmount()
+    })
+  })
+
+  describe('10. BaseButton', () => {
+    it('renderiza icono y texto en una sola línea con clases inline-flex, items-center, justify-center, gap-2 y whitespace-nowrap', () => {
+      const wrapper = mount(BaseButton, {
+        props: {
+          icon: Plus,
+        },
+        slots: {
+          default: 'Nuevo almacén',
+        },
+      })
+
+      expect(wrapper.exists()).toBe(true)
+      const buttonClasses = wrapper.classes()
+      expect(buttonClasses).toContain('inline-flex')
+      expect(buttonClasses).toContain('items-center')
+      expect(buttonClasses).toContain('justify-center')
+      expect(buttonClasses).toContain('gap-2')
+      expect(buttonClasses).toContain('whitespace-nowrap')
+
+      // Verificar que el contenedor de texto también previene saltos de línea
+      const textSpan = wrapper.find('span.whitespace-nowrap')
+      expect(textSpan.exists()).toBe(true)
+      expect(textSpan.text()).toBe('Nuevo almacén')
       wrapper.unmount()
     })
   })
