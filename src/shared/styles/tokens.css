@@ -5,6 +5,9 @@
    ========================================================================== */
 
 :root {
+  /* Esquema de color para controles y scrollbars del navegador */
+  color-scheme: light;
+
   /* Marca QvaFlow */
   --qvaflow-primary: #1e3a6b;
   --qvaflow-primary-hover: #162e56;
@@ -102,6 +105,9 @@
 }
 
 .dark {
+  /* Esquema de color para controles y scrollbars del navegador en modo oscuro */
+  color-scheme: dark;
+
   /* Densidad de controles */
   --control-height-comfortable: 48px;
   --control-height-compact: 36px;

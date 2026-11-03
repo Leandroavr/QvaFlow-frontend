@@ -1,6 +1,6 @@
 <template>
   <div
-    class="border-border-default flex flex-wrap items-center justify-between gap-3 border-t bg-surface-card px-4 py-2.5 text-xs text-content-secondary"
+    class="flex flex-wrap items-center justify-between gap-3 border-t border-border-subtle bg-surface-card px-4 py-2.5 text-xs text-content-secondary"
   >
     <!-- Rango de elementos mostrados -->
     <div class="flex items-center gap-2">
@@ -29,7 +29,7 @@
         <button
           type="button"
           :disabled="disabled || page <= 1"
-          class="border-border-default flex h-8 w-8 items-center justify-center rounded-lg border bg-surface-card text-content-primary transition-colors hover:bg-surface-sunken focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40"
+          class="flex h-8 w-8 items-center justify-center rounded-lg border border-border-subtle bg-surface-card text-content-primary transition-colors hover:bg-surface-sunken focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40"
           title="Primera página"
           aria-label="Primera página"
           @click="goToPage(1)"
@@ -40,7 +40,7 @@
         <button
           type="button"
           :disabled="disabled || page <= 1"
-          class="border-border-default flex h-8 w-8 items-center justify-center rounded-lg border bg-surface-card text-content-primary transition-colors hover:bg-surface-sunken focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40"
+          class="flex h-8 w-8 items-center justify-center rounded-lg border border-border-subtle bg-surface-card text-content-primary transition-colors hover:bg-surface-sunken focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40"
           title="Página anterior"
           aria-label="Página anterior"
           @click="goToPage(page - 1)"
@@ -55,7 +55,7 @@
         <button
           type="button"
           :disabled="disabled || page >= totalPages"
-          class="border-border-default flex h-8 w-8 items-center justify-center rounded-lg border bg-surface-card text-content-primary transition-colors hover:bg-surface-sunken focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40"
+          class="flex h-8 w-8 items-center justify-center rounded-lg border border-border-subtle bg-surface-card text-content-primary transition-colors hover:bg-surface-sunken focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40"
           title="Página siguiente"
           aria-label="Página siguiente"
           @click="goToPage(page + 1)"
@@ -66,7 +66,7 @@
         <button
           type="button"
           :disabled="disabled || page >= totalPages"
-          class="border-border-default flex h-8 w-8 items-center justify-center rounded-lg border bg-surface-card text-content-primary transition-colors hover:bg-surface-sunken focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40"
+          class="flex h-8 w-8 items-center justify-center rounded-lg border border-border-subtle bg-surface-card text-content-primary transition-colors hover:bg-surface-sunken focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40"
           title="Última página"
           aria-label="Última página"
           @click="goToPage(totalPages)"

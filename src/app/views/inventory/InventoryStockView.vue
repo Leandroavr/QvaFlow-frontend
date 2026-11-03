@@ -233,10 +233,22 @@
       <!-- Celda personalizada: Estado con Dot -->
       <template #cell-status="{ row }">
         <div class="flex justify-center">
-          <BaseBadge :variant="getStatusBadgeVariant(row.status)" :dot="true" size="sm">
+          <BaseBadge
+            :variant="getStatusBadgeVariant(row.status)"
+            :dot="true"
+            size="sm"
+            class="whitespace-nowrap"
+          >
             {{ getStatusBadgeLabel(row.status) }}
           </BaseBadge>
         </div>
+      </template>
+
+      <!-- Celda personalizada: Actualizado (visible en pantallas >= 1440px) -->
+      <template #cell-updatedAt="{ value }">
+        <span class="whitespace-nowrap font-mono text-[11px] text-content-muted">
+          {{ formatDateShort(value) }}
+        </span>
       </template>
     </DataTable>
 
@@ -361,7 +373,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { toast } from 'vue-sonner'
 import {
@@ -452,36 +464,44 @@ const categoryOptions: SelectOption[] = [
 // Opciones de Estado de Stock
 const statusOptions: SelectOption[] = [
   { label: 'Normal', value: 'ok' },
-  { label: 'Bajo stock', value: 'low' },
+  { label: 'Bajo', value: 'low' },
   { label: 'Agotado', value: 'out' },
 ]
 
-// Definición de columnas de la tabla tipadas
+// Detección reactiva de pantalla ancha (>= 1440px) para mostrar columna "Actualizado"
+const isScreenWide = ref(typeof window !== 'undefined' ? window.innerWidth >= 1440 : false)
+const handleResize = () => {
+  if (typeof window !== 'undefined') {
+    isScreenWide.value = window.innerWidth >= 1440
+  }
+}
+
+// Definición de columnas de la tabla tipadas con anchos optimizados
 const columns = computed<DataTableColumn<StockItem>[]>(() => {
   return [
     {
       key: 'productCode',
       title: 'Código',
-      width: '130px',
+      width: '105px',
       sortable: true,
     },
     {
       key: 'productName',
       title: 'Producto',
       sortable: true,
-      minWidth: '220px',
+      minWidth: '160px',
     },
     {
       key: 'warehouseName',
-      title: 'Almacén / Localización',
+      title: 'Ubicación',
       sortable: true,
-      minWidth: '180px',
+      minWidth: '140px',
     },
     {
       key: 'quantity',
       title: 'Cantidad',
       align: 'right',
-      width: '120px',
+      width: '90px',
       sortable: true,
     },
     {
@@ -489,7 +509,7 @@ const columns = computed<DataTableColumn<StockItem>[]>(() => {
       title: 'Costo',
       currency: 'CUP',
       align: 'right',
-      width: '120px',
+      width: '95px',
       sortable: true,
       visible: can('products.view_cost'),
     },
@@ -498,15 +518,23 @@ const columns = computed<DataTableColumn<StockItem>[]>(() => {
       title: 'Precio',
       currency: 'CUP',
       align: 'right',
-      width: '120px',
+      width: '95px',
       sortable: true,
     },
     {
       key: 'status',
       title: 'Estado',
       align: 'center',
+      width: '85px',
+      sortable: true,
+    },
+    {
+      key: 'updatedAt',
+      title: 'Actualizado',
+      align: 'center',
       width: '110px',
       sortable: true,
+      visible: isScreenWide.value,
     },
   ]
 })
@@ -562,9 +590,23 @@ function getStatusBadgeVariant(s?: StockStatus): 'success' | 'warning' | 'danger
 }
 
 function getStatusBadgeLabel(s?: StockStatus): string {
-  if (s === 'low') return 'Bajo stock'
+  if (s === 'low') return 'Bajo'
   if (s === 'out') return 'Agotado'
   return 'Normal'
+}
+
+function formatDateShort(isoString?: string): string {
+  if (!isoString) return '—'
+  try {
+    const d = new Date(isoString)
+    return d.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit',
+    })
+  } catch {
+    return isoString
+  }
 }
 
 function formatDate(isoString: string): string {
@@ -752,6 +794,9 @@ async function refreshAll() {
 }
 
 onMounted(async () => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', handleResize)
+  }
   if (route?.query) {
     if (route.query.search) search.value = String(route.query.search)
     if (route.query.warehouse) {
@@ -767,5 +812,11 @@ onMounted(async () => {
     if (route.query.sort) sort.value = String(route.query.sort)
   }
   await Promise.all([fetchWarehouses(), fetchStock(), fetchSummary()])
+})
+
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', handleResize)
+  }
 })
 </script>

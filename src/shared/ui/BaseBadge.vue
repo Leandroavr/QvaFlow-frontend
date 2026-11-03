@@ -1,7 +1,7 @@
 <template>
   <span
     :class="[
-      'inline-flex select-none items-center font-medium transition-colors',
+      'inline-flex select-none items-center whitespace-nowrap font-medium transition-colors',
       sizeClasses[size],
       variantClasses[variant],
     ]"
