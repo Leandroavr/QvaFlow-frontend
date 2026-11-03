@@ -46,12 +46,23 @@ describe('DataTable, MoneyCell y FilterBar (src/shared/ui/DataTable)', () => {
       expect(wrapper.classes()).toContain('text-right')
     })
 
-    it('muestra divisa cuando se habilita la prop showCurrency', () => {
-      const wrapper = mount(MoneyCell, {
+    it('muestra divisa cuando se habilita la prop showCurrency con código explícito sin símbolo ₱', () => {
+      const wrapperCup = mount(MoneyCell, {
+        props: { value: '154285.00', currency: 'CUP', showCurrency: true },
+      })
+      expect(wrapperCup.text()).toBe('154,285.00 CUP')
+      expect(wrapperCup.text()).not.toContain('₱')
+
+      const wrapperMlc = mount(MoneyCell, {
+        props: { value: '250.00', currency: 'MLC', showCurrency: true },
+      })
+      expect(wrapperMlc.text()).toBe('250.00 MLC')
+
+      const wrapperUsd = mount(MoneyCell, {
         props: { value: '1250.50', currency: 'USD', showCurrency: true },
       })
-      expect(wrapper.text()).toContain('$')
-      expect(wrapper.text()).toContain('1,250.50')
+      expect(wrapperUsd.text()).toContain('$')
+      expect(wrapperUsd.text()).toContain('1,250.50')
     })
 
     it('muestra guion largo para valores vacíos o nulos', () => {

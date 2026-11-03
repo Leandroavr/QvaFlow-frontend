@@ -31,13 +31,13 @@ export const SUPPORTED_CURRENCIES: Record<Currency, CurrencyConfig> = {
   },
   CUP: {
     code: 'CUP',
-    symbol: '₱',
+    symbol: 'CUP',
     label: 'Pesos Cubanos en Efectivo (CUP)',
     isCash: true,
   },
   CUP_TRANSFER: {
     code: 'CUP_TRANSFER',
-    symbol: '₱ (Transf.)',
+    symbol: 'CUP',
     label: 'Transferencia Nacional (EnZona / Transfermóvil)',
     isCash: false,
   },
