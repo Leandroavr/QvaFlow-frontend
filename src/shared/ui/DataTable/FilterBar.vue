@@ -1,11 +1,11 @@
 <template>
   <div class="flex w-full flex-col gap-2">
-    <!-- Fila principal responsiva con wrap para pantallas estrechas -->
-    <div class="flex flex-wrap items-center justify-between gap-3">
+    <!-- Fila principal responsiva: una sola línea desde 1280px (xl), wrap por debajo -->
+    <div class="flex flex-wrap items-center justify-between gap-2.5 xl:flex-nowrap">
       <!-- Bloque de filtros (buscador + selects + limpiar) -->
-      <div class="flex min-w-[280px] flex-1 flex-wrap items-center gap-2.5">
-        <!-- Buscador con debounce y densidad compacta -->
-        <div v-if="showSearch" class="w-full sm:w-64">
+      <div class="flex flex-1 flex-wrap items-center gap-2 xl:flex-nowrap">
+        <!-- Buscador con ancho flexible (mín. 200px, máx. 280px) -->
+        <div v-if="showSearch" class="w-full min-w-[200px] max-w-[280px] flex-1 sm:w-auto">
           <BaseInput
             :model-value="internalSearch"
             :placeholder="searchPlaceholder"
@@ -22,13 +22,13 @@
           <slot />
         </slot>
 
-        <!-- Botón Limpiar filtros (solo visible cuando hay filtros activos) -->
+        <!-- Botón Limpiar filtros (inline, solo visible cuando hay filtros activos) -->
         <BaseButton
           v-if="canClear"
           variant="ghost"
           density="compact"
           :icon="RotateCcw"
-          class="text-xs text-content-secondary hover:text-content-primary"
+          class="shrink-0 text-xs text-content-secondary hover:text-content-primary"
           @click="handleClearAll"
         >
           Limpiar filtros

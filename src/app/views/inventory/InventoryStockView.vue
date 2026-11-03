@@ -102,26 +102,26 @@
       @clear="handleClearFilters"
     >
       <template #filters>
-        <!-- Filtro: Almacén -->
-        <div class="w-48">
+        <!-- Filtro: Almacén (~160px) -->
+        <div class="w-40 shrink-0">
           <BaseSelect
             :model-value="warehouse"
             :options="warehouseOptions"
             include-all-option
-            all-option-label="Todos los almacenes"
+            all-option-label="Todos"
             all-option-value=""
             placeholder="Almacén"
             @update:model-value="handleWarehouseChange"
           />
         </div>
 
-        <!-- Filtro: Localización (Dependiente del almacén) -->
-        <div class="w-48">
+        <!-- Filtro: Localización (Dependiente del almacén, ~160px) -->
+        <div class="w-40 shrink-0">
           <BaseSelect
             :model-value="location"
             :options="locationOptions"
             include-all-option
-            all-option-label="Todas las localizaciones"
+            all-option-label="Todas"
             all-option-value=""
             placeholder="Localización"
             :disabled="!warehouse"
@@ -129,26 +129,26 @@
           />
         </div>
 
-        <!-- Filtro: Categoría -->
-        <div class="w-44">
+        <!-- Filtro: Categoría (~144px) -->
+        <div class="w-36 shrink-0">
           <BaseSelect
             :model-value="category"
             :options="categoryOptions"
             include-all-option
-            all-option-label="Todas las categorías"
+            all-option-label="Todas"
             all-option-value=""
             placeholder="Categoría"
             @update:model-value="handleCategoryChange"
           />
         </div>
 
-        <!-- Filtro: Estado -->
-        <div class="w-40">
+        <!-- Filtro: Estado (~130px) -->
+        <div class="w-32 shrink-0">
           <BaseSelect
             :model-value="status"
             :options="statusOptions"
             include-all-option
-            all-option-label="Todos los estados"
+            all-option-label="Todos"
             all-option-value=""
             placeholder="Estado"
             @update:model-value="handleStatusSelectChange"
