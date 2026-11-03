@@ -327,6 +327,28 @@ describe('DataTable, MoneyCell y FilterBar (src/shared/ui/DataTable)', () => {
     })
   })
 
+  describe('4. DataTable — Columna de acciones sticky y cabecera', () => {
+    it('renderiza la columna de acciones con clase sticky right-0 y cabecera de ~40px', () => {
+      const wrapper = mount(DataTable, {
+        props: {
+          columns: testColumns,
+          data: testProducts,
+          actions: () => [{ id: 'edit', label: 'Editar' }],
+        },
+      })
+
+      const headerTr = wrapper.find('thead tr')
+      expect(headerTr.classes()).toContain('h-10')
+
+      const actionTh = wrapper.find('th.sticky.right-0')
+      expect(actionTh.exists()).toBe(true)
+
+      const actionTd = wrapper.find('td.sticky.right-0')
+      expect(actionTd.exists()).toBe(true)
+      wrapper.unmount()
+    })
+  })
+
   describe('8. Ausencia de errores o advertencias en consola', () => {
     it('no genera console.error ni console.warn durante el ciclo de vida', () => {
       expect(consoleErrorSpy).not.toHaveBeenCalled()
