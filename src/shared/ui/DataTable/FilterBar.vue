@@ -27,10 +27,10 @@
           v-if="canClear"
           variant="ghost"
           density="compact"
+          :icon="RotateCcw"
           class="text-xs text-content-secondary hover:text-content-primary"
           @click="handleClearAll"
         >
-          <RotateCcw class="mr-1.5 h-3.5 w-3.5 text-content-muted" aria-hidden="true" />
           Limpiar filtros
         </BaseButton>
       </div>

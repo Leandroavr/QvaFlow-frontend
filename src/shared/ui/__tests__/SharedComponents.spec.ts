@@ -324,7 +324,7 @@ describe('Componentes Primitivos UI (src/shared/ui)', () => {
   })
 
   describe('10. BaseButton', () => {
-    it('renderiza icono y texto en una sola línea con clases inline-flex, items-center, justify-center, gap-2 y whitespace-nowrap', () => {
+    it('renderiza icono y texto en una sola línea con clases inline-flex, items-center, justify-center, gap-2 y whitespace-nowrap cuando el icono llega como prop', () => {
       const wrapper = mount(BaseButton, {
         props: {
           icon: Plus,
@@ -346,6 +346,22 @@ describe('Componentes Primitivos UI (src/shared/ui)', () => {
       const textSpan = wrapper.find('span.whitespace-nowrap')
       expect(textSpan.exists()).toBe(true)
       expect(textSpan.text()).toBe('Nuevo almacén')
+      wrapper.unmount()
+    })
+
+    it('mantiene layout en una sola línea (whitespace-nowrap) cuando el icono llega por slot de prefijo', () => {
+      const wrapper = mount(BaseButton, {
+        slots: {
+          prefix: h(Plus, { class: 'h-4 w-4' }),
+          default: 'Nueva localización',
+        },
+      })
+
+      expect(wrapper.exists()).toBe(true)
+      expect(wrapper.classes()).toContain('inline-flex')
+      expect(wrapper.classes()).toContain('whitespace-nowrap')
+      expect(wrapper.find('svg').exists()).toBe(true)
+      expect(wrapper.text()).toContain('Nueva localización')
       wrapper.unmount()
     })
   })

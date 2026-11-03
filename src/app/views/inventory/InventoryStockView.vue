@@ -9,10 +9,10 @@
         <BaseButton
           variant="secondary"
           density="compact"
+          :icon="RefreshCw"
           :loading="isLoading || isLoadingSummary"
           @click="refreshAll"
         >
-          <RefreshCw class="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
           Actualizar
         </BaseButton>
       </template>
@@ -356,12 +356,20 @@
       </div>
 
       <template #actions>
-        <BaseButton variant="secondary" density="compact" @click="handleAdjustFromDrawer">
-          <SlidersHorizontal class="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+        <BaseButton
+          variant="secondary"
+          density="compact"
+          :icon="SlidersHorizontal"
+          @click="handleAdjustFromDrawer"
+        >
           Ajustar stock
         </BaseButton>
-        <BaseButton variant="secondary" density="compact" @click="handleTransferFromDrawer">
-          <ArrowRightLeft class="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
+        <BaseButton
+          variant="secondary"
+          density="compact"
+          :icon="ArrowRightLeft"
+          @click="handleTransferFromDrawer"
+        >
           Trasladar
         </BaseButton>
         <BaseButton variant="primary" density="compact" @click="isDrawerOpen = false">

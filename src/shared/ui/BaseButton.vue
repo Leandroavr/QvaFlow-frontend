@@ -37,7 +37,7 @@
     <!-- Texto o contenido del botón -->
     <span
       v-if="$slots.default || loading"
-      class="inline-flex items-center gap-1.5 whitespace-nowrap"
+      class="inline-flex items-center justify-center gap-2 whitespace-nowrap"
       :class="{ 'opacity-90': loading }"
     >
       <slot>{{ loading ? loadingText : '' }}</slot>

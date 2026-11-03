@@ -22,9 +22,9 @@
             v-if="can('warehouses.manage')"
             variant="primary"
             density="compact"
+            :icon="Plus"
             @click="openCreateWarehouse"
           >
-            <Plus class="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
             Nuevo almacén
           </BaseButton>
         </div>
@@ -96,10 +96,10 @@
             v-if="can('warehouses.manage')"
             variant="primary"
             density="compact"
+            :icon="Plus"
             :disabled="!selectedWarehouseCode"
             @click="openCreateLocation"
           >
-            <Plus class="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
             Nueva localización
           </BaseButton>
         </div>

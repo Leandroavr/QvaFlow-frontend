@@ -184,10 +184,10 @@
                 <BaseButton
                   variant="secondary"
                   density="compact"
+                  :icon="RotateCw"
                   class="mt-1"
                   @click="emit('retry')"
                 >
-                  <RotateCw class="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
                   Reintentar
                 </BaseButton>
               </div>
