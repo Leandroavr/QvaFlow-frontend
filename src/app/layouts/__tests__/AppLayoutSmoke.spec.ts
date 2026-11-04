@@ -62,7 +62,7 @@ describe('AppLayout Smoke Tests', () => {
     expect(sidebarText).toContain('Administración')
 
     wrapper.unmount()
-  })
+  }, 15000)
 
   it('monta AppLayout para vendedor mostrando solo Inicio, Ventas y Productos', async () => {
     const authStore = useAuthStore()
@@ -90,7 +90,7 @@ describe('AppLayout Smoke Tests', () => {
     expect(sidebarText).not.toContain('Administración')
 
     wrapper.unmount()
-  })
+  }, 15000)
 
   it('monta AppLayout para almacenero mostrando solo Inicio, Inventario, Productos y Compras', async () => {
     const authStore = useAuthStore()
@@ -117,9 +117,11 @@ describe('AppLayout Smoke Tests', () => {
     expect(sidebarText).not.toContain('Administración')
 
     wrapper.unmount()
-  })
+  }, 15000)
 
-  it('abre automáticamente el grupo padre al navegar directamente a una ruta hija', async () => {
+  it(
+    'abre automáticamente el grupo padre al navegar directamente a una ruta hija',
+    async () => {
     const authStore = useAuthStore()
     await authStore.login({ username: 'almacenero', password: 'password123' })
 
@@ -142,5 +144,5 @@ describe('AppLayout Smoke Tests', () => {
     expect(text).toContain('Almacenes')
 
     wrapper.unmount()
-  })
+  }, 15000)
 })

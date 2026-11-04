@@ -25,7 +25,7 @@
     <component
       :is="icon"
       v-if="icon && !loading && !$slots.prefix"
-      class="h-4 w-4 shrink-0"
+      :class="[density === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4', 'shrink-0']"
       aria-hidden="true"
     />
 

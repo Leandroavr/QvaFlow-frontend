@@ -364,5 +364,31 @@ describe('Componentes Primitivos UI (src/shared/ui)', () => {
       expect(wrapper.text()).toContain('Nueva localización')
       wrapper.unmount()
     })
+
+    it('renderiza icono y texto en una sola línea con inline-flex, items-center, justify-center, gap-2 y whitespace-nowrap cuando el icono llega dentro del slot por defecto', () => {
+      const wrapper = mount(BaseButton, {
+        slots: {
+          default: () => [h(Plus, { class: 'h-4 w-4 shrink-0' }), 'Actualizar'],
+        },
+      })
+
+      expect(wrapper.exists()).toBe(true)
+      expect(wrapper.classes()).toContain('inline-flex')
+      expect(wrapper.classes()).toContain('items-center')
+      expect(wrapper.classes()).toContain('justify-center')
+      expect(wrapper.classes()).toContain('gap-2')
+      expect(wrapper.classes()).toContain('whitespace-nowrap')
+
+      const innerSpan = wrapper.find('span')
+      expect(innerSpan.exists()).toBe(true)
+      expect(innerSpan.classes()).toContain('inline-flex')
+      expect(innerSpan.classes()).toContain('items-center')
+      expect(innerSpan.classes()).toContain('justify-center')
+      expect(innerSpan.classes()).toContain('gap-2')
+      expect(innerSpan.classes()).toContain('whitespace-nowrap')
+      expect(wrapper.find('svg').exists()).toBe(true)
+      expect(wrapper.text()).toContain('Actualizar')
+      wrapper.unmount()
+    })
   })
 })
