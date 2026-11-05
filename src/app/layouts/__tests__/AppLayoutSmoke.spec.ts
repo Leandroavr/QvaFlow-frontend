@@ -119,9 +119,7 @@ describe('AppLayout Smoke Tests', () => {
     wrapper.unmount()
   }, 15000)
 
-  it(
-    'abre automáticamente el grupo padre al navegar directamente a una ruta hija',
-    async () => {
+  it('abre automáticamente el grupo padre al navegar directamente a una ruta hija', async () => {
     const authStore = useAuthStore()
     await authStore.login({ username: 'almacenero', password: 'password123' })
 
