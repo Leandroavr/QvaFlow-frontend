@@ -244,3 +244,17 @@ body {
     animation: none !important;
   }
 }
+
+/* ==========================================================================
+   GESTIÓN DE FOCO ACCESIBLE (Sin anillo tras clic de ratón)
+   Solo muestra anillo cuando el elemento recibe foco vía teclado (:focus-visible).
+   ========================================================================== */
+button:focus:not(:focus-visible),
+[role='button']:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+[data-reka-select-trigger]:focus:not(:focus-visible) {
+  outline: none !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  box-shadow: var(--tw-shadow, 0 0 #0000) !important;
+}

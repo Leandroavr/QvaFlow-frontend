@@ -4,7 +4,7 @@
     :disabled="disabled || loading"
     :class="[
       'inline-flex cursor-pointer select-none items-center justify-center gap-2 whitespace-nowrap font-semibold transition-all duration-150',
-      'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+      'focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
       'disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none',
       'active:scale-[0.98]',
       variantClasses[variant],
