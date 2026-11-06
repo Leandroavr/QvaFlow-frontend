@@ -339,7 +339,7 @@ describe('DataTable, MoneyCell y FilterBar (src/shared/ui/DataTable)', () => {
   })
 
   describe('4. DataTable — Columna de acciones sticky y cabecera', () => {
-    it('renderiza la columna de acciones con clase sticky right-0 y cabecera de ~40px', () => {
+    it('renderiza la cabecera sin sticky por defecto y con sticky solo si hay scrollHeight', async () => {
       const wrapper = mount(DataTable, {
         props: {
           columns: testColumns,
@@ -348,14 +348,29 @@ describe('DataTable, MoneyCell y FilterBar (src/shared/ui/DataTable)', () => {
         },
       })
 
+      const thead = wrapper.find('thead')
+      expect(thead.classes()).not.toContain('sticky')
+      expect(thead.classes()).toContain('bg-surface-sunken')
+
       const headerTr = wrapper.find('thead tr')
       expect(headerTr.classes()).toContain('h-10')
 
       const actionTh = wrapper.find('th.sticky.right-0')
       expect(actionTh.exists()).toBe(true)
+      expect(actionTh.classes()).toContain('z-20')
 
       const actionTd = wrapper.find('td.sticky.right-0')
       expect(actionTd.exists()).toBe(true)
+      expect(actionTd.classes()).toContain('z-10')
+
+      // Al proporcionar scrollHeight, thead se vuelve sticky top-0 z-20 y actionTh top-0 z-30
+      await wrapper.setProps({ scrollHeight: '400px' })
+      expect(wrapper.find('thead').classes()).toContain('sticky')
+      expect(wrapper.find('thead').classes()).toContain('top-0')
+      expect(wrapper.find('thead').classes()).toContain('z-20')
+      expect(wrapper.find('th.sticky.right-0').classes()).toContain('top-0')
+      expect(wrapper.find('th.sticky.right-0').classes()).toContain('z-30')
+
       wrapper.unmount()
     })
   })

@@ -41,11 +41,16 @@
       :style="scrollHeight ? { maxHeight: scrollHeight } : undefined"
     >
       <table class="w-full border-collapse text-left text-xs text-content-primary">
-        <!-- Cabecera fija (Sticky) con tokens de superficie hundida -->
-        <thead class="sticky top-0 z-10 border-b border-border-subtle bg-surface-sunken">
+        <!-- Cabecera fija (Sticky solo si hay scroll interno) con tokens de superficie hundida -->
+        <thead
+          :class="[
+            scrollHeight ? 'sticky top-0 z-20' : '',
+            'border-b border-border-subtle bg-surface-sunken',
+          ]"
+        >
           <tr class="h-10">
             <!-- Columna de selección múltiple (checkbox) -->
-            <th v-if="selectable" scope="col" class="w-10 px-3 py-2 text-center">
+            <th v-if="selectable" scope="col" class="w-10 bg-surface-sunken px-3 py-2 text-center">
               <input
                 type="checkbox"
                 :checked="isAllSelected"
@@ -64,7 +69,7 @@
               scope="col"
               :style="{ width: col.width, minWidth: col.minWidth }"
               :class="[
-                'group select-none whitespace-nowrap px-3 py-2 text-xs font-semibold uppercase tracking-wider text-content-secondary',
+                'group select-none whitespace-nowrap bg-surface-sunken px-3 py-2 text-xs font-semibold uppercase tracking-wider text-content-secondary',
                 col.align === 'right'
                   ? 'text-right'
                   : col.align === 'center'
@@ -113,11 +118,15 @@
               </div>
             </th>
 
-            <!-- Columna de acciones por fila (Sticky a la derecha) -->
+            <!-- Columna de acciones por fila (Sticky a la derecha, z-index superior a filas) -->
             <th
               v-if="hasActions"
               scope="col"
-              class="sticky right-0 z-20 w-12 border-l border-border-subtle bg-surface-sunken px-2 py-2 text-center text-xs font-semibold uppercase tracking-wider text-content-secondary shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]"
+              :class="[
+                'sticky right-0 border-l border-border-subtle bg-surface-sunken px-2 py-2 text-center text-xs font-semibold uppercase tracking-wider text-content-secondary shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]',
+                scrollHeight ? 'top-0 z-30' : 'z-20',
+                'w-12',
+              ]"
             >
               <span class="sr-only">Acciones</span>
             </th>
