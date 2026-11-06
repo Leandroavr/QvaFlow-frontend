@@ -217,9 +217,12 @@
               :class="[
                 'group h-10 transition-colors',
                 isRowSelected(row, rIdx) ? 'bg-primary-subtle/40' : 'hover:bg-surface-sunken/40',
+                isRowActive(row, rIdx) &&
+                  'shadow-xs border-l-4 !border-l-primary !bg-surface-sunken font-medium',
                 activeKeyboardRowIndex === rIdx &&
                   'ring-primary/60 bg-surface-sunken/60 ring-1 ring-inset',
               ]"
+              :aria-selected="isRowActive(row, rIdx) || isRowSelected(row, rIdx) || undefined"
               @click="handleRowClick(row, rIdx)"
             >
               <!-- Checkbox de selección -->
@@ -365,6 +368,7 @@ interface Props<T = any> {
   scrollHeight?: string
   skeletonRowCount?: number
   showPagination?: boolean
+  selectedId?: string | number | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -386,6 +390,7 @@ const props = withDefaults(defineProps<Props>(), {
   scrollHeight: 'calc(100vh - 280px)',
   skeletonRowCount: 5,
   showPagination: true,
+  selectedId: null,
 })
 
 const emit = defineEmits<{
@@ -649,6 +654,14 @@ const selectedRows = computed(() => {
 const isRowSelected = (row: any, idx: number) => {
   const key = getRowIdentifier(row, idx)
   return selectedRowKeys.value.includes(key)
+}
+
+const isRowActive = (row: any, idx: number) => {
+  if (props.selectedId === null || props.selectedId === undefined || props.selectedId === '') {
+    return false
+  }
+  const key = getRowIdentifier(row, idx)
+  return String(key) === String(props.selectedId)
 }
 
 const toggleRowSelection = (row: any, idx: number) => {

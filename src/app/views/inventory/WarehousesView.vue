@@ -6,11 +6,11 @@
       description="Configuración de espacios físicos de almacenamiento, pasillos y estanterías."
     />
 
-    <!-- Layout a Dos Paneles (Desktop: ~55% / ~45%, apilado bajo 1280px) -->
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-12">
-      <!-- PANEL IZQUIERDO: Almacenes (7 cols en xl ~58%) -->
-      <div class="flex flex-col gap-3 xl:col-span-7">
-        <div class="flex items-center justify-between">
+    <!-- Layout a Dos Paneles (Desktop: 50% / 50%, apilado bajo 1280px) -->
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <!-- PANEL IZQUIERDO: Almacenes (50% en xl) -->
+      <div class="flex flex-col gap-3">
+        <div class="flex h-9 items-center justify-between">
           <div class="flex items-center gap-2">
             <h2 class="text-sm font-bold text-content-primary">Almacenes</h2>
             <BaseBadge variant="neutral" size="sm">
@@ -37,6 +37,7 @@
           :loading="isLoadingWarehouses"
           :error="error"
           row-key="code"
+          :selected-id="selectedWarehouseCode"
           :actions="can('warehouses.manage') ? getWarehouseRowActions : undefined"
           empty-title="No hay almacenes configurados"
           empty-description="Añada el primer almacén para organizar el inventario."
@@ -54,7 +55,9 @@
                 class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
                 aria-hidden="true"
               />
-              <span class="font-mono text-[11px] font-semibold text-content-primary">
+              <span
+                class="whitespace-nowrap font-mono text-[11px] font-semibold text-content-primary"
+              >
                 {{ value }}
               </span>
             </div>
@@ -67,11 +70,6 @@
             </span>
           </template>
 
-          <!-- Celda de Zonas -->
-          <template #cell-locationsCount="{ value }">
-            <span class="tabular-nums text-content-secondary">{{ value ?? 0 }}</span>
-          </template>
-
           <!-- Celda de Stock -->
           <template #cell-stockUnits="{ value }">
             <span class="font-semibold tabular-nums text-content-primary">{{ value ?? 0 }}</span>
@@ -79,19 +77,25 @@
         </DataTable>
       </div>
 
-      <!-- PANEL DERECHO: Localizaciones del almacén seleccionado (5 cols en xl ~42%) -->
-      <div class="flex flex-col gap-3 xl:col-span-5">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <h2 class="text-sm font-bold text-content-primary">
-              Localizaciones
-              <span v-if="selectedWarehouse" class="font-normal text-content-muted">
-                en {{ selectedWarehouse.name }}
-              </span>
-            </h2>
-            <BaseBadge v-if="selectedWarehouse" variant="neutral" size="sm">
-              {{ locations.length }}
-            </BaseBadge>
+      <!-- PANEL DERECHO: Localizaciones del almacén seleccionado (50% en xl) -->
+      <div class="flex flex-col gap-3">
+        <div class="flex h-9 items-center justify-between">
+          <div class="flex min-w-0 items-center gap-2">
+            <div class="min-w-0 leading-tight">
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-bold text-content-primary">Localizaciones</h2>
+                <BaseBadge v-if="selectedWarehouse" variant="neutral" size="sm">
+                  {{ locations.length }}
+                </BaseBadge>
+              </div>
+              <div
+                v-if="selectedWarehouse"
+                class="truncate text-[11px] text-content-muted"
+                :title="selectedWarehouse.name"
+              >
+                {{ selectedWarehouse.name }}
+              </div>
+            </div>
           </div>
 
           <BaseButton
@@ -136,7 +140,9 @@
         >
           <!-- Celda de Código -->
           <template #cell-code="{ value }">
-            <span class="font-mono text-[11px] font-semibold text-content-primary">
+            <span
+              class="whitespace-nowrap font-mono text-[11px] font-semibold text-content-primary"
+            >
               {{ value }}
             </span>
           </template>
@@ -183,7 +189,6 @@
         <!-- Código (solo lectura en edición) -->
         <BaseFormField
           label="Código del almacén"
-          :required="!isEditingWarehouse"
           :error="warehouseErrors.code"
           help="Identificador alfanumérico en mayúsculas (ej: ALM-CENTRAL)"
         >
@@ -193,6 +198,7 @@
               v-model="warehouseForm.code"
               density="compact"
               placeholder="ALM-CENTRAL"
+              uppercase
               :disabled="isEditingWarehouse"
               :error="warehouseErrors.code"
               @update:model-value="handleWarehouseCodeInput"
@@ -203,7 +209,6 @@
         <!-- Nombre -->
         <BaseFormField
           label="Nombre del almacén"
-          required
           :error="warehouseErrors.name"
           help="Nombre descriptivo reconocible (ej: Almacén Central)"
         >
@@ -268,7 +273,6 @@
         <!-- Código de Localización -->
         <BaseFormField
           label="Código de la localización"
-          :required="!isEditingLocation"
           :error="locationErrors.code"
           help="Identificador alfanumérico en mayúsculas (ej: LOC-PASILLO-1)"
         >
@@ -278,6 +282,7 @@
               v-model="locationForm.code"
               density="compact"
               placeholder="LOC-CEN-P1"
+              uppercase
               :disabled="isEditingLocation"
               :error="locationErrors.code"
               @update:model-value="handleLocationCodeInput"
@@ -288,7 +293,6 @@
         <!-- Nombre de Localización -->
         <BaseFormField
           label="Nombre o descripción de la zona"
-          required
           :error="locationErrors.name"
           help="Ubicación física clara (ej: Pasillo 1 - Secos)"
         >
@@ -401,18 +405,12 @@ const warehouseColumns: DataTableColumn<Warehouse>[] = [
   {
     key: 'code',
     title: 'Código',
-    width: '130px',
+    width: '120px',
   },
   {
     key: 'name',
     title: 'Nombre',
-    minWidth: '180px',
-  },
-  {
-    key: 'locationsCount',
-    title: 'Zonas',
-    align: 'right',
-    width: '70px',
+    minWidth: '160px',
   },
   {
     key: 'stockUnits',
