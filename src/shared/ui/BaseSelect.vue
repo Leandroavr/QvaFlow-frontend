@@ -20,9 +20,10 @@
           error
             ? 'border-state-error focus-visible:ring-state-error'
             : 'border-border-default hover:border-border-strong focus-visible:ring-primary',
-          disabled && 'cursor-not-allowed bg-surface-sunken opacity-50',
+          disabled && 'cursor-not-allowed bg-surface-sunken opacity-60',
         ]"
-        :title="displayLabel || placeholder"
+        :title="title || displayLabel || placeholder"
+        :aria-label="ariaLabel"
         :aria-invalid="!!error"
         :aria-describedby="error ? `${selectId}-error` : undefined"
       >
@@ -139,6 +140,8 @@ interface Props {
   disabled?: boolean
   id?: string
   name?: string
+  title?: string
+  ariaLabel?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -151,6 +154,8 @@ const props = withDefaults(defineProps<Props>(), {
   searchable: false,
   error: '',
   disabled: false,
+  title: undefined,
+  ariaLabel: undefined,
 })
 
 const emit = defineEmits<{

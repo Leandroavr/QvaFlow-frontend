@@ -117,7 +117,7 @@
         </div>
 
         <!-- Filtro: Localización (Dependiente del almacén, ~168px) -->
-        <div class="w-42 shrink-0">
+        <div class="w-42 shrink-0" :title="!warehouse ? 'Elige un almacén primero' : undefined">
           <BaseSelect
             :model-value="location"
             :options="locationOptions"
@@ -127,6 +127,8 @@
             all-option-value=""
             placeholder="Localización"
             :disabled="!warehouse"
+            :title="!warehouse ? 'Elige un almacén primero' : undefined"
+            :aria-label="!warehouse ? 'Elige un almacén primero' : undefined"
             @update:model-value="handleLocationChange"
           />
         </div>

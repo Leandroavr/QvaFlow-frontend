@@ -384,14 +384,20 @@ const autoExpandActiveGroup = () => {
   })
 }
 
-const handleItemClick = () => {
+const handleItemClick = (e?: Event) => {
+  if (e && 'detail' in e && (e as MouseEvent).detail !== 0) {
+    ;(e.currentTarget as HTMLElement)?.blur()
+  }
   if (props.mobileOpen) {
     emit('close-mobile')
   }
 }
 
 // Control del Popover en modo colapsado
-const closePopover = () => {
+const closePopover = (e?: Event) => {
+  if (e && 'detail' in e && (e as MouseEvent).detail !== 0) {
+    ;(e.currentTarget as HTMLElement)?.blur()
+  }
   if (closeTimeout) clearTimeout(closeTimeout)
   activePopoverId.value = null
 }

@@ -160,6 +160,24 @@ describe('Componentes Primitivos UI (src/shared/ui)', () => {
 
       wrapper.unmount()
     })
+
+    it('soporta estado deshabilitado con opacidad 60%, title y aria-label', () => {
+      const wrapper = mount(BaseSelect, {
+        props: {
+          options,
+          disabled: true,
+          title: 'Elige un almacén primero',
+          ariaLabel: 'Elige un almacén primero',
+        },
+      })
+
+      const trigger = wrapper.find('button[role="combobox"]')
+      expect(trigger.exists()).toBe(true)
+      expect(trigger.classes()).toContain('opacity-60')
+      expect(trigger.attributes('title')).toBe('Elige un almacén primero')
+      expect(trigger.attributes('aria-label')).toBe('Elige un almacén primero')
+      wrapper.unmount()
+    })
   })
 
   describe('5. BaseModal y BaseDrawer', () => {

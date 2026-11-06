@@ -258,3 +258,11 @@ a:focus:not(:focus-visible),
   --tw-ring-shadow: 0 0 #0000 !important;
   box-shadow: var(--tw-shadow, 0 0 #0000) !important;
 }
+
+button:active,
+[role='button']:active,
+a:active {
+  outline: none !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+}
