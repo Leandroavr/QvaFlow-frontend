@@ -15,17 +15,18 @@
       <SelectTrigger
         :id="selectId"
         :class="[
-          'flex h-9 w-full items-center justify-between rounded-lg border bg-surface-card px-3 text-xs text-content-primary transition-colors',
+          'flex h-9 w-full items-center justify-between rounded-lg border bg-surface-card px-2.5 text-xs text-content-primary transition-colors',
           'focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2',
           error
             ? 'border-state-error focus-visible:ring-state-error'
             : 'border-border-default hover:border-border-strong focus-visible:ring-primary',
           disabled && 'cursor-not-allowed bg-surface-sunken opacity-50',
         ]"
+        :title="displayLabel || placeholder"
         :aria-invalid="!!error"
         :aria-describedby="error ? `${selectId}-error` : undefined"
       >
-        <SelectValue :placeholder="placeholder">
+        <SelectValue :placeholder="placeholder" class="truncate pr-1 text-left">
           {{ displayLabel }}
         </SelectValue>
         <ChevronDown class="h-4 w-4 shrink-0 text-content-muted" aria-hidden="true" />
@@ -128,6 +129,7 @@ interface Props {
   modelValue?: string | number | null
   options: SelectOption[]
   label?: string
+  inlinePrefix?: string
   placeholder?: string
   includeAllOption?: boolean
   allOptionLabel?: string
@@ -141,6 +143,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: undefined,
+  inlinePrefix: '',
   placeholder: 'Seleccionar...',
   includeAllOption: false,
   allOptionLabel: 'Todos',
@@ -183,11 +186,18 @@ const internalValue = computed(() => {
 })
 
 const displayLabel = computed(() => {
+  let labelText: string | undefined
   if (internalValue.value === '__all_option__') {
-    return props.allOptionLabel
+    labelText = props.allOptionLabel
+  } else {
+    const match = props.options.find((opt) => String(opt.value) === internalValue.value)
+    labelText = match ? match.label : undefined
   }
-  const match = props.options.find((opt) => String(opt.value) === internalValue.value)
-  return match ? match.label : undefined
+
+  if (props.inlinePrefix && labelText) {
+    return `${props.inlinePrefix}: ${labelText}`
+  }
+  return labelText
 })
 
 const handleUpdate = (val: string) => {

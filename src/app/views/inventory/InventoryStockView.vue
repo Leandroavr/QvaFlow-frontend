@@ -107,6 +107,7 @@
           <BaseSelect
             :model-value="warehouse"
             :options="warehouseOptions"
+            inline-prefix="Almacén"
             include-all-option
             all-option-label="Todos"
             all-option-value=""
@@ -115,11 +116,12 @@
           />
         </div>
 
-        <!-- Filtro: Localización (Dependiente del almacén, ~160px) -->
-        <div class="w-40 shrink-0">
+        <!-- Filtro: Localización (Dependiente del almacén, ~168px) -->
+        <div class="w-42 shrink-0">
           <BaseSelect
             :model-value="location"
             :options="locationOptions"
+            inline-prefix="Localización"
             include-all-option
             all-option-label="Todas"
             all-option-value=""
@@ -129,11 +131,12 @@
           />
         </div>
 
-        <!-- Filtro: Categoría (~144px) -->
-        <div class="w-36 shrink-0">
+        <!-- Filtro: Categoría (~152px) -->
+        <div class="w-38 shrink-0">
           <BaseSelect
             :model-value="category"
             :options="categoryOptions"
+            inline-prefix="Categoría"
             include-all-option
             all-option-label="Todas"
             all-option-value=""
@@ -142,11 +145,12 @@
           />
         </div>
 
-        <!-- Filtro: Estado (~130px) -->
-        <div class="w-32 shrink-0">
+        <!-- Filtro: Estado (~136px) -->
+        <div class="w-34 shrink-0">
           <BaseSelect
             :model-value="status"
             :options="statusOptions"
+            inline-prefix="Estado"
             include-all-option
             all-option-label="Todos"
             all-option-value=""
