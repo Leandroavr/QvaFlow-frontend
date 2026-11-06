@@ -358,10 +358,12 @@ describe('DataTable, MoneyCell y FilterBar (src/shared/ui/DataTable)', () => {
       const actionTh = wrapper.find('th.sticky.right-0')
       expect(actionTh.exists()).toBe(true)
       expect(actionTh.classes()).toContain('z-20')
+      expect(actionTh.classes()).toContain('w-10')
 
       const actionTd = wrapper.find('td.sticky.right-0')
       expect(actionTd.exists()).toBe(true)
       expect(actionTd.classes()).toContain('z-10')
+      expect(actionTd.classes()).toContain('w-10')
 
       // Al proporcionar scrollHeight, thead se vuelve sticky top-0 z-20 y actionTh top-0 z-30
       await wrapper.setProps({ scrollHeight: '400px' })

@@ -236,7 +236,7 @@
 
       <!-- Celda personalizada: Estado con Dot -->
       <template #cell-status="{ row }">
-        <div class="flex justify-center">
+        <div class="flex items-center justify-center whitespace-nowrap">
           <BaseBadge
             :variant="getStatusBadgeVariant(row.status)"
             :dot="true"
@@ -522,26 +522,26 @@ const columns = computed<DataTableColumn<StockItem>[]>(() => {
     {
       key: 'productCode',
       title: 'Código',
-      width: '105px',
+      width: '95px',
       sortable: true,
     },
     {
       key: 'productName',
       title: 'Producto',
       sortable: true,
-      minWidth: '160px',
+      minWidth: '140px',
     },
     {
       key: 'warehouseName',
       title: 'Ubicación',
       sortable: true,
-      minWidth: '140px',
+      minWidth: '120px',
     },
     {
       key: 'quantity',
       title: 'Cantidad',
       align: 'right',
-      width: '90px',
+      width: '85px',
       sortable: true,
     },
     {
@@ -549,7 +549,7 @@ const columns = computed<DataTableColumn<StockItem>[]>(() => {
       title: 'Costo',
       currency: 'CUP',
       align: 'right',
-      width: '95px',
+      width: '90px',
       sortable: true,
       visible: can('products.view_cost'),
     },
@@ -558,16 +558,15 @@ const columns = computed<DataTableColumn<StockItem>[]>(() => {
       title: 'Precio',
       currency: 'CUP',
       align: 'right',
-      width: '95px',
+      width: '90px',
       sortable: true,
     },
     {
       key: 'status',
       title: 'Estado',
       align: 'center',
-      width: '105px',
-      minWidth: '105px',
-      cellClass: 'pr-3',
+      width: 'min-content',
+      cellClass: 'whitespace-nowrap px-2',
       sortable: true,
     },
     {
