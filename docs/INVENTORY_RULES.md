@@ -122,11 +122,15 @@ Este documento detalla las entidades, validaciones, flujos de traslados/ajustes,
 
 ## 7. A Definir con el Backend
 
-1. **Cálculo de Stock Bajo (Umbral):**
-   * ¿Se considerará bajo stock cuando `quantity <= minStock` a nivel de producto/localización, o existirá un umbral porcentual/global definido por empresa?
-2. **Generación de Códigos de Almacenes y Localizaciones:**
+1. **Cálculo de Stock Bajo y Estado por Producto:**
+   * El campo `status` es del producto, calculado por el backend (propuesta) sobre el **total acumulado** del producto sumando todas sus localizaciones: `total <= 0 -> 'out'`, `total <= minStock -> 'low'`, de lo contrario `'ok'`. Un producto sin filas de stock computa como `'out'`. Asimismo, los contadores del resumen global (`lowStockCount` y `outOfStockCount`) cuantifican productos únicos en ese estado y no filas físicas.
+2. **Campo de Stock Mínimo en Producto:**
+   * La entidad Producto actual no dispone de un campo explícito para stock mínimo (`minStock`). Queda pendiente coordinar con el backend si se añade dicha columna al modelo de productos o si se establece un umbral mínimo global por defecto (ej. 10 unidades).
+3. **Creación de Almacenes sin Localizaciones:**
+   * A diferencia del legado, se permite crear y mantener almacenes sin localizaciones asignadas obligatorias (el panel de localizaciones mostrará un estado vacío con acción de creación si el usuario posee permiso).
+4. **Generación de Códigos de Almacenes y Localizaciones:**
    * ¿El backend permitirá al usuario ingresar un código alfanumérico manual (ej. `ALM-CENTRAL`) o generará automáticamente slugs / códigos secuenciales si viene vacío?
-3. **Distribución Multi-Localización por Producto:**
-   * En el listado `/api/inventory/stock`, ¿cada fila representa la existencia en una localización específica o existirá una vista agregada que sume el stock global del producto entre todos sus almacenes?
-4. **Validación de Integridad Referencial al Eliminar:**
+5. **Distribución Multi-Localización por Producto:**
+   * En el listado `/api/inventory/stock`, cada fila representa la existencia física en una localización específica con su desglose correspondiente, mientras que el badge de estado refleja el estado global consolidado del producto.
+6. **Validación de Integridad Referencial al Eliminar:**
    * Se requiere confirmar si al intentar eliminar una localización con stock en cero pero con movimientos históricos pasados, se debe archivar/inactivar (soft-delete) o si solo se bloquea con 409 cuando el stock actual es mayor a cero.

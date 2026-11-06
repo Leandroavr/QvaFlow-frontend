@@ -562,11 +562,15 @@ Esta sección define el contrato de API para la gestión de almacenes físicos, 
 1. **El Contrato es una PROPUESTA Adaptable:**
    * Esta especificación es una propuesta de arquitectura limpia. Si el backend Symfony ya implementa otra estructura (por ejemplo el bundle estándar `LexikJWTAuthenticationBundle` respondiendo `{ "token": "..." }` en `POST /api/login_check`), **la adaptación se realiza en la capa de servicios HTTP**, sin necesidad de modificar ningún componente visual, store ni vista del frontend.
 2. **Cálculo de Estado de Stock (`status: 'ok' | 'low' | 'out'`):**
-   * **Propuesta recomendada:** El backend calcula e incluye el campo `status` en cada registro de `/api/inventory/stock` evaluando `quantity <= 0 ? 'out' : quantity <= minStock ? 'low' : 'ok'`.
-   * **Alternativa:** Si el backend prefiere no calcularlo, el frontend puede derivarlo en tiempo de ejecución comparando `quantity` con `minStock`. Se deja como punto abierto a coordinar.
-3. **Estrategia de Sesión y Expiración en Red Local (LAN):**
+   * **Propuesta recomendada:** El campo `status` es del producto, calculado e incluido por el backend en cada registro de existencias evaluando el total acumulado entre todas las localizaciones: `total <= 0 ? 'out' : total <= minStock ? 'low' : 'ok'` (con un umbral por defecto de 10 si no se especifica `minStock`). Un producto sin filas de stock computa como `'out'`. Asimismo, los contadores globales `lowStockCount` y `outOfStockCount` de `/api/inventory/summary` cuantifican productos únicos, no filas físicas.
+   * **Alternativa:** Si el backend prefiere no calcularlo, el frontend puede derivarlo en tiempo de ejecución.
+3. **Campo de Stock Mínimo en Producto:**
+   * La entidad Producto actual no dispone de un campo explícito para stock mínimo (`minStock`). Queda pendiente coordinar si se añade dicha columna en la tabla de productos o si se estandariza un umbral mínimo global por defecto a nivel de configuración del sistema.
+4. **Almacenes sin Localizaciones:**
+   * Se permite la creación y existencia de almacenes sin localizaciones asignadas de forma obligatoria, eliminando la restricción del legado que exigía al menos una localización para dar de alta un almacén.
+5. **Estrategia de Sesión y Expiración en Red Local (LAN):**
    * Token JWT de larga duración (ej: 12 a 24 horas, coincidente con la jornada de operación), sin necesidad de refresh token ni rotación compleja.
-4. **Precisión Numérica en Base de Datos:**
+6. **Precisión Numérica en Base de Datos:**
    * Todos los importes y cantidades de inventario deben viajar como `DecimalString` (`"24.00"`, `"1250.50"`), mapeados en Symfony a columnas `DECIMAL(12,2)`.
-5. **Catálogo de Monedas y Tasas de Cambio:**
+7. **Catálogo de Monedas y Tasas de Cambio:**
    * Monedas admitidas: `USD`, `CUP`, `CUP_TRANSFER` y `MLC`.

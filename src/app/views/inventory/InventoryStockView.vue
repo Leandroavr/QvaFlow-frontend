@@ -287,9 +287,17 @@
           </h4>
           <div class="grid grid-cols-2 gap-3">
             <div class="rounded-lg border border-border-subtle bg-surface-card p-3">
-              <span class="text-[11px] text-content-muted">Stock actual</span>
+              <span class="text-[11px] text-content-muted">Stock en ubicación</span>
               <div class="mt-1 text-lg font-bold text-content-primary">
                 {{ selectedItem.quantity }}
+                <span class="text-xs font-normal text-content-muted">{{ selectedItem.unit }}</span>
+              </div>
+            </div>
+
+            <div class="rounded-lg border border-border-subtle bg-surface-card p-3">
+              <span class="text-[11px] text-content-muted">Stock total</span>
+              <div class="mt-1 text-lg font-bold text-primary">
+                {{ productTotalStock }}
                 <span class="text-xs font-normal text-content-muted">{{ selectedItem.unit }}</span>
               </div>
             </div>
@@ -311,7 +319,7 @@
 
             <div
               v-if="can('products.view_cost')"
-              class="rounded-lg border border-border-subtle bg-surface-card p-3"
+              class="col-span-2 rounded-lg border border-border-subtle bg-surface-card p-3"
             >
               <span class="text-[11px] text-content-muted">Costo adquisición</span>
               <div class="mt-1 text-lg font-bold text-content-primary">
@@ -327,30 +335,38 @@
           </div>
         </div>
 
-        <!-- Ubicación Física -->
+        <!-- Stock por Ubicación Física -->
         <div>
           <h4 class="mb-3 text-xs font-semibold uppercase tracking-wider text-content-muted">
-            Ubicación Física
+            Stock por Ubicación
           </h4>
-          <div class="space-y-2 rounded-xl border border-border-subtle bg-surface-card p-4 text-xs">
-            <div class="flex items-center justify-between">
-              <span class="text-content-muted">Almacén:</span>
-              <span class="font-medium text-content-primary"
-                >{{ selectedItem.warehouseName }} ({{ selectedItem.warehouseCode }})</span
-              >
+          <div
+            class="divide-y divide-border-subtle rounded-xl border border-border-subtle bg-surface-card px-4 py-1 text-xs"
+          >
+            <div
+              v-for="loc in productLocationsStock.length > 0
+                ? productLocationsStock
+                : [selectedItem]"
+              :key="`${loc.warehouseCode}-${loc.locationCode}`"
+              class="flex items-center justify-between py-2.5"
+            >
+              <div class="min-w-0 pr-3">
+                <div class="truncate font-medium text-content-primary">
+                  {{ loc.warehouseName || loc.warehouseCode }}
+                </div>
+                <div class="truncate text-[11px] text-content-muted">
+                  {{ loc.locationName || loc.locationCode }}
+                </div>
+              </div>
+              <div class="shrink-0 text-right font-semibold tabular-nums text-content-primary">
+                {{ loc.quantity }}
+                <span class="text-[11px] font-normal text-content-muted">{{ loc.unit }}</span>
+              </div>
             </div>
-            <div class="flex items-center justify-between border-t border-border-subtle pt-2">
-              <span class="text-content-muted">Localización:</span>
-              <span class="font-medium text-content-primary"
-                >{{ selectedItem.locationName }} ({{ selectedItem.locationCode }})</span
-              >
-            </div>
-            <div class="flex items-center justify-between border-t border-border-subtle pt-2">
-              <span class="text-content-muted">Última actualización:</span>
-              <span class="font-mono text-content-muted">{{
-                formatDate(selectedItem.updatedAt)
-              }}</span>
-            </div>
+          </div>
+          <div class="mt-2 flex items-center justify-between px-1 text-[11px] text-content-muted">
+            <span>Última actualización:</span>
+            <span class="font-mono">{{ formatDate(selectedItem.updatedAt) }}</span>
           </div>
         </div>
       </div>
@@ -411,6 +427,7 @@ import { useStock } from '@/features/inventory/composables/useStock'
 import { useWarehouses } from '@/features/inventory/composables/useWarehouses'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { formatMoney } from '@/shared/utils/formatMoney'
+import { inventoryService } from '@/services'
 import type { StockItem, StockStatus } from '@/features/inventory/types'
 
 const { can } = usePermissions()
@@ -442,6 +459,17 @@ const { warehouses, locations, fetchWarehouses, fetchLocations } = useWarehouses
 // Estado del Drawer de detalle
 const isDrawerOpen = ref(false)
 const selectedItem = ref<StockItem | null>(null)
+const productLocationsStock = ref<StockItem[]>([])
+const isLoadingProductStock = ref(false)
+
+const productTotalStock = computed(() => {
+  if (productLocationsStock.value.length > 0) {
+    return productLocationsStock.value
+      .reduce((acc, item) => acc + (parseFloat(item.quantity) || 0), 0)
+      .toFixed(2)
+  }
+  return selectedItem.value ? selectedItem.value.quantity : '0.00'
+})
 
 // Opciones de Almacén para BaseSelect
 const warehouseOptions = computed<SelectOption[]>(() => {
@@ -578,9 +606,22 @@ function handleRowAction({ actionId, row }: { actionId: string; row: StockItem }
   }
 }
 
-function openProductDetail(row: StockItem) {
+async function openProductDetail(row: StockItem) {
   selectedItem.value = row
   isDrawerOpen.value = true
+  isLoadingProductStock.value = true
+  productLocationsStock.value = [row]
+  try {
+    const res = await inventoryService.getStock({ search: row.productCode, perPage: 100 })
+    const matched = res.items.filter((item) => item.productCode === row.productCode)
+    if (matched.length > 0) {
+      productLocationsStock.value = matched
+    }
+  } catch {
+    // Si falla la búsqueda, mantener el item actual
+  } finally {
+    isLoadingProductStock.value = false
+  }
 }
 
 function handleAdjustFromDrawer() {

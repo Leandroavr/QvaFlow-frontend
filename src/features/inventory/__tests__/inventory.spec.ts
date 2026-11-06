@@ -181,6 +181,143 @@ describe('Módulo de Inventario y Almacenes (Pruebas Unitarias)', () => {
       expect(stock.items.some((item) => item.cost !== undefined)).toBe(true)
       expect(summary.costValue).toBeDefined()
     })
+
+    it('calcula estado de stock como ok para producto con 2 unidades en una localización y 100 en otra', async () => {
+      const service = new MockInventoryService()
+      // Inyectar en el stock del servicio un producto multi-localización
+      const testCode = 'TEST_MULTI_LOC_PRD'
+      ;(service as any).stock.push(
+        {
+          productCode: testCode,
+          productName: 'Producto Multi Ubicación',
+          category: 'Alimentos',
+          unit: 'ud',
+          warehouseCode: 'ALM-CENTRAL',
+          locationCode: 'LOC-CEN-P1',
+          quantity: '2.00',
+          price: '50.00',
+          minStock: '10.00',
+          updatedAt: '2026-11-01T10:00:00Z',
+        },
+        {
+          productCode: testCode,
+          productName: 'Producto Multi Ubicación',
+          category: 'Alimentos',
+          unit: 'ud',
+          warehouseCode: 'ALM-TIENDA',
+          locationCode: 'LOC-TND-E1',
+          quantity: '100.00',
+          price: '50.00',
+          minStock: '10.00',
+          updatedAt: '2026-11-01T10:00:00Z',
+        }
+      )
+
+      const res = await service.getStock({ search: testCode })
+      expect(res.items.length).toBe(2)
+      // Aunque la primera fila tiene quantity 2.00 <= minStock (10.00), el total es 102.00 > 10.00 -> 'ok'
+      expect(res.items[0].status).toBe('ok')
+      expect(res.items[1].status).toBe('ok')
+    })
+
+    it('calcula estado de stock como out para un producto sin registros de stock', () => {
+      const service = new MockInventoryService()
+      const status = (service as any).calculateProductStatus('NON_EXISTENT_PRODUCT_CODE')
+      expect(status).toBe('out')
+    })
+
+    it('calcula contadores del summary (lowStockCount y outOfStockCount) basados en productos únicos', async () => {
+      const service = new MockInventoryService()
+      // Configurar stock controlado con productos en múltiples localizaciones
+      ;(service as any).stock = [
+        // Producto 1: Normal (Total: 2 + 100 = 102 > minStock 10)
+        {
+          productCode: 'PRD-MULTI-OK',
+          productName: 'Producto OK Multi',
+          category: 'Alimentos',
+          unit: 'ud',
+          warehouseCode: 'ALM-CENTRAL',
+          locationCode: 'LOC-CEN-P1',
+          quantity: '2.00',
+          price: '10.00',
+          minStock: '10.00',
+          updatedAt: '2026-11-01T10:00:00Z',
+        },
+        {
+          productCode: 'PRD-MULTI-OK',
+          productName: 'Producto OK Multi',
+          category: 'Alimentos',
+          unit: 'ud',
+          warehouseCode: 'ALM-TIENDA',
+          locationCode: 'LOC-TND-E1',
+          quantity: '100.00',
+          price: '10.00',
+          minStock: '10.00',
+          updatedAt: '2026-11-01T10:00:00Z',
+        },
+        // Producto 2: Bajo stock en 2 filas (Total: 2 + 3 = 5 <= minStock 10)
+        // Debe sumar 1 en lowStockCount, no 2
+        {
+          productCode: 'PRD-MULTI-LOW',
+          productName: 'Producto Bajo Multi',
+          category: 'Alimentos',
+          unit: 'ud',
+          warehouseCode: 'ALM-CENTRAL',
+          locationCode: 'LOC-CEN-P1',
+          quantity: '2.00',
+          price: '15.00',
+          minStock: '10.00',
+          updatedAt: '2026-11-01T10:00:00Z',
+        },
+        {
+          productCode: 'PRD-MULTI-LOW',
+          productName: 'Producto Bajo Multi',
+          category: 'Alimentos',
+          unit: 'ud',
+          warehouseCode: 'ALM-TIENDA',
+          locationCode: 'LOC-TND-E1',
+          quantity: '3.00',
+          price: '15.00',
+          minStock: '10.00',
+          updatedAt: '2026-11-01T10:00:00Z',
+        },
+        // Producto 3: Agotado en 2 ubicaciones (Total 0 <= 0 -> out)
+        // Debe sumar 1 en outOfStockCount, no 2
+        {
+          productCode: 'PRD-MULTI-OUT',
+          productName: 'Producto Agotado Multi',
+          category: 'Bebidas',
+          unit: 'ud',
+          warehouseCode: 'ALM-CENTRAL',
+          locationCode: 'LOC-CEN-P1',
+          quantity: '0.00',
+          price: '20.00',
+          minStock: '10.00',
+          updatedAt: '2026-11-01T10:00:00Z',
+        },
+        {
+          productCode: 'PRD-MULTI-OUT',
+          productName: 'Producto Agotado Multi',
+          category: 'Bebidas',
+          unit: 'ud',
+          warehouseCode: 'ALM-FRIO',
+          locationCode: 'LOC-NEV-B1',
+          quantity: '0.00',
+          price: '20.00',
+          minStock: '10.00',
+          updatedAt: '2026-11-01T10:00:00Z',
+        },
+      ]
+
+      const summary = await service.getStockSummary()
+
+      // Total unidades físicas: 2 + 100 + 2 + 3 + 0 + 0 = 107
+      expect(summary.totalUnits).toBe(107)
+      // lowStockCount debe ser exactamente 1 (PRD-MULTI-LOW), no 2 filas
+      expect(summary.lowStockCount).toBe(1)
+      // outOfStockCount debe ser exactamente 1 (PRD-MULTI-OUT), no 2 filas
+      expect(summary.outOfStockCount).toBe(1)
+    })
   })
 
   // =========================================================================

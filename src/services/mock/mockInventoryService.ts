@@ -463,14 +463,32 @@ export class MockInventoryService implements InventoryService {
   }
 
   /**
-   * Calcula el estado de stock ('ok' | 'low' | 'out') según cantidad y minStock.
+   * Calcula el estado de stock de un producto ('ok' | 'low' | 'out') evaluando
+   * el TOTAL sumado de todas sus localizaciones.
+   * Regla de negocio:
+   * - Si no existen filas de stock para el producto o total <= 0 -> 'out'
+   * - Si total <= minStock (10 por defecto si no se especifica) -> 'low'
+   * - En cualquier otro caso -> 'ok'
    */
-  private calculateStatus(quantityStr: string, minStockStr?: string): StockStatus {
-    const qty = parseFloat(quantityStr) || 0
-    const min = parseFloat(minStockStr || '10') || 10
+  private calculateProductStatus(productCode: string, minStockOverride?: string): StockStatus {
+    const items = this.stock.filter((s) => s.productCode === productCode)
+    if (items.length === 0) {
+      return 'out'
+    }
 
-    if (qty <= 0) return 'out'
-    if (qty < min) return 'low'
+    const totalQty = items.reduce((acc, s) => acc + (parseFloat(s.quantity) || 0), 0)
+    if (totalQty <= 0) {
+      return 'out'
+    }
+
+    // Usar minStockOverride o el minStock del primer registro del producto, por defecto 10
+    const rawMin = minStockOverride ?? items[0]?.minStock
+    const minStock = parseFloat(rawMin || '10') || 10
+
+    if (totalQty <= minStock) {
+      return 'low'
+    }
+
     return 'ok'
   }
 
@@ -759,10 +777,10 @@ export class MockInventoryService implements InventoryService {
       items = items.filter((i) => i.category.toLowerCase() === cat)
     }
 
-    // 5. Filtrado por estado de stock
+    // 5. Filtrado por estado de stock (evaluado sobre el TOTAL del producto)
     if (params.status && params.status !== 'all') {
       items = items.filter((i) => {
-        const st = this.calculateStatus(i.quantity, i.minStock)
+        const st = this.calculateProductStatus(i.productCode, i.minStock)
         return st === params.status
       })
     }
@@ -795,11 +813,11 @@ export class MockInventoryService implements InventoryService {
     const start = (page - 1) * perPage
     const paged = items.slice(start, start + perPage)
 
-    // Formatear items con status derivado y omitir 'cost' si no hay permiso
+    // Formatear items con status derivado del total del producto y omitir 'cost' si no hay permiso
     const formattedItems = paged.map((i) => {
       const itemClone: StockItem = {
         ...i,
-        status: this.calculateStatus(i.quantity, i.minStock),
+        status: this.calculateProductStatus(i.productCode, i.minStock),
       }
 
       if (!canViewCost) {
@@ -822,22 +840,28 @@ export class MockInventoryService implements InventoryService {
     const canViewCost = this.checkHasCostPermission()
 
     let totalUnits = 0
-    let lowStockCount = 0
-    let outOfStockCount = 0
     let totalCostAccum = 0
 
+    // Acumular totalUnits y costValue sobre todas las existencias físicas
     this.stock.forEach((i) => {
       const qty = parseFloat(i.quantity) || 0
       totalUnits += qty
-
-      const status = this.calculateStatus(i.quantity, i.minStock)
-      if (status === 'low') lowStockCount += 1
-      if (status === 'out') outOfStockCount += 1
 
       if (canViewCost && i.cost) {
         const cost = parseFloat(i.cost) || 0
         totalCostAccum += qty * cost
       }
+    })
+
+    // Contar PRODUCTOS únicos para lowStockCount y outOfStockCount
+    const uniqueProductCodes = Array.from(new Set(this.stock.map((i) => i.productCode)))
+    let lowStockCount = 0
+    let outOfStockCount = 0
+
+    uniqueProductCodes.forEach((code) => {
+      const status = this.calculateProductStatus(code)
+      if (status === 'low') lowStockCount += 1
+      if (status === 'out') outOfStockCount += 1
     })
 
     const summary: StockSummary = {
