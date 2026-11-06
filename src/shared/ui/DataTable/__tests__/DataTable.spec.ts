@@ -360,6 +360,31 @@ describe('DataTable, MoneyCell y FilterBar (src/shared/ui/DataTable)', () => {
     })
   })
 
+  describe('9. Altura de tabla y scroll vertical por defecto', () => {
+    it('monta DataTable con 10 filas sin altura fija ni clases de scroll vertical por defecto', () => {
+      const tenRows = Array.from({ length: 10 }, (_, i) => ({
+        id: i + 1,
+        code: `PRD-${i + 1}`,
+        name: `Producto ${i + 1}`,
+        price: '100.00',
+        stock: 10,
+      }))
+
+      const wrapper = mount(DataTable, {
+        props: {
+          columns: testColumns,
+          data: tenRows,
+        },
+      })
+
+      const scrollContainer = wrapper.find('.overflow-x-auto')
+      expect(scrollContainer.exists()).toBe(true)
+      expect(scrollContainer.classes()).not.toContain('overflow-y-auto')
+      expect((scrollContainer.element as HTMLElement).style.maxHeight).toBe('')
+      wrapper.unmount()
+    })
+  })
+
   describe('8. Ausencia de errores o advertencias en consola', () => {
     it('no genera console.error ni console.warn durante el ciclo de vida', () => {
       expect(consoleErrorSpy).not.toHaveBeenCalled()

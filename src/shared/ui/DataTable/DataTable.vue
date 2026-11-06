@@ -36,7 +36,10 @@
     </div>
 
     <!-- Contenedor con scroll de la tabla -->
-    <div class="flex-1 overflow-x-auto overflow-y-auto" :style="{ maxHeight: scrollHeight }">
+    <div
+      :class="['flex-1 overflow-x-auto', scrollHeight ? 'overflow-y-auto' : '']"
+      :style="scrollHeight ? { maxHeight: scrollHeight } : undefined"
+    >
       <table class="w-full border-collapse text-left text-xs text-content-primary">
         <!-- Cabecera fija (Sticky) con tokens de superficie hundida -->
         <thead class="sticky top-0 z-10 border-b border-border-subtle bg-surface-sunken">
@@ -387,7 +390,7 @@ const props = withDefaults(defineProps<Props>(), {
   emptyIcon: undefined,
   actions: undefined,
   primaryAction: undefined,
-  scrollHeight: 'calc(100vh - 280px)',
+  scrollHeight: undefined,
   skeletonRowCount: 5,
   showPagination: true,
   selectedId: null,
