@@ -41,7 +41,7 @@ describe('DataTable, MoneyCell y FilterBar (src/shared/ui/DataTable)', () => {
         props: { value: '1250.50', currency: 'CUP' },
       })
       expect(wrapper.text()).toBe('1,250.50')
-      expect(wrapper.classes()).toContain('font-mono')
+      expect(wrapper.classes()).toContain('font-sans')
       expect(wrapper.classes()).toContain('tabular-nums')
       expect(wrapper.classes()).toContain('text-right')
     })

@@ -1,7 +1,7 @@
 <template>
   <span
     :class="[
-      'inline-block w-full text-right font-mono text-xs tabular-nums text-content-primary',
+      'inline-block w-full text-right font-sans text-xs tabular-nums text-content-primary',
       customClass,
     ]"
     :title="displayTitle"

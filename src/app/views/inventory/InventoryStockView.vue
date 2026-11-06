@@ -176,6 +176,7 @@
       empty-description="No hay productos que coincidan con los filtros de búsqueda seleccionados."
       :actions="getRowActions"
       row-key="productCode"
+      scroll-height="calc(100vh - 430px)"
       @update:page="handlePageChange"
       @update:per-page="handlePerPageChange"
       @update:sort="handleSortChange"
@@ -565,7 +566,9 @@ const columns = computed<DataTableColumn<StockItem>[]>(() => {
       key: 'status',
       title: 'Estado',
       align: 'center',
-      width: '85px',
+      width: '105px',
+      minWidth: '105px',
+      cellClass: 'pr-3',
       sortable: true,
     },
     {
