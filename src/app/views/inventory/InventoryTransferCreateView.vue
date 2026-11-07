@@ -141,43 +141,16 @@
         <!-- Fila de captura / Formulario de línea -->
         <div class="bg-surface-sunken/40 mt-4 rounded-lg border border-border-subtle p-4">
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-12">
-            <!-- Producto / Pistola lectora (Búsqueda por código o nombre) -->
+            <!-- Producto / Pistola lectora (Componente Compartido) -->
             <div class="sm:col-span-4">
-              <BaseFormField
-                id="product-input"
-                label="Producto (lector o búsqueda)"
-                required
+              <DocumentProductSelector
+                :model-value="draftProductCode"
+                :available-stock="availableStock"
                 :error="draftLineError.product"
-                help="Enter agrega la línea con código exacto"
-              >
-                <div class="flex flex-col gap-1.5">
-                  <BaseInput
-                    id="product-input"
-                    v-model="productSearchInput"
-                    placeholder="Código o nombre..."
-                    density="compact"
-                    data-test="product-code-input"
-                    @enter="handleBarcodeEnter"
-                    @keydown.enter.prevent="handleBarcodeEnter"
-                  >
-                    <template #prefix>
-                      <Barcode class="h-3.5 w-3.5" aria-hidden="true" />
-                    </template>
-                  </BaseInput>
-
-                  <!-- Selector desplegable complementario de producto -->
-                  <BaseSelect
-                    id="product-select"
-                    v-model="draftProductCode"
-                    :options="productSelectOptions"
-                    placeholder="O elija de la lista..."
-                    density="compact"
-                    searchable
-                    data-test="product-select"
-                    @update:model-value="handleProductSelect"
-                  />
-                </div>
-              </BaseFormField>
+                @update:model-value="handleProductChange"
+                @update:search-input="handleSearchInputChange"
+                @exact-match="handleExactProductMatch"
+              />
             </div>
 
             <!-- Localización de Origen -->
@@ -263,7 +236,7 @@
             </div>
           </div>
 
-          <!-- Aviso de stock insuficiente en cliente (no bloqueante, aviso informativo) -->
+          <!-- Aviso de stock insuficiente en cliente (no bloqueante, informativo) -->
           <div
             v-if="isQuantityHigherThanStock"
             class="border-state-warning/30 bg-state-warning-subtle/20 mt-3 flex items-center gap-2 rounded-md border px-3 py-2 text-xs text-state-warning"
@@ -294,7 +267,7 @@
           </div>
         </div>
 
-        <!-- Error de items a nivel de formulario del servidor o cliente -->
+        <!-- Error de items a nivel de formulario del servidor -->
         <p
           v-if="fieldErrors['items']"
           class="mt-3 text-xs text-state-error"
@@ -340,7 +313,7 @@
                 <td class="px-3.5 py-2.5 text-content-muted">{{ idx + 1 }}</td>
                 <td class="px-3.5 py-2.5">
                   <div class="font-medium text-content-primary">
-                    {{ getProductName(line.productCode) }}
+                    {{ getProductName(line.productCode, availableStock) }}
                   </div>
                   <div class="font-mono text-[11px] text-content-muted">
                     {{ line.productCode }}
@@ -348,7 +321,7 @@
                 </td>
                 <td class="px-3.5 py-2.5">
                   <div class="text-content-primary">
-                    {{ getLocationDisplayName(line.sourceLocationCode) }}
+                    {{ getLocationDisplayName(line.sourceLocationCode, locations, warehouses) }}
                   </div>
                   <div class="text-[11px] text-content-muted">
                     {{ line.sourceLocationCode }}
@@ -356,7 +329,7 @@
                 </td>
                 <td class="px-3.5 py-2.5">
                   <div class="text-content-primary">
-                    {{ getLocationDisplayName(line.targetLocationCode) }}
+                    {{ getLocationDisplayName(line.targetLocationCode, locations, warehouses) }}
                   </div>
                   <div class="text-[11px] text-content-muted">
                     {{ line.targetLocationCode }}
@@ -417,14 +390,9 @@
       </div>
     </div>
 
-    <!-- Diálogo de confirmación para descartar cambios -->
-    <ConfirmDialog
+    <!-- Diálogo de confirmación para descartar cambios (Componente Compartido) -->
+    <DocumentCancelDialog
       :open="showCancelModal"
-      title="Descartar cambios"
-      message="¿Está seguro de que desea cancelar? Se perderán todos los datos y líneas del traslado no guardados."
-      confirm-text="Sí, descartar"
-      cancel-text="Continuar editando"
-      variant="warning"
       @confirm="handleConfirmDiscard"
       @cancel="showCancelModal = false"
       @update:open="showCancelModal = $event"
@@ -443,7 +411,6 @@ import {
   AlertTriangle,
   AlertCircle,
   RefreshCw,
-  Barcode,
 } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { z } from 'zod'
@@ -455,12 +422,19 @@ import BaseSelect from '@/shared/ui/BaseSelect.vue'
 import type { SelectOption } from '@/shared/ui/BaseSelect.vue'
 import BaseFormField from '@/shared/ui/BaseFormField.vue'
 import BaseSkeleton from '@/shared/ui/BaseSkeleton.vue'
-import ConfirmDialog from '@/shared/ui/ConfirmDialog.vue'
+
+import DocumentProductSelector from '@/features/inventory/components/DocumentProductSelector.vue'
+import DocumentCancelDialog from '@/features/inventory/components/DocumentCancelDialog.vue'
+import {
+  getLocationDisplayName,
+  getProductName,
+  getStockAtLocation,
+} from '@/features/inventory/components/documentHelpers'
 
 import { useTransfers } from '@/features/inventory/composables/useTransfers'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { compareDecimals, normalizeDecimal } from '@/shared/utils/decimal'
-import type { CreateStockTransferItemDto } from '@/features/inventory/types'
+import type { CreateStockTransferItemDto, StockItem } from '@/features/inventory/types'
 
 const router = useRouter()
 const { can } = usePermissions()
@@ -513,30 +487,11 @@ function validateReason() {
   return true
 }
 
-// Opciones de productos deducidas del catálogo de existencias
-const productSelectOptions = computed<SelectOption[]>(() => {
-  const seen = new Set<string>()
-  const opts: SelectOption[] = []
-  for (const item of availableStock.value) {
-    if (!seen.has(item.productCode)) {
-      seen.add(item.productCode)
-      opts.push({
-        value: item.productCode,
-        label: `${item.productName} (${item.productCode})`,
-      })
-    }
-  }
-  return opts
-})
-
-// Opciones de localizaciones de origen
+// Opciones de localizaciones de origen con formato de stock disponible
 const sourceLocationSelectOptions = computed<SelectOption[]>(() => {
   return locations.value.map((loc) => {
     const wh = warehouses.value.find((w) => w.code === loc.warehouseCode)
-    const stockItem = availableStock.value.find(
-      (s) => s.productCode === draftProductCode.value && s.locationCode === loc.code
-    )
-    const qty = stockItem ? stockItem.quantity : '0.00'
+    const qty = getStockAtLocation(draftProductCode.value, loc.code, availableStock.value)
     const whName = wh ? wh.name : loc.warehouseCode
     const locName = loc.name || loc.code
 
@@ -566,11 +521,7 @@ const targetLocationSelectOptions = computed<SelectOption[]>(() => {
 
 // Stock disponible en la localización de origen seleccionada para el producto borrador
 const availableStockAtSource = computed<string>(() => {
-  if (!draftProductCode.value || !draftSourceLocation.value) return '0.00'
-  const match = availableStock.value.find(
-    (s) => s.productCode === draftProductCode.value && s.locationCode === draftSourceLocation.value
-  )
-  return match ? match.quantity : '0.00'
+  return getStockAtLocation(draftProductCode.value, draftSourceLocation.value, availableStock.value)
 })
 
 // Comprueba si la cantidad ingresada supera el stock disponible en origen (aviso al usuario)
@@ -585,19 +536,6 @@ const isQuantityHigherThanStock = computed<boolean>(() => {
   }
 })
 
-// Ayudantes para etiquetas amigables en la tabla
-function getProductName(productCode: string): string {
-  const match = availableStock.value.find((s) => s.productCode === productCode)
-  return match ? match.productName : productCode
-}
-
-function getLocationDisplayName(locationCode: string): string {
-  const loc = locations.value.find((l) => l.code === locationCode)
-  if (!loc) return locationCode
-  const wh = warehouses.value.find((w) => w.code === loc.warehouseCode)
-  return `${loc.name || loc.code} (${wh ? wh.name : loc.warehouseCode})`
-}
-
 // Marca si una línea corresponde al error 409 STOCK_INSUFFICIENT devuelto por el servidor
 function isLineInsufficient(line: CreateStockTransferItemDto): boolean {
   if (!stockInsufficientError.value) return false
@@ -607,13 +545,21 @@ function isLineInsufficient(line: CreateStockTransferItemDto): boolean {
   )
 }
 
-// Manejo de selección de producto desde el dropdown
-function handleProductSelect(code: string | number | null) {
-  if (!code) {
+function handleSearchInputChange(val: string) {
+  productSearchInput.value = val
+}
+
+function handleProductChange(code: string) {
+  if (code) {
+    setProduct(code)
+  } else {
     draftProductCode.value = ''
-    return
   }
-  setProduct(String(code))
+}
+
+function handleExactProductMatch(item: StockItem) {
+  setProduct(item.productCode)
+  addLineFromDraft()
 }
 
 function setProduct(code: string) {
@@ -656,35 +602,6 @@ function handleSourceLocationChange(code: string | number | null) {
 function handleTargetLocationChange(code: string | number | null) {
   draftTargetLocation.value = String(code || '')
   draftLineError.value.target = ''
-}
-
-// Pistola lectora: Enter con código exacto agrega la línea
-function handleBarcodeEnter() {
-  const query = productSearchInput.value.trim()
-  if (!query) return
-
-  // 1. Buscar coincidencia exacta por código o nombre
-  const exactMatch =
-    availableStock.value.find((s) => s.productCode.toLowerCase() === query.toLowerCase()) ||
-    availableStock.value.find((s) => s.productName.toLowerCase() === query.toLowerCase())
-
-  if (exactMatch) {
-    setProduct(exactMatch.productCode)
-    // Agregar la línea inmediatamente
-    addLineFromDraft()
-  } else {
-    // Si no coincide exactamente, buscar si coincide parcialmente
-    const partialMatch = availableStock.value.find(
-      (s) =>
-        s.productCode.toLowerCase().includes(query.toLowerCase()) ||
-        s.productName.toLowerCase().includes(query.toLowerCase())
-    )
-    if (partialMatch) {
-      setProduct(partialMatch.productCode)
-    } else {
-      draftLineError.value.product = `Producto "${query}" no encontrado en el catálogo.`
-    }
-  }
 }
 
 // Agregar línea validada a la lista
@@ -808,5 +725,15 @@ onMounted(async () => {
     return
   }
   await fetchTransferOptions()
+})
+
+defineExpose({
+  draftProductCode,
+  draftSourceLocation,
+  draftTargetLocation,
+  draftQuantity,
+  lines,
+  addLineFromDraft,
+  handleConfirmDiscard,
 })
 </script>
