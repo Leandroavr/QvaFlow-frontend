@@ -380,6 +380,7 @@
 
       <template #actions>
         <BaseButton
+          v-if="can('inventory.adjust')"
           variant="secondary"
           density="compact"
           :icon="SlidersHorizontal"
@@ -388,6 +389,7 @@
           Ajustar stock
         </BaseButton>
         <BaseButton
+          v-if="can('inventory.transfer')"
           variant="secondary"
           density="compact"
           :icon="ArrowRightLeft"
@@ -406,7 +408,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { toast } from 'vue-sonner'
 import {
   Boxes,
   CircleDollarSign,
@@ -584,32 +585,52 @@ const columns = computed<DataTableColumn<StockItem>[]>(() => {
 
 // Acciones del menú por fila
 function getRowActions(_row: StockItem): DropdownMenuItemConfig[] {
-  return [
+  const actions: DropdownMenuItemConfig[] = [
     {
       id: 'view_detail',
       label: 'Ver detalle',
       icon: Eye,
     },
-    {
+  ]
+
+  if (can('inventory.adjust')) {
+    actions.push({
       id: 'adjust',
       label: 'Ajustar stock',
       icon: SlidersHorizontal,
-    },
-    {
+    })
+  }
+
+  if (can('inventory.transfer')) {
+    actions.push({
       id: 'transfer',
       label: 'Trasladar',
       icon: ArrowRightLeft,
-    },
-  ]
+    })
+  }
+
+  return actions
 }
 
 function handleRowAction({ actionId, row }: { actionId: string; row: StockItem }) {
   if (actionId === 'view_detail') {
     openProductDetail(row)
   } else if (actionId === 'adjust') {
-    toast.info('Funcionalidad de ajuste de stock en desarrollo.')
+    router?.push({
+      path: '/inventory/adjustments/new',
+      query: {
+        productCode: row.productCode,
+        locationCode: row.locationCode,
+      },
+    })
   } else if (actionId === 'transfer') {
-    toast.info('Funcionalidad de traslado en desarrollo.')
+    router?.push({
+      path: '/inventory/transfers/new',
+      query: {
+        productCode: row.productCode,
+        sourceLocationCode: row.locationCode,
+      },
+    })
   }
 }
 
@@ -632,11 +653,27 @@ async function openProductDetail(row: StockItem) {
 }
 
 function handleAdjustFromDrawer() {
-  toast.info('Funcionalidad de ajuste de stock en desarrollo.')
+  if (!selectedItem.value) return
+  isDrawerOpen.value = false
+  router?.push({
+    path: '/inventory/adjustments/new',
+    query: {
+      productCode: selectedItem.value.productCode,
+      locationCode: selectedItem.value.locationCode,
+    },
+  })
 }
 
 function handleTransferFromDrawer() {
-  toast.info('Funcionalidad de traslado en desarrollo.')
+  if (!selectedItem.value) return
+  isDrawerOpen.value = false
+  router?.push({
+    path: '/inventory/transfers/new',
+    query: {
+      productCode: selectedItem.value.productCode,
+      sourceLocationCode: selectedItem.value.locationCode,
+    },
+  })
 }
 
 function getStatusBadgeVariant(s?: StockStatus): 'success' | 'warning' | 'danger' {

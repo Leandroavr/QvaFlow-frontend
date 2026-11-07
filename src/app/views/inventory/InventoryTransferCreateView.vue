@@ -402,7 +402,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import {
   ArrowLeft,
   Check,
@@ -437,6 +437,7 @@ import { compareDecimals, normalizeDecimal } from '@/shared/utils/decimal'
 import type { CreateStockTransferItemDto, StockItem } from '@/features/inventory/types'
 
 const router = useRouter()
+const route = useRoute()
 const { can } = usePermissions()
 
 const {
@@ -725,6 +726,20 @@ onMounted(async () => {
     return
   }
   await fetchTransferOptions()
+
+  // Precargar desde query params si son válidos
+  const qProduct = route.query.productCode ? String(route.query.productCode).trim() : ''
+  const qSourceLoc = route.query.sourceLocationCode
+    ? String(route.query.sourceLocationCode).trim()
+    : ''
+
+  if (qProduct && availableStock.value.some((s) => s.productCode === qProduct)) {
+    setProduct(qProduct)
+    if (qSourceLoc && locations.value.some((l) => l.code === qSourceLoc)) {
+      draftSourceLocation.value = qSourceLoc
+      ensureDifferentTargetLocation()
+    }
+  }
 })
 
 defineExpose({
