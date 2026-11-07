@@ -358,12 +358,12 @@ describe('DataTable, MoneyCell y FilterBar (src/shared/ui/DataTable)', () => {
       const actionTh = wrapper.find('th.sticky.right-0')
       expect(actionTh.exists()).toBe(true)
       expect(actionTh.classes()).toContain('z-20')
-      expect(actionTh.classes()).toContain('w-10')
+      expect(actionTh.classes()).toContain('w-[44px]')
 
       const actionTd = wrapper.find('td.sticky.right-0')
       expect(actionTd.exists()).toBe(true)
       expect(actionTd.classes()).toContain('z-10')
-      expect(actionTd.classes()).toContain('w-10')
+      expect(actionTd.classes()).toContain('w-[44px]')
 
       // Al proporcionar scrollHeight, thead se vuelve sticky top-0 z-20 y actionTh top-0 z-30
       await wrapper.setProps({ scrollHeight: '400px' })
@@ -398,6 +398,39 @@ describe('DataTable, MoneyCell y FilterBar (src/shared/ui/DataTable)', () => {
       expect(scrollContainer.exists()).toBe(true)
       expect(scrollContainer.classes()).not.toContain('overflow-y-auto')
       expect((scrollContainer.element as HTMLElement).style.maxHeight).toBe('')
+      wrapper.unmount()
+    })
+  })
+
+  describe('10. FixedLayout y ancho estable de celdas de estado', () => {
+    it('aplica clase table-fixed y respeta anchos configurados con datos de Agotado y Bajo', () => {
+      const stockColumns: DataTableColumn[] = [
+        { key: 'code', title: 'Código', width: '95px' },
+        { key: 'name', title: 'Producto' },
+        { key: 'status', title: 'Estado', width: '104px', minWidth: '104px' },
+      ]
+
+      const items = [
+        { id: 1, code: 'PRD-01', name: 'Ron Havana Club 7 Años 700ml', status: 'Agotado' },
+        { id: 2, code: 'PRD-02', name: 'Ron Santiago de Cuba Carta Blanca', status: 'Bajo' },
+      ]
+
+      const wrapper = mount(DataTable, {
+        props: {
+          columns: stockColumns,
+          data: items,
+          fixedLayout: true,
+        },
+      })
+
+      const table = wrapper.find('table')
+      expect(table.classes()).toContain('table-fixed')
+
+      // Verificar que el encabezado de estado tiene style width: 104px
+      const headers = wrapper.findAll('th')
+      const statusTh = headers.find((th) => th.text().includes('Estado'))
+      expect(statusTh?.attributes('style')).toContain('104px')
+
       wrapper.unmount()
     })
   })

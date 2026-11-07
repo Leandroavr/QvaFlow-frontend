@@ -178,6 +178,7 @@
       empty-description="No hay productos que coincidan con los filtros de búsqueda seleccionados."
       :actions="getRowActions"
       row-key="productCode"
+      :fixed-layout="true"
       @update:page="handlePageChange"
       @update:per-page="handlePerPageChange"
       @update:sort="handleSortChange"
@@ -193,25 +194,25 @@
         </span>
       </template>
 
-      <!-- Celda personalizada: Producto y Categoría -->
+      <!-- Celda personalizada: Producto y Categoría (Truncate y Title) -->
       <template #cell-productName="{ row }">
-        <div class="min-w-0">
-          <div class="truncate font-medium text-content-primary">
+        <div class="min-w-0" :title="`${row.productName} (${row.category})`">
+          <div class="truncate font-medium text-content-primary" :title="row.productName">
             {{ row.productName }}
           </div>
-          <div class="truncate text-[11px] text-content-muted">
+          <div class="truncate text-[11px] text-content-muted" :title="row.category">
             {{ row.category }}
           </div>
         </div>
       </template>
 
-      <!-- Celda personalizada: Almacén y Localización -->
+      <!-- Celda personalizada: Almacén y Localización (Truncate y Title) -->
       <template #cell-warehouseName="{ row }">
-        <div class="min-w-0">
-          <div class="truncate text-content-primary">
+        <div class="min-w-0" :title="`${row.warehouseName} - ${row.locationName}`">
+          <div class="truncate text-content-primary" :title="row.warehouseName">
             {{ row.warehouseName }}
           </div>
-          <div class="truncate text-[11px] text-content-muted">
+          <div class="truncate text-[11px] text-content-muted" :title="row.locationName">
             {{ row.locationName }}
           </div>
         </div>
@@ -236,14 +237,14 @@
         <MoneyCell :value="row.price" currency="CUP" />
       </template>
 
-      <!-- Celda personalizada: Estado con Dot -->
+      <!-- Celda personalizada: Estado con Dot (Whitespace-nowrap y sin overflow oculto) -->
       <template #cell-status="{ row }">
-        <div class="flex items-center justify-center whitespace-nowrap">
+        <div class="flex items-center justify-center overflow-visible whitespace-nowrap">
           <BaseBadge
             :variant="getStatusBadgeVariant(row.status)"
             :dot="true"
             size="sm"
-            class="whitespace-nowrap"
+            class="overflow-visible whitespace-nowrap"
           >
             {{ getStatusBadgeLabel(row.status) }}
           </BaseBadge>
@@ -531,13 +532,11 @@ const columns = computed<DataTableColumn<StockItem>[]>(() => {
       key: 'productName',
       title: 'Producto',
       sortable: true,
-      minWidth: '140px',
     },
     {
       key: 'warehouseName',
       title: 'Ubicación',
       sortable: true,
-      minWidth: '120px',
     },
     {
       key: 'quantity',
@@ -567,8 +566,9 @@ const columns = computed<DataTableColumn<StockItem>[]>(() => {
       key: 'status',
       title: 'Estado',
       align: 'center',
-      width: 'min-content',
-      cellClass: 'whitespace-nowrap px-2',
+      width: '104px',
+      minWidth: '104px',
+      cellClass: 'whitespace-nowrap px-1 overflow-visible',
       sortable: true,
     },
     {

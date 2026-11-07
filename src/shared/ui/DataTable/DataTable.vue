@@ -40,7 +40,12 @@
       :class="['flex-1 overflow-x-auto', scrollHeight ? 'overflow-y-auto' : '']"
       :style="scrollHeight ? { maxHeight: scrollHeight } : undefined"
     >
-      <table class="w-full border-collapse text-left text-xs text-content-primary">
+      <table
+        :class="[
+          'w-full border-collapse text-left text-xs text-content-primary',
+          fixedLayout && 'table-fixed',
+        ]"
+      >
         <!-- Cabecera fija (Sticky solo si hay scroll interno) con tokens de superficie hundida -->
         <thead
           :class="[
@@ -118,12 +123,12 @@
               </div>
             </th>
 
-            <!-- Columna de acciones por fila (Sticky a la derecha, z-index superior a filas, 40px fijos) -->
+            <!-- Columna de acciones por fila (Sticky a la derecha, z-index superior a filas, 44px fijos) -->
             <th
               v-if="hasActions"
               scope="col"
               :class="[
-                'sticky right-0 w-10 min-w-[40px] max-w-[40px] border-l border-border-subtle bg-surface-sunken px-1.5 py-2 text-center text-xs font-semibold uppercase tracking-wider text-content-secondary shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]',
+                'sticky right-0 w-[44px] min-w-[44px] max-w-[44px] border-l border-border-subtle bg-surface-sunken px-1.5 py-2 text-center text-xs font-semibold uppercase tracking-wider text-content-secondary shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]',
                 scrollHeight ? 'top-0 z-30' : 'z-20',
               ]"
             >
@@ -166,7 +171,7 @@
 
               <td
                 v-if="hasActions"
-                class="sticky right-0 z-10 w-10 min-w-[40px] max-w-[40px] border-l border-border-subtle bg-surface-card px-1.5 py-2 text-center shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]"
+                class="sticky right-0 z-10 w-[44px] min-w-[44px] max-w-[44px] border-l border-border-subtle bg-surface-card px-1.5 py-2 text-center shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]"
               >
                 <BaseSkeleton class="mx-auto h-6 w-6 rounded-md" />
               </td>
@@ -282,11 +287,11 @@
                 </slot>
               </td>
 
-              <!-- Menú de acciones por fila (Sticky a la derecha, 40px fijos sin solaparse) -->
+              <!-- Menú de acciones por fila (Sticky a la derecha, 44px fijos sin solaparse) -->
               <td
                 v-if="hasActions"
                 :class="[
-                  'sticky right-0 z-10 w-10 min-w-[40px] max-w-[40px] border-l border-border-subtle px-1.5 py-2 text-center shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)] transition-colors',
+                  'sticky right-0 z-10 w-[44px] min-w-[44px] max-w-[44px] border-l border-border-subtle px-1.5 py-2 text-center shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)] transition-colors',
                   isRowSelected(row, rIdx)
                     ? 'bg-primary-subtle'
                     : 'bg-surface-card group-hover:bg-surface-sunken',
@@ -380,6 +385,7 @@ interface Props<T = any> {
   skeletonRowCount?: number
   showPagination?: boolean
   selectedId?: string | number | null
+  fixedLayout?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -402,6 +408,7 @@ const props = withDefaults(defineProps<Props>(), {
   skeletonRowCount: 5,
   showPagination: true,
   selectedId: null,
+  fixedLayout: false,
 })
 
 const emit = defineEmits<{
