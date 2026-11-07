@@ -138,6 +138,17 @@ export const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'inventory/transfers/new',
+        name: 'inventory-transfers-new',
+        component: () => import('../views/inventory/InventoryTransferCreateView.vue'),
+        meta: {
+          permission: 'inventory.transfer',
+          title: 'Nuevo Traslado - QvaFlow',
+          breadcrumb: 'Nuevo traslado',
+          parentBreadcrumb: 'Movimientos y traslados',
+        },
+      },
+      {
         path: 'inventory/adjustments',
         name: 'inventory-adjustments',
         component: () => import('../views/inventory/InventoryAdjustmentsView.vue'),

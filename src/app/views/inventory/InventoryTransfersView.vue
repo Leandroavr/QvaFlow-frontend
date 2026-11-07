@@ -256,8 +256,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { Plus, RefreshCw, FileText } from 'lucide-vue-next'
-import { toast } from 'vue-sonner'
 
 import PageHeader from '@/shared/ui/PageHeader.vue'
 import BaseButton from '@/shared/ui/BaseButton.vue'
@@ -274,6 +274,7 @@ import { useDataTableQuery } from '@/shared/composables/useDataTableQuery'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import type { StockTransfer, DocumentStatus } from '@/features/inventory/types'
 
+const router = useRouter()
 const { can } = usePermissions()
 
 const {
@@ -415,7 +416,7 @@ function refreshTransfers() {
 }
 
 function handleNewTransferClick() {
-  toast.info('Disponible en el siguiente paso')
+  router.push('/inventory/transfers/new')
 }
 
 function handleSearchUpdate(val: string) {
