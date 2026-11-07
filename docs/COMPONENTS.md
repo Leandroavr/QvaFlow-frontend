@@ -5,8 +5,9 @@
 ---
 
 ## 1. Principios de Diseño
+
 - **Tokens Semánticos**: Uso exclusivo de variables CSS (`--surface-page`, `--surface-card`, `--surface-skeleton`, `--state-success`, etc.). Sin colores hexadecimales sueltos.
-- **Color como Estado**: Los colores expresan estados (*éxito*, *aviso*, *error/peligro*, *información*), nunca propósitos puramente decorativos.
+- **Color como Estado**: Los colores expresan estados (_éxito_, _aviso_, _error/peligro_, _información_), nunca propósitos puramente decorativos.
 - **Foco Accesible (`focus-visible`)**: Foco visible con anillos de alta visibilidad para navegación por teclado, sin dejar anillos residuales tras clics de ratón.
 - **Sin Emojis**: Iconografía basada en `lucide-vue-next`.
 - **Ruta de Demostración**: Disponible en entorno de desarrollo en `/#/dev/components` (excluida del build de producción).
@@ -16,6 +17,7 @@
 ## 2. Catálogo de Componentes
 
 ### BaseBadge
+
 Etiquetas semánticas de estado con soporte opcional de punto indicador.
 
 - **Props**:
@@ -23,6 +25,7 @@ Etiquetas semánticas de estado con soporte opcional de punto indicador.
   - `size`: `'sm' | 'md'` (por defecto: `'md'`)
   - `dot`: `boolean` (por defecto: `false`)
 - **Ejemplo**:
+
 ```vue
 <BaseBadge variant="success" dot>Completado</BaseBadge>
 <BaseBadge variant="warning" size="sm">Stock crítico</BaseBadge>
@@ -31,6 +34,7 @@ Etiquetas semánticas de estado con soporte opcional de punto indicador.
 ---
 
 ### StatCard
+
 Tarjetas de métricas operativas con valores destacados, tendencias y soporte de skeleton loading.
 
 - **Props**:
@@ -41,6 +45,7 @@ Tarjetas de métricas operativas con valores destacados, tendencias y soporte de
   - `loading?`: `boolean` (activa esqueleto de carga)
   - `icon?`: `Component` (icono pequeño y neutro, sin color decorativo)
 - **Ejemplo**:
+
 ```vue
 <StatCard
   label="Ventas de hoy"
@@ -54,6 +59,7 @@ Tarjetas de métricas operativas con valores destacados, tendencias y soporte de
 ---
 
 ### BaseSkeleton
+
 Placeholders animados con el token `--surface-skeleton` adaptativo a tema claro y oscuro.
 
 - **Props**:
@@ -61,6 +67,7 @@ Placeholders animados con el token `--surface-skeleton` adaptativo a tema claro 
   - `height?`: `string` (ej. `'1.5rem'`, `'20px'`)
   - `rounded?`: `string` (ej. `'rounded-full'`, `'rounded-md'`)
 - **Ejemplo**:
+
 ```vue
 <BaseSkeleton height="1.5rem" width="60%" />
 <BaseSkeleton height="2rem" width="2rem" rounded="rounded-full" />
@@ -69,6 +76,7 @@ Placeholders animados con el token `--surface-skeleton` adaptativo a tema claro 
 ---
 
 ### EmptyState
+
 Contenedor centralizado para listas o tablas sin registros.
 
 - **Props**:
@@ -78,6 +86,7 @@ Contenedor centralizado para listas o tablas sin registros.
 - **Slots**:
   - `actions`: Botones o controles de acción primaria/secundaria.
 - **Ejemplo**:
+
 ```vue
 <EmptyState
   title="Sin existencias"
@@ -93,6 +102,7 @@ Contenedor centralizado para listas o tablas sin registros.
 ---
 
 ### BaseSelect
+
 Selector accesible de altura 36px construido sobre Reka UI Select con soporte de búsqueda interna y opción general "Todos".
 
 - **Props**:
@@ -108,6 +118,7 @@ Selector accesible de altura 36px construido sobre Reka UI Select con soporte de
 - **Eventos**:
   - `update:modelValue`: Emitido al seleccionar una opción.
 - **Ejemplo**:
+
 ```vue
 <BaseSelect
   v-model="selectedWarehouse"
@@ -123,6 +134,7 @@ Selector accesible de altura 36px construido sobre Reka UI Select con soporte de
 ---
 
 ### BaseModal
+
 Ventana de diálogo modal sobre Reka UI Dialog con foco atrapado, cierre con Escape y scroll interno del cuerpo.
 
 - **Props**:
@@ -137,6 +149,7 @@ Ventana de diálogo modal sobre Reka UI Dialog con foco atrapado, cierre con Esc
   - `default`: Cuerpo con scroll independiente.
   - `actions`: Pie con botones de acción.
 - **Ejemplo**:
+
 ```vue
 <BaseModal
   :open="isModalOpen"
@@ -155,6 +168,7 @@ Ventana de diálogo modal sobre Reka UI Dialog con foco atrapado, cierre con Esc
 ---
 
 ### BaseDrawer
+
 Panel deslizante lateral desde el borde derecho sobre Reka UI Dialog.
 
 - **Props**:
@@ -166,6 +180,7 @@ Panel deslizante lateral desde el borde derecho sobre Reka UI Dialog.
   - `update:open`: `(open: boolean) => void`
   - `close`: Emitido al cerrarse.
 - **Ejemplo**:
+
 ```vue
 <BaseDrawer
   :open="isDrawerOpen"
@@ -180,6 +195,7 @@ Panel deslizante lateral desde el borde derecho sobre Reka UI Dialog.
 ---
 
 ### BaseTabs
+
 Pestañas de estilo subrayado con soporte de contadores numéricos y navegación por teclado.
 
 - **Props**:
@@ -190,11 +206,15 @@ Pestañas de estilo subrayado con soporte de contadores numéricos y navegación
 - **Slots**:
   - `[item.id]`: Contenido específico de cada pestaña.
 - **Ejemplo**:
+
 ```vue
-<BaseTabs v-model="tabActiva" :items="[
-  { id: 'activos', label: 'Activos', count: 12 },
-  { id: 'cerrados', label: 'Cerrados', count: 48 },
-]">
+<BaseTabs
+  v-model="tabActiva"
+  :items="[
+    { id: 'activos', label: 'Activos', count: 12 },
+    { id: 'cerrados', label: 'Cerrados', count: 48 },
+  ]"
+>
   <template #activos>Lista de activos...</template>
   <template #cerrados>Historial de cerrados...</template>
 </BaseTabs>
@@ -203,6 +223,7 @@ Pestañas de estilo subrayado con soporte de contadores numéricos y navegación
 ---
 
 ### BaseDropdownMenu
+
 Menú contextual flotante con soporte de iconos, elementos de peligro (rojo), separadores y accesos rápidos.
 
 - **Props**:
@@ -213,6 +234,7 @@ Menú contextual flotante con soporte de iconos, elementos de peligro (rojo), se
 - **Slots**:
   - `trigger`: Elemento disparador (as-child).
 - **Ejemplo**:
+
 ```vue
 <BaseDropdownMenu
   :items="[
@@ -230,6 +252,7 @@ Menú contextual flotante con soporte de iconos, elementos de peligro (rojo), se
 ---
 
 ### BaseTooltip
+
 Mensaje emergente accesible con flecha indicadora sobre Reka UI Tooltip.
 
 - **Props**:
@@ -237,6 +260,7 @@ Mensaje emergente accesible con flecha indicadora sobre Reka UI Tooltip.
   - `side?`: `'top' | 'right' | 'bottom' | 'left'` (por defecto: `'top'`)
   - `delayDuration?`: `number` (ms, por defecto: `150`)
 - **Ejemplo**:
+
 ```vue
 <BaseTooltip content="Exportar reporte a Excel" side="top">
   <BaseButton variant="secondary" density="compact">Exportar</BaseButton>
@@ -246,6 +270,7 @@ Mensaje emergente accesible con flecha indicadora sobre Reka UI Tooltip.
 ---
 
 ### BaseFormField
+
 Envoltorio accesible que asocia etiquetas, textos de ayuda y mensajes de error con el control subyacente mediante `aria-describedby` y `for`.
 
 - **Props**:
@@ -257,6 +282,7 @@ Envoltorio accesible que asocia etiquetas, textos de ayuda y mensajes de error c
 - **Scoped Slot**:
   - Recibe `{ id, describedBy, error, hasError }` para enlazar directamente con `BaseInput` o `BaseSelect`.
 - **Ejemplo**:
+
 ```vue
 <BaseFormField id="codigo" label="Código de Producto" help="Escanee el código" required>
   <template #default="{ id, describedBy }">
@@ -268,6 +294,7 @@ Envoltorio accesible que asocia etiquetas, textos de ayuda y mensajes de error c
 ---
 
 ### useToast (Notificaciones vue-sonner)
+
 Composable para emitir notificaciones semánticas configurado con los tokens de diseño de la aplicación. Montado globalmente en `AppLayout.vue`.
 
 - **Métodos**:
@@ -277,6 +304,7 @@ Composable para emitir notificaciones semánticas configurado con los tokens de 
   - `toast.info(message, options?)`
   - `toast.dismiss(id?)`
 - **Ejemplo**:
+
 ```ts
 import { useToast } from '@/shared/composables/useToast'
 
@@ -290,6 +318,7 @@ toast.error('No se pudo conectar con el servidor local.')
 ## 3. Componentes de Datos y Tablas Avanzadas
 
 ### DataTable
+
 Tabla de datos de alto rendimiento construida sobre `@tanstack/vue-table` v9, compatible con modos de procesamiento en memoria (`client`) y paginación/ordenación remota (`server`). Incluye cabecera fija (sticky) con tokens `--surface-sunken`, filas compactas (~40px), soporte de selección múltiple con acciones en lote, menú desplegable de acciones por fila mediante `BaseDropdownMenu`, renderizado de estados (`loading`, `empty`, `error` con reintento) y navegación accesible por teclado (flechas ↑ y ↓, Enter para acción principal) **sin robar el foco al montarse**.
 
 - **Props**:
@@ -323,6 +352,7 @@ Tabla de datos de alto rendimiento construida sobre `@tanstack/vue-table` v9, co
   - `#batch-actions`: Barra de acciones en lote mostrada cuando hay filas seleccionadas (`{ selectedRows, selectedKeys, clearSelection }`).
   - `#empty-actions`: Botones o controles dentro del estado vacío.
 - **Ejemplo**:
+
 ```vue
 <DataTable
   mode="server"
@@ -341,6 +371,7 @@ Tabla de datos de alto rendimiento construida sobre `@tanstack/vue-table` v9, co
 ---
 
 ### MoneyCell
+
 Celda monetaria formateada para listados financieros basada en `formatMoney`. Garantiza el uso seguro de string decimal (`"1250.50"`), alineación a la derecha y tipografía tabular (`font-mono tabular-nums`). Cumple la directriz del sistema de diseño de no repetir la divisa en cada fila cuando esta ya figura en la cabecera de la columna.
 
 - **Props**:
@@ -349,6 +380,7 @@ Celda monetaria formateada para listados financieros basada en `formatMoney`. Ga
   - `showCurrency?`: `boolean` (por defecto `false` para no saturar las celdas de datos).
   - `class?`: `string` (estilos CSS adicionales).
 - **Ejemplo**:
+
 ```vue
 <MoneyCell :value="row.cost" currency="CUP" />
 ```
@@ -356,6 +388,7 @@ Celda monetaria formateada para listados financieros basada en `formatMoney`. Ga
 ---
 
 ### FilterBar
+
 Barra de filtros de una sola fila con comportamiento responsivo (`wrap` en pantallas estrechas), buscador con debounce integrado, selects compactos para filtrado paramétrico, botón "Limpiar filtros" (solo visible cuando existen filtros activos o búsqueda) y slot para acciones principales a la derecha ("Nuevo producto", etc.). Incluye chips de filtros activos opcionales con botón de descarte individual.
 
 - **Props**:
@@ -372,6 +405,7 @@ Barra de filtros de una sola fila con comportamiento responsivo (`wrap` en panta
   - `#actions`: Botones de acción principales (ej. `BaseButton` "Nuevo").
   - `#chips`: Personalización libre de la tira de chips activos.
 - **Ejemplo**:
+
 ```vue
 <FilterBar
   v-model:search="query.search"
@@ -393,6 +427,7 @@ Barra de filtros de una sola fila con comportamiento responsivo (`wrap` en panta
 ---
 
 ### useDataTableQuery (Composable)
+
 Composable para gestión de estado de listados tabulares con sincronización bidireccional en la query string de la URL (compatible con modo hash `/#/ruta?page=2&sort=name:asc`), normalización de parámetros y generación del objeto de consulta listo para la API de Symfony.
 
 - **Opciones (`DataTableQueryOptions`)**:
@@ -409,3 +444,40 @@ Composable para gestión de estado de listados tabulares con sincronización bid
   - `setPage`, `setPerPage`, `setSort`, `setSearch`, `setFilter`, `resetFilters`, `resetAll`.
   - `handleQueryChange`: Controlador directo para el evento `@query-change` de `DataTable`.
 
+---
+
+### ConfirmDialog
+
+Diálogo modal accesible para confirmaciones críticas o acciones destructivas (como eliminar almacenes o localizaciones), construido sobre `BaseModal`. Aplica por defecto la variante `'danger'`, icono de advertencia, y foco automático (autofocus programático accesible) en el botón "Cancelar" para prevenir eliminaciones accidentales al pulsar Enter.
+
+- **Props**:
+  - `open`: `boolean` (controla la visibilidad del modal).
+  - `title?`: `string` (título de la acción, por defecto `¿Confirmar acción?`).
+  - `message?`: `string` (mensaje explicativo de la consecuencia).
+  - `confirmText?`: `string` (etiqueta del botón de confirmación, por defecto `Confirmar`).
+  - `cancelText?`: `string` (etiqueta del botón de cancelación, por defecto `Cancelar`).
+  - `variant?`: `'danger' | 'warning' | 'primary'` (por defecto `'danger'`).
+  - `loading?`: `boolean` (estado de carga mientras se ejecuta la acción remota).
+  - `size?`: `'sm' | 'md' | 'lg' | 'xl'` (por defecto `'sm'`).
+- **Eventos**:
+  - `update:open`: `(open: boolean)` (soporte para `v-model:open`).
+  - `confirm`: `()` (disparado al pulsar el botón de confirmación).
+  - `cancel`: `()` (disparado al pulsar cancelar, backdrop o Escape).
+- **Accesibilidad**:
+  - Vincula el mensaje a la descripción accesible de `DialogContent`.
+  - Foco programático seguro en el botón de cancelación mediante `nextTick()`.
+- **Ejemplo**:
+
+```vue
+<ConfirmDialog
+  :open="isDeleteOpen"
+  title="¿Eliminar almacén?"
+  :message="`¿Está seguro de eliminar '${warehouse.name}'? Esta acción no se puede deshacer.`"
+  confirm-text="Eliminar almacén"
+  variant="danger"
+  :loading="isDeleting"
+  @update:open="isDeleteOpen = $event"
+  @confirm="handleConfirmDelete"
+  @cancel="isDeleteOpen = false"
+/>
+```

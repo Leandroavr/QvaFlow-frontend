@@ -25,6 +25,7 @@ export const KNOWN_PERMISSIONS = [
   'inventory.create',
   'inventory.adjust',
   'inventory.transfer',
+  'warehouses.manage', // [PROPUESTA] Crear, editar y eliminar almacenes y localizaciones físicos
 
   // Catálogo de Productos y Costos
   'products.view',

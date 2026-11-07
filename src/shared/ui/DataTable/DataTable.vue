@@ -1,7 +1,7 @@
 <template>
   <div
     ref="tableContainerRef"
-    class="border-border-default relative flex w-full flex-col overflow-hidden rounded-xl border bg-surface-card shadow-sm outline-none"
+    class="relative flex w-full flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface-card shadow-sm outline-none"
     tabindex="0"
     role="region"
     aria-label="Tabla de datos"
@@ -36,13 +36,26 @@
     </div>
 
     <!-- Contenedor con scroll de la tabla -->
-    <div class="flex-1 overflow-x-auto overflow-y-auto" :style="{ maxHeight: scrollHeight }">
-      <table class="w-full border-collapse text-left text-xs text-content-primary">
-        <!-- Cabecera fija (Sticky) con tokens de superficie hundida -->
-        <thead class="border-border-default sticky top-0 z-10 border-b bg-surface-sunken">
-          <tr>
+    <div
+      :class="['flex-1 overflow-x-auto', scrollHeight ? 'overflow-y-auto' : '']"
+      :style="scrollHeight ? { maxHeight: scrollHeight } : undefined"
+    >
+      <table
+        :class="[
+          'w-full border-collapse text-left text-xs text-content-primary',
+          fixedLayout && 'table-fixed',
+        ]"
+      >
+        <!-- Cabecera fija (Sticky solo si hay scroll interno) con tokens de superficie hundida -->
+        <thead
+          :class="[
+            scrollHeight ? 'sticky top-0 z-20' : '',
+            'border-b border-border-subtle bg-surface-sunken',
+          ]"
+        >
+          <tr class="h-10">
             <!-- Columna de selección múltiple (checkbox) -->
-            <th v-if="selectable" scope="col" class="w-10 px-3 py-2 text-center">
+            <th v-if="selectable" scope="col" class="w-10 bg-surface-sunken px-3 py-2 text-center">
               <input
                 type="checkbox"
                 :checked="isAllSelected"
@@ -61,7 +74,7 @@
               scope="col"
               :style="{ width: col.width, minWidth: col.minWidth }"
               :class="[
-                'select-none px-4 py-2.5 font-semibold uppercase tracking-wider text-content-secondary',
+                'group select-none whitespace-nowrap bg-surface-sunken px-3 py-2 text-xs font-semibold uppercase tracking-wider text-content-secondary',
                 col.align === 'right'
                   ? 'text-right'
                   : col.align === 'center'
@@ -76,7 +89,7 @@
             >
               <div
                 :class="[
-                  'inline-flex items-center gap-1.5',
+                  'inline-flex items-center gap-1.5 whitespace-nowrap',
                   col.align === 'right'
                     ? 'justify-end'
                     : col.align === 'center'
@@ -89,8 +102,8 @@
                   ({{ col.currency }})
                 </span>
 
-                <!-- Indicador de ordenación -->
-                <span v-if="col.sortable" class="inline-flex shrink-0 text-content-muted">
+                <!-- Indicador de ordenación: solo en columnas ordenables, atenuado hasta hover u ordenación activa -->
+                <span v-if="col.sortable" class="inline-flex shrink-0">
                   <ArrowUp
                     v-if="activeSortKey === col.key && activeSortDirection === 'asc'"
                     class="h-3.5 w-3.5 text-primary"
@@ -103,18 +116,21 @@
                   />
                   <ArrowUpDown
                     v-else
-                    class="h-3 w-3 opacity-40 hover:opacity-100"
+                    class="h-3 w-3 text-content-muted opacity-25 transition-opacity group-hover:opacity-80"
                     aria-hidden="true"
                   />
                 </span>
               </div>
             </th>
 
-            <!-- Columna de acciones por fila -->
+            <!-- Columna de acciones por fila (Sticky a la derecha, z-index superior a filas, 44px fijos) -->
             <th
               v-if="hasActions"
               scope="col"
-              class="w-14 px-3 py-2.5 text-center font-semibold uppercase tracking-wider text-content-secondary"
+              :class="[
+                'sticky right-0 w-[44px] min-w-[44px] max-w-[44px] border-l border-border-subtle bg-surface-sunken px-1.5 py-2 text-center text-xs font-semibold uppercase tracking-wider text-content-secondary shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]',
+                scrollHeight ? 'top-0 z-30' : 'z-20',
+              ]"
             >
               <span class="sr-only">Acciones</span>
             </th>
@@ -133,7 +149,7 @@
               <td
                 v-for="col in visibleColumns"
                 :key="col.key"
-                class="px-4 py-2"
+                class="px-3 py-2"
                 :class="
                   col.align === 'right'
                     ? 'text-right'
@@ -153,7 +169,10 @@
                 />
               </td>
 
-              <td v-if="hasActions" class="px-3 py-2 text-center">
+              <td
+                v-if="hasActions"
+                class="sticky right-0 z-10 w-[44px] min-w-[44px] max-w-[44px] border-l border-border-subtle bg-surface-card px-1.5 py-2 text-center shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)]"
+              >
                 <BaseSkeleton class="mx-auto h-6 w-6 rounded-md" />
               </td>
             </tr>
@@ -181,10 +200,10 @@
                 <BaseButton
                   variant="secondary"
                   density="compact"
+                  :icon="RotateCw"
                   class="mt-1"
                   @click="emit('retry')"
                 >
-                  <RotateCw class="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
                   Reintentar
                 </BaseButton>
               </div>
@@ -212,11 +231,14 @@
               v-for="(row, rIdx) in displayedRows"
               :key="getRowIdentifier(row, rIdx)"
               :class="[
-                'h-10 transition-colors',
+                'group h-10 transition-colors',
                 isRowSelected(row, rIdx) ? 'bg-primary-subtle/40' : 'hover:bg-surface-sunken/40',
+                isRowActive(row, rIdx) &&
+                  'shadow-xs border-l-4 !border-l-primary !bg-surface-sunken font-medium',
                 activeKeyboardRowIndex === rIdx &&
                   'ring-primary/60 bg-surface-sunken/60 ring-1 ring-inset',
               ]"
+              :aria-selected="isRowActive(row, rIdx) || isRowSelected(row, rIdx) || undefined"
               @click="handleRowClick(row, rIdx)"
             >
               <!-- Checkbox de selección -->
@@ -235,7 +257,7 @@
                 v-for="col in visibleColumns"
                 :key="col.key"
                 :class="[
-                  'px-4 py-2 text-content-primary',
+                  'px-3 py-2 text-content-primary',
                   col.align === 'right'
                     ? 'text-right'
                     : col.align === 'center'
@@ -265,8 +287,17 @@
                 </slot>
               </td>
 
-              <!-- Menú de acciones por fila (BaseDropdownMenu con "⋯") -->
-              <td v-if="hasActions" class="w-14 px-3 py-2 text-center" @click.stop>
+              <!-- Menú de acciones por fila (Sticky a la derecha, 44px fijos sin solaparse) -->
+              <td
+                v-if="hasActions"
+                :class="[
+                  'sticky right-0 z-10 w-[44px] min-w-[44px] max-w-[44px] border-l border-border-subtle px-1.5 py-2 text-center shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.05)] transition-colors',
+                  isRowSelected(row, rIdx)
+                    ? 'bg-primary-subtle'
+                    : 'bg-surface-card group-hover:bg-surface-sunken',
+                ]"
+                @click.stop
+              >
                 <slot name="actions" :row="row" :index="rIdx">
                   <BaseDropdownMenu
                     v-if="actions"
@@ -353,6 +384,8 @@ interface Props<T = any> {
   scrollHeight?: string
   skeletonRowCount?: number
   showPagination?: boolean
+  selectedId?: string | number | null
+  fixedLayout?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -371,9 +404,11 @@ const props = withDefaults(defineProps<Props>(), {
   emptyIcon: undefined,
   actions: undefined,
   primaryAction: undefined,
-  scrollHeight: 'calc(100vh - 280px)',
+  scrollHeight: undefined,
   skeletonRowCount: 5,
   showPagination: true,
+  selectedId: null,
+  fixedLayout: false,
 })
 
 const emit = defineEmits<{
@@ -637,6 +672,14 @@ const selectedRows = computed(() => {
 const isRowSelected = (row: any, idx: number) => {
   const key = getRowIdentifier(row, idx)
   return selectedRowKeys.value.includes(key)
+}
+
+const isRowActive = (row: any, idx: number) => {
+  if (props.selectedId === null || props.selectedId === undefined || props.selectedId === '') {
+    return false
+  }
+  const key = getRowIdentifier(row, idx)
+  return String(key) === String(props.selectedId)
 }
 
 const toggleRowSelection = (row: any, idx: number) => {

@@ -107,7 +107,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'inventory/stock',
         name: 'inventory-stock',
-        component: () => import('../views/ModulePlaceholderView.vue'),
+        component: () => import('../views/inventory/InventoryStockView.vue'),
         meta: {
           permission: 'inventory.view',
           title: 'Stock de Inventario - QvaFlow',
@@ -118,7 +118,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'inventory/warehouses',
         name: 'inventory-warehouses',
-        component: () => import('../views/ModulePlaceholderView.vue'),
+        component: () => import('../views/inventory/WarehousesView.vue'),
         meta: {
           permission: 'inventory.view',
           title: 'Almacenes y Localizaciones - QvaFlow',

@@ -41,17 +41,28 @@ describe('DataTable, MoneyCell y FilterBar (src/shared/ui/DataTable)', () => {
         props: { value: '1250.50', currency: 'CUP' },
       })
       expect(wrapper.text()).toBe('1,250.50')
-      expect(wrapper.classes()).toContain('font-mono')
+      expect(wrapper.classes()).toContain('font-sans')
       expect(wrapper.classes()).toContain('tabular-nums')
       expect(wrapper.classes()).toContain('text-right')
     })
 
-    it('muestra divisa cuando se habilita la prop showCurrency', () => {
-      const wrapper = mount(MoneyCell, {
+    it('muestra divisa cuando se habilita la prop showCurrency con código explícito sin símbolo ₱', () => {
+      const wrapperCup = mount(MoneyCell, {
+        props: { value: '154285.00', currency: 'CUP', showCurrency: true },
+      })
+      expect(wrapperCup.text()).toBe('154,285.00 CUP')
+      expect(wrapperCup.text()).not.toContain('₱')
+
+      const wrapperMlc = mount(MoneyCell, {
+        props: { value: '250.00', currency: 'MLC', showCurrency: true },
+      })
+      expect(wrapperMlc.text()).toBe('250.00 MLC')
+
+      const wrapperUsd = mount(MoneyCell, {
         props: { value: '1250.50', currency: 'USD', showCurrency: true },
       })
-      expect(wrapper.text()).toContain('$')
-      expect(wrapper.text()).toContain('1,250.50')
+      expect(wrapperUsd.text()).toContain('$')
+      expect(wrapperUsd.text()).toContain('1,250.50')
     })
 
     it('muestra guion largo para valores vacíos o nulos', () => {
@@ -324,6 +335,103 @@ describe('DataTable, MoneyCell y FilterBar (src/shared/ui/DataTable)', () => {
       expect(search.value).toBe('')
       expect(filters.value.category).toBe('')
       expect(page.value).toBe(1)
+    })
+  })
+
+  describe('4. DataTable — Columna de acciones sticky y cabecera', () => {
+    it('renderiza la cabecera sin sticky por defecto y con sticky solo si hay scrollHeight', async () => {
+      const wrapper = mount(DataTable, {
+        props: {
+          columns: testColumns,
+          data: testProducts,
+          actions: () => [{ id: 'edit', label: 'Editar' }],
+        },
+      })
+
+      const thead = wrapper.find('thead')
+      expect(thead.classes()).not.toContain('sticky')
+      expect(thead.classes()).toContain('bg-surface-sunken')
+
+      const headerTr = wrapper.find('thead tr')
+      expect(headerTr.classes()).toContain('h-10')
+
+      const actionTh = wrapper.find('th.sticky.right-0')
+      expect(actionTh.exists()).toBe(true)
+      expect(actionTh.classes()).toContain('z-20')
+      expect(actionTh.classes()).toContain('w-[44px]')
+
+      const actionTd = wrapper.find('td.sticky.right-0')
+      expect(actionTd.exists()).toBe(true)
+      expect(actionTd.classes()).toContain('z-10')
+      expect(actionTd.classes()).toContain('w-[44px]')
+
+      // Al proporcionar scrollHeight, thead se vuelve sticky top-0 z-20 y actionTh top-0 z-30
+      await wrapper.setProps({ scrollHeight: '400px' })
+      expect(wrapper.find('thead').classes()).toContain('sticky')
+      expect(wrapper.find('thead').classes()).toContain('top-0')
+      expect(wrapper.find('thead').classes()).toContain('z-20')
+      expect(wrapper.find('th.sticky.right-0').classes()).toContain('top-0')
+      expect(wrapper.find('th.sticky.right-0').classes()).toContain('z-30')
+
+      wrapper.unmount()
+    })
+  })
+
+  describe('9. Altura de tabla y scroll vertical por defecto', () => {
+    it('monta DataTable con 10 filas sin altura fija ni clases de scroll vertical por defecto', () => {
+      const tenRows = Array.from({ length: 10 }, (_, i) => ({
+        id: i + 1,
+        code: `PRD-${i + 1}`,
+        name: `Producto ${i + 1}`,
+        price: '100.00',
+        stock: 10,
+      }))
+
+      const wrapper = mount(DataTable, {
+        props: {
+          columns: testColumns,
+          data: tenRows,
+        },
+      })
+
+      const scrollContainer = wrapper.find('.overflow-x-auto')
+      expect(scrollContainer.exists()).toBe(true)
+      expect(scrollContainer.classes()).not.toContain('overflow-y-auto')
+      expect((scrollContainer.element as HTMLElement).style.maxHeight).toBe('')
+      wrapper.unmount()
+    })
+  })
+
+  describe('10. FixedLayout y ancho estable de celdas de estado', () => {
+    it('aplica clase table-fixed y respeta anchos configurados con datos de Agotado y Bajo', () => {
+      const stockColumns: DataTableColumn[] = [
+        { key: 'code', title: 'Código', width: '95px' },
+        { key: 'name', title: 'Producto' },
+        { key: 'status', title: 'Estado', width: '104px', minWidth: '104px' },
+      ]
+
+      const items = [
+        { id: 1, code: 'PRD-01', name: 'Ron Havana Club 7 Años 700ml', status: 'Agotado' },
+        { id: 2, code: 'PRD-02', name: 'Ron Santiago de Cuba Carta Blanca', status: 'Bajo' },
+      ]
+
+      const wrapper = mount(DataTable, {
+        props: {
+          columns: stockColumns,
+          data: items,
+          fixedLayout: true,
+        },
+      })
+
+      const table = wrapper.find('table')
+      expect(table.classes()).toContain('table-fixed')
+
+      // Verificar que el encabezado de estado tiene style width: 104px
+      const headers = wrapper.findAll('th')
+      const statusTh = headers.find((th) => th.text().includes('Estado'))
+      expect(statusTh?.attributes('style')).toContain('104px')
+
+      wrapper.unmount()
     })
   })
 

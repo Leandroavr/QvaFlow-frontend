@@ -44,7 +44,12 @@ export function formatMoney(
     return `${sign}${formattedInt}.${formattedDec}`
   }
 
-  return `${sign}${currencyConfig.symbol} ${formattedInt}.${formattedDec}`
+  // Para divisas con símbolo '$' (USD) se coloca como prefijo; para CUP, MLC, etc. se coloca código explícito al final
+  if (currencyConfig.symbol === '$') {
+    return `${sign}$ ${formattedInt}.${formattedDec}`
+  }
+
+  return `${sign}${formattedInt}.${formattedDec} ${currencyConfig.symbol}`
 }
 
 /**

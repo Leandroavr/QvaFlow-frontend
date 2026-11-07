@@ -3,8 +3,8 @@
     :type="type"
     :disabled="disabled || loading"
     :class="[
-      'inline-flex cursor-pointer select-none items-center justify-center font-semibold transition-all duration-150',
-      'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
+      'inline-flex cursor-pointer select-none items-center justify-center gap-2 whitespace-nowrap font-semibold transition-all duration-150',
+      'focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
       'disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none',
       'active:scale-[0.98]',
       variantClasses[variant],
@@ -18,27 +18,40 @@
       v-if="loading"
       :size="density === 'compact' ? 'sm' : 'md'"
       :color="variant === 'primary' || variant === 'danger' ? 'white' : 'primary'"
-      class="mr-2"
+      class="shrink-0"
     />
 
-    <!-- Icono prefijo opcional -->
-    <span v-if="$slots.prefix && !loading" class="mr-2 inline-flex items-center">
+    <!-- Icono opcional como prop -->
+    <component
+      :is="icon"
+      v-if="icon && !loading && !$slots.prefix"
+      :class="[density === 'compact' ? 'h-3.5 w-3.5' : 'h-4 w-4', 'shrink-0']"
+      aria-hidden="true"
+    />
+
+    <!-- Icono prefijo opcional por slot -->
+    <span v-if="$slots.prefix && !loading" class="inline-flex shrink-0 items-center">
       <slot name="prefix" />
     </span>
 
     <!-- Texto o contenido del botón -->
-    <span :class="{ 'opacity-90': loading }">
+    <span
+      v-if="$slots.default || loading"
+      class="inline-flex items-center justify-center gap-2 whitespace-nowrap"
+      :class="{ 'opacity-90': loading }"
+    >
       <slot>{{ loading ? loadingText : '' }}</slot>
     </span>
 
     <!-- Icono sufijo opcional -->
-    <span v-if="$slots.suffix && !loading" class="ml-2 inline-flex items-center">
+    <span v-if="$slots.suffix && !loading" class="inline-flex shrink-0 items-center">
       <slot name="suffix" />
     </span>
   </button>
 </template>
 
 <script setup lang="ts">
+import type { Component } from 'vue'
 import BaseSpinner from './BaseSpinner.vue'
 
 export type ControlDensity = 'comfortable' | 'compact'
@@ -52,6 +65,7 @@ interface Props {
   loading?: boolean
   loadingText?: string
   block?: boolean
+  icon?: Component
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -63,6 +77,7 @@ const props = withDefaults(defineProps<Props>(), {
   loading: false,
   loadingText: 'Cargando...',
   block: false,
+  icon: undefined,
 })
 
 const variantClasses: Record<string, string> = {

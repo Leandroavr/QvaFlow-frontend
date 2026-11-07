@@ -54,6 +54,7 @@
             : density === 'compact'
               ? 'pr-3'
               : 'pr-4',
+          uppercase && 'uppercase',
           error
             ? 'border-state-error ring-1 ring-state-error focus:border-state-error focus:ring-state-error'
             : 'border-border-default hover:border-border-hover',
@@ -124,6 +125,7 @@ interface Props {
   autocomplete?: string
   autofocus?: boolean
   density?: ControlDensity
+  uppercase?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -138,6 +140,7 @@ const props = withDefaults(defineProps<Props>(), {
   autocomplete: 'off',
   autofocus: false,
   density: 'compact',
+  uppercase: false,
 })
 
 const emit = defineEmits<{
@@ -175,7 +178,9 @@ const togglePasswordVisibility = () => {
 
 const onInput = (event: Event) => {
   const target = event.target as HTMLInputElement
-  emit('update:modelValue', target.value)
+  const val = props.uppercase ? target.value.toUpperCase() : target.value
+  target.value = val
+  emit('update:modelValue', val)
 }
 
 onMounted(() => {

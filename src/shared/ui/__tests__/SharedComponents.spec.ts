@@ -12,7 +12,8 @@ import BaseTabs from '../BaseTabs.vue'
 import BaseDropdownMenu from '../BaseDropdownMenu.vue'
 import BaseTooltip from '../BaseTooltip.vue'
 import BaseFormField from '../BaseFormField.vue'
-import { TrendingUp, Package } from 'lucide-vue-next'
+import BaseButton from '../BaseButton.vue'
+import { TrendingUp, Package, Plus } from 'lucide-vue-next'
 
 describe('Componentes Primitivos UI (src/shared/ui)', () => {
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>
@@ -157,6 +158,24 @@ describe('Componentes Primitivos UI (src/shared/ui)', () => {
       vm.handleUpdate('__all_option__')
       expect(wrapper.emitted('update:modelValue')?.[1]).toEqual([''])
 
+      wrapper.unmount()
+    })
+
+    it('soporta estado deshabilitado con opacidad 60%, title y aria-label', () => {
+      const wrapper = mount(BaseSelect, {
+        props: {
+          options,
+          disabled: true,
+          title: 'Elige un almacén primero',
+          ariaLabel: 'Elige un almacén primero',
+        },
+      })
+
+      const trigger = wrapper.find('button[role="combobox"]')
+      expect(trigger.exists()).toBe(true)
+      expect(trigger.classes()).toContain('opacity-60')
+      expect(trigger.attributes('title')).toBe('Elige un almacén primero')
+      expect(trigger.attributes('aria-label')).toBe('Elige un almacén primero')
       wrapper.unmount()
     })
   })
@@ -318,6 +337,75 @@ describe('Componentes Primitivos UI (src/shared/ui)', () => {
       wrapper.setProps({ error: 'El campo es obligatorio' })
       expect(consoleErrorSpy).not.toHaveBeenCalled()
       expect(consoleWarnSpy).not.toHaveBeenCalled()
+      wrapper.unmount()
+    })
+  })
+
+  describe('10. BaseButton', () => {
+    it('renderiza icono y texto en una sola línea con clases inline-flex, items-center, justify-center, gap-2 y whitespace-nowrap cuando el icono llega como prop', () => {
+      const wrapper = mount(BaseButton, {
+        props: {
+          icon: Plus,
+        },
+        slots: {
+          default: 'Nuevo almacén',
+        },
+      })
+
+      expect(wrapper.exists()).toBe(true)
+      const buttonClasses = wrapper.classes()
+      expect(buttonClasses).toContain('inline-flex')
+      expect(buttonClasses).toContain('items-center')
+      expect(buttonClasses).toContain('justify-center')
+      expect(buttonClasses).toContain('gap-2')
+      expect(buttonClasses).toContain('whitespace-nowrap')
+
+      // Verificar que el contenedor de texto también previene saltos de línea
+      const textSpan = wrapper.find('span.whitespace-nowrap')
+      expect(textSpan.exists()).toBe(true)
+      expect(textSpan.text()).toBe('Nuevo almacén')
+      wrapper.unmount()
+    })
+
+    it('mantiene layout en una sola línea (whitespace-nowrap) cuando el icono llega por slot de prefijo', () => {
+      const wrapper = mount(BaseButton, {
+        slots: {
+          prefix: h(Plus, { class: 'h-4 w-4' }),
+          default: 'Nueva localización',
+        },
+      })
+
+      expect(wrapper.exists()).toBe(true)
+      expect(wrapper.classes()).toContain('inline-flex')
+      expect(wrapper.classes()).toContain('whitespace-nowrap')
+      expect(wrapper.find('svg').exists()).toBe(true)
+      expect(wrapper.text()).toContain('Nueva localización')
+      wrapper.unmount()
+    })
+
+    it('renderiza icono y texto en una sola línea con inline-flex, items-center, justify-center, gap-2 y whitespace-nowrap cuando el icono llega dentro del slot por defecto', () => {
+      const wrapper = mount(BaseButton, {
+        slots: {
+          default: () => [h(Plus, { class: 'h-4 w-4 shrink-0' }), 'Actualizar'],
+        },
+      })
+
+      expect(wrapper.exists()).toBe(true)
+      expect(wrapper.classes()).toContain('inline-flex')
+      expect(wrapper.classes()).toContain('items-center')
+      expect(wrapper.classes()).toContain('justify-center')
+      expect(wrapper.classes()).toContain('gap-2')
+      expect(wrapper.classes()).toContain('whitespace-nowrap')
+
+      const innerSpan = wrapper.find('span')
+      expect(innerSpan.exists()).toBe(true)
+      expect(innerSpan.classes()).toContain('inline-flex')
+      expect(innerSpan.classes()).toContain('items-center')
+      expect(innerSpan.classes()).toContain('justify-center')
+      expect(innerSpan.classes()).toContain('gap-2')
+      expect(innerSpan.classes()).toContain('whitespace-nowrap')
+      expect(wrapper.find('svg').exists()).toBe(true)
+      expect(wrapper.text()).toContain('Actualizar')
       wrapper.unmount()
     })
   })

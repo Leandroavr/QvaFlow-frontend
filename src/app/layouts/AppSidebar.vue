@@ -5,7 +5,7 @@
     <!-- Backdrop móvil (pantallas < 1024px) -->
     <div
       v-if="mobileOpen"
-      class="backdrop-blur-xs fixed inset-0 z-40 bg-black/60 transition-opacity lg:hidden"
+      class="backdrop-blur-xs fixed inset-0 z-[var(--z-sidebar)] bg-black/60 transition-opacity lg:hidden"
       aria-hidden="true"
       @click="$emit('close-mobile')"
     />
@@ -13,7 +13,7 @@
     <!-- Panel Sidebar (100% de la altura del viewport) -->
     <aside
       :class="[
-        'fixed inset-y-0 left-0 z-50 flex h-dvh flex-col border-r border-sidebar-border bg-sidebar-bg text-sidebar-text shadow-xl transition-all duration-200 ease-in-out',
+        'fixed inset-y-0 left-0 z-[var(--z-sidebar)] flex h-dvh flex-col border-r border-sidebar-border bg-sidebar-bg text-sidebar-text shadow-xl transition-all duration-200 ease-in-out',
         // Comportamiento en escritorio (>= 1024px)
         'lg:static lg:z-auto lg:shadow-none',
         collapsed ? 'w-60 lg:w-16' : 'w-60',
@@ -105,14 +105,11 @@
 
             <!-- 2. Grupo con hijos (ej: Ventas, Caja, Inventario) -->
             <template v-else>
-              <div
-                class="relative"
-                @mouseenter="handleGroupMouseEnter($event, item.id)"
-                @mouseleave="handleGroupMouseLeave"
-              >
+              <div class="relative">
                 <!-- Botón de cabecera del grupo -->
                 <button
                   type="button"
+                  :data-sidebar-group="item.id"
                   :class="[
                     'group relative flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors',
                     'focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
@@ -125,11 +122,13 @@
                   :aria-haspopup="collapsed && !mobileOpen ? 'menu' : undefined"
                   :title="item.label"
                   @click="toggleGroup(item.id)"
+                  @pointerenter="handleTriggerPointerEnter($event, item.id)"
+                  @pointerleave="handleTriggerPointerLeave(item.id)"
+                  @mouseenter="handleTriggerPointerEnter($event, item.id)"
+                  @mouseleave="handleTriggerPointerLeave(item.id)"
                   @focusin="handleGroupFocusIn($event, item.id)"
-                  @focusout="handleGroupFocusOut"
-                  @keydown.enter.prevent="toggleGroup(item.id)"
-                  @keydown.space.prevent="toggleGroup(item.id)"
-                  @keydown.escape="closePopover"
+                  @focusout="handleGroupFocusOut($event, item.id)"
+                  @keydown="handleGroupKeydown($event, item.id)"
                 >
                   <!-- Indicador de grupo activo si está colapsado -->
                   <span
@@ -215,64 +214,72 @@
                   </ul>
                 </transition>
 
-                <!-- Popover flotante en Modo Colapsado (hover o foco de teclado) -->
-                <div
-                  v-if="activePopoverId === item.id && collapsed && !mobileOpen"
-                  class="fixed left-16 z-50 ml-1.5 w-52 rounded-xl border border-border-subtle bg-sidebar-bg p-2 text-sidebar-text shadow-2xl ring-1 ring-black/20"
-                  :style="{ top: `${popoverTop}px` }"
-                  role="menu"
-                  :aria-label="item.label"
-                  @mouseenter="cancelPopoverClose"
-                  @mouseleave="handleGroupMouseLeave"
-                  @keydown.escape="closePopover"
-                >
-                  <!-- Cabecera del popover -->
+                <!-- Popover flotante en Modo Colapsado con Teleport al body -->
+                <Teleport to="body">
                   <div
-                    class="mb-1.5 flex items-center justify-between border-b border-sidebar-border px-2.5 py-1"
+                    v-if="activePopoverId === item.id && collapsed && !mobileOpen"
+                    :id="`popover-${item.id}`"
+                    class="fixed z-[var(--z-popover)] w-52 rounded-xl border border-border-subtle bg-sidebar-bg p-2 text-sidebar-text shadow-2xl ring-1 ring-black/20"
+                    :style="{ top: `${popoverTop}px`, left: `${popoverLeft}px` }"
+                    role="menu"
+                    data-sidebar-popover
+                    :aria-label="item.label"
+                    tabindex="-1"
+                    @pointerenter="handlePopoverPointerEnter"
+                    @pointerleave="handlePopoverPointerLeave(item.id)"
+                    @mouseenter="handlePopoverPointerEnter"
+                    @mouseleave="handlePopoverPointerLeave(item.id)"
+                    @keydown="handlePopoverKeydown"
+                    @focusout="handlePopoverFocusOut($event, item.id)"
                   >
-                    <span class="text-xs font-bold text-white">{{ item.label }}</span>
-                    <span class="text-[10px] text-sidebar-text-muted"
-                      >{{ item.children?.length }} opciones</span
+                    <!-- Cabecera del popover -->
+                    <div
+                      class="mb-1.5 flex items-center justify-between border-b border-sidebar-border px-2.5 py-1"
                     >
-                  </div>
-
-                  <!-- Lista de submódulos -->
-                  <ul class="space-y-0.5">
-                    <li v-for="subItem in item.children" :key="subItem.id">
-                      <router-link
-                        :to="subItem.to || '/'"
-                        :class="[
-                          'group relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs transition-colors',
-                          'focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
-                          isActiveRoute(subItem.to)
-                            ? 'shadow-xs bg-sidebar-active font-medium text-white'
-                            : 'text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white',
-                        ]"
-                        :aria-current="isActiveRoute(subItem.to) ? 'page' : undefined"
-                        :title="subItem.label"
-                        role="menuitem"
-                        @click="closePopover"
+                      <span class="text-xs font-bold text-white">{{ item.label }}</span>
+                      <span class="text-[10px] text-sidebar-text-muted"
+                        >{{ item.children?.length }} opciones</span
                       >
-                        <span
-                          v-if="isActiveRoute(subItem.to)"
-                          class="absolute bottom-1.5 left-0 top-1.5 w-1 rounded-r bg-sky-400"
-                          aria-hidden="true"
-                        />
-                        <component
-                          :is="subItem.icon"
-                          class="h-4 w-4 shrink-0"
-                          :class="
+                    </div>
+
+                    <!-- Lista de submódulos -->
+                    <ul class="space-y-0.5">
+                      <li v-for="subItem in item.children" :key="subItem.id">
+                        <router-link
+                          :to="subItem.to || '/'"
+                          :class="[
+                            'group relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs transition-colors',
+                            'focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
                             isActiveRoute(subItem.to)
-                              ? 'text-sky-300'
-                              : 'text-sidebar-text-muted group-hover:text-white'
-                          "
-                          aria-hidden="true"
-                        />
-                        <span class="truncate" :title="subItem.label">{{ subItem.label }}</span>
-                      </router-link>
-                    </li>
-                  </ul>
-                </div>
+                              ? 'shadow-xs bg-sidebar-active font-medium text-white'
+                              : 'text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white',
+                          ]"
+                          :aria-current="isActiveRoute(subItem.to) ? 'page' : undefined"
+                          :title="subItem.label"
+                          role="menuitem"
+                          @click="closePopover"
+                        >
+                          <span
+                            v-if="isActiveRoute(subItem.to)"
+                            class="absolute bottom-1.5 left-0 top-1.5 w-1 rounded-r bg-sky-400"
+                            aria-hidden="true"
+                          />
+                          <component
+                            :is="subItem.icon"
+                            class="h-4 w-4 shrink-0"
+                            :class="
+                              isActiveRoute(subItem.to)
+                                ? 'text-sky-300'
+                                : 'text-sidebar-text-muted group-hover:text-white'
+                            "
+                            aria-hidden="true"
+                          />
+                          <span class="truncate" :title="subItem.label">{{ subItem.label }}</span>
+                        </router-link>
+                      </li>
+                    </ul>
+                  </div>
+                </Teleport>
               </div>
             </template>
           </li>
@@ -311,7 +318,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { X, ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next'
 import { useNavigationMenu, type MenuItem } from '../navigation/menu'
@@ -339,7 +346,10 @@ const openGroups = ref<Set<string>>(new Set())
 // Estado reactivo de popovers flotantes en modo colapsado
 const activePopoverId = ref<string | null>(null)
 const popoverTop = ref<number>(0)
+const popoverLeft = ref<number>(70)
+const lastTriggerElement = ref<HTMLElement | null>(null)
 let closeTimeout: ReturnType<typeof setTimeout> | null = null
+let isRestoringFocus = false
 
 // Funciones de navegación y estado de grupos
 const isGroupOpen = (groupId: string): boolean => {
@@ -348,10 +358,16 @@ const isGroupOpen = (groupId: string): boolean => {
 
 const toggleGroup = (groupId: string) => {
   if (props.collapsed && !props.mobileOpen) {
-    // Si está colapsado, al hacer clic en un grupo expandimos el sidebar
-    emit('toggle-collapse')
-    openGroups.value.add(groupId)
-    activePopoverId.value = null
+    if (activePopoverId.value === groupId) {
+      closePopover()
+    } else {
+      const trigger = document.querySelector(
+        `[data-sidebar-group="${groupId}"]`
+      ) as HTMLElement | null
+      if (trigger) {
+        openPopover(groupId, trigger)
+      }
+    }
     return
   }
 
@@ -384,64 +400,187 @@ const autoExpandActiveGroup = () => {
   })
 }
 
-const handleItemClick = () => {
+const handleItemClick = (e?: Event) => {
+  if (e && 'detail' in e && (e as MouseEvent).detail !== 0) {
+    ;(e.currentTarget as HTMLElement)?.blur()
+  }
   if (props.mobileOpen) {
     emit('close-mobile')
   }
 }
 
 // Control del Popover en modo colapsado
-const closePopover = () => {
-  if (closeTimeout) clearTimeout(closeTimeout)
+const cancelCloseTimer = () => {
+  if (closeTimeout) {
+    clearTimeout(closeTimeout)
+    closeTimeout = null
+  }
+}
+
+const openPopover = (groupId: string, trigger: HTMLElement) => {
+  if (!props.collapsed || props.mobileOpen) return
+  cancelCloseTimer()
+  lastTriggerElement.value = trigger
+  const rect = trigger.getBoundingClientRect()
+  popoverTop.value = Math.max(8, rect.top)
+  popoverLeft.value = Math.round(rect.right + 6)
+  activePopoverId.value = groupId
+}
+
+const scheduleClosePopover = (groupId?: string) => {
+  if (!props.collapsed || props.mobileOpen) return
+  cancelCloseTimer()
+  closeTimeout = setTimeout(() => {
+    // Si se especificó groupId, solo cerramos si el popover activo no ha cambiado
+    if (!groupId || activePopoverId.value === groupId) {
+      activePopoverId.value = null
+    }
+    closeTimeout = null
+  }, 150)
+}
+
+const closePopover = (e?: Event) => {
+  if (e && 'detail' in e && (e as MouseEvent).detail !== 0) {
+    ;(e.currentTarget as HTMLElement)?.blur()
+  }
+  cancelCloseTimer()
   activePopoverId.value = null
 }
 
-const handleGroupMouseEnter = (event: MouseEvent, groupId: string) => {
-  if (!props.collapsed || props.mobileOpen) return
-  if (closeTimeout) clearTimeout(closeTimeout)
-
-  const trigger = event.currentTarget as HTMLElement
-  const rect = trigger.getBoundingClientRect()
-  popoverTop.value = Math.max(8, rect.top)
-  activePopoverId.value = groupId
+const closePopoverAndRestoreFocus = () => {
+  const trigger = lastTriggerElement.value
+  closePopover()
+  if (trigger && typeof trigger.focus === 'function') {
+    isRestoringFocus = true
+    trigger.focus()
+    queueMicrotask(() => {
+      isRestoringFocus = false
+    })
+  }
 }
 
-const handleGroupMouseLeave = () => {
+const handleTriggerPointerEnter = (event: Event, groupId: string) => {
   if (!props.collapsed || props.mobileOpen) return
-  closeTimeout = setTimeout(() => {
-    activePopoverId.value = null
-  }, 150)
+  const el = event.currentTarget as HTMLElement
+  const trigger = el.tagName === 'BUTTON' ? el : el.querySelector('button') || el
+  openPopover(groupId, trigger)
 }
 
-const cancelPopoverClose = () => {
-  if (closeTimeout) clearTimeout(closeTimeout)
+const handleTriggerPointerLeave = (groupId: string) => {
+  if (!props.collapsed || props.mobileOpen) return
+  scheduleClosePopover(groupId)
+}
+
+const handlePopoverPointerEnter = () => {
+  cancelCloseTimer()
+}
+
+const handlePopoverPointerLeave = (groupId: string) => {
+  scheduleClosePopover(groupId)
+}
+
+const handleGroupKeydown = (event: KeyboardEvent, groupId: string) => {
+  if (props.collapsed && !props.mobileOpen) {
+    const trigger = event.currentTarget as HTMLElement
+    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+      event.preventDefault()
+      if (activePopoverId.value === groupId) {
+        closePopover()
+      } else {
+        openPopover(groupId, trigger)
+      }
+    } else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      if (activePopoverId.value === groupId) {
+        event.preventDefault()
+        const popoverEl = document.querySelector(`[data-sidebar-popover]`)
+        const firstLink = popoverEl?.querySelector('a') as HTMLElement | null
+        firstLink?.focus()
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault()
+        openPopover(groupId, trigger)
+      }
+    } else if (event.key === 'Escape') {
+      event.preventDefault()
+      closePopoverAndRestoreFocus()
+    }
+  } else {
+    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+      event.preventDefault()
+      toggleGroup(groupId)
+    }
+  }
+}
+
+const handlePopoverKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' || event.key === 'ArrowLeft') {
+    event.preventDefault()
+    closePopoverAndRestoreFocus()
+  }
 }
 
 const handleGroupFocusIn = (event: FocusEvent, groupId: string) => {
+  if (isRestoringFocus) return
   if (!props.collapsed || props.mobileOpen) return
-  if (closeTimeout) clearTimeout(closeTimeout)
-
-  const trigger = event.currentTarget as HTMLElement
-  const rect = trigger.getBoundingClientRect()
-  popoverTop.value = Math.max(8, rect.top)
-  activePopoverId.value = groupId
+  const el = event.currentTarget as HTMLElement
+  const trigger = el.tagName === 'BUTTON' ? el : el.querySelector('button') || el
+  openPopover(groupId, trigger)
 }
 
-const handleGroupFocusOut = (event: FocusEvent) => {
+const handleGroupFocusOut = (event: FocusEvent, groupId: string) => {
   if (!props.collapsed || props.mobileOpen) return
-  // Si el foco se mueve a un hijo dentro del popover, mantener abierto
   const relatedTarget = event.relatedTarget as HTMLElement | null
-  if (relatedTarget && relatedTarget.closest('[role="menu"]')) {
+  if (
+    relatedTarget &&
+    (relatedTarget.closest('[data-sidebar-popover]') ||
+      relatedTarget.closest('[data-sidebar-group]'))
+  ) {
     return
   }
-  closeTimeout = setTimeout(() => {
-    activePopoverId.value = null
-  }, 150)
+  scheduleClosePopover(groupId)
 }
 
-// Ciclo de vida y observadores (declarados al final tras todas las funciones que invocan)
+const handlePopoverFocusOut = (event: FocusEvent, groupId: string) => {
+  if (!props.collapsed || props.mobileOpen) return
+  const relatedTarget = event.relatedTarget as HTMLElement | null
+  if (
+    relatedTarget &&
+    (relatedTarget.closest('[data-sidebar-popover]') ||
+      relatedTarget.closest('[data-sidebar-group]'))
+  ) {
+    return
+  }
+  scheduleClosePopover(groupId)
+}
+
+const handleClickOutside = (event: MouseEvent | PointerEvent) => {
+  if (!activePopoverId.value) return
+  const target = event.target as HTMLElement | null
+  if (
+    target &&
+    (target.closest('[data-sidebar-popover]') || target.closest('[data-sidebar-group]'))
+  ) {
+    return
+  }
+  closePopover()
+}
+
+const handleDocumentKeyDown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && activePopoverId.value) {
+    closePopoverAndRestoreFocus()
+  }
+}
+
+// Ciclo de vida y observadores
 onMounted(() => {
   autoExpandActiveGroup()
+  document.addEventListener('pointerdown', handleClickOutside)
+  document.addEventListener('keydown', handleDocumentKeyDown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('pointerdown', handleClickOutside)
+  document.removeEventListener('keydown', handleDocumentKeyDown)
+  cancelCloseTimer()
 })
 
 watch(

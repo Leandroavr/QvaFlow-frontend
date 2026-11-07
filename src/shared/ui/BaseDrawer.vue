@@ -13,6 +13,7 @@
           'animate-in slide-in-from-right',
           sizeClasses[size],
         ]"
+        @open-auto-focus="handleOpenAutoFocus"
       >
         <!-- Cabecera del Drawer -->
         <div class="flex shrink-0 items-start justify-between border-b border-border-subtle p-5">
@@ -70,11 +71,13 @@ interface Props {
   title: string
   description?: string
   size?: DrawerSize
+  autoFocusFirstInput?: boolean
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   description: '',
   size: 'md',
+  autoFocusFirstInput: true,
 })
 
 const emit = defineEmits<{
@@ -86,6 +89,19 @@ const sizeClasses: Record<DrawerSize, string> = {
   sm: 'max-w-md w-full',
   md: 'max-w-lg w-full',
   lg: 'max-w-2xl w-full',
+}
+
+const handleOpenAutoFocus = (e: Event) => {
+  if (!props.autoFocusFirstInput) return
+  const el = e.currentTarget as HTMLElement | null
+  if (!el) return
+  const input = el.querySelector<HTMLElement>(
+    'input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [data-autofocus]'
+  )
+  if (input) {
+    e.preventDefault()
+    input.focus()
+  }
 }
 
 const handleOpenUpdate = (val: boolean) => {

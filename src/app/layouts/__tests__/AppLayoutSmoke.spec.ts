@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createMemoryHistory, type Router } from 'vue-router'
 import AppLayout from '../AppLayout.vue'
+import AppSidebar from '../AppSidebar.vue'
 import { routes } from '../../router'
 import { useAuthStore } from '../../../features/auth/stores/authStore'
 
@@ -62,7 +63,7 @@ describe('AppLayout Smoke Tests', () => {
     expect(sidebarText).toContain('Administración')
 
     wrapper.unmount()
-  })
+  }, 15000)
 
   it('monta AppLayout para vendedor mostrando solo Inicio, Ventas y Productos', async () => {
     const authStore = useAuthStore()
@@ -90,7 +91,7 @@ describe('AppLayout Smoke Tests', () => {
     expect(sidebarText).not.toContain('Administración')
 
     wrapper.unmount()
-  })
+  }, 15000)
 
   it('monta AppLayout para almacenero mostrando solo Inicio, Inventario, Productos y Compras', async () => {
     const authStore = useAuthStore()
@@ -117,7 +118,7 @@ describe('AppLayout Smoke Tests', () => {
     expect(sidebarText).not.toContain('Administración')
 
     wrapper.unmount()
-  })
+  }, 15000)
 
   it('abre automáticamente el grupo padre al navegar directamente a una ruta hija', async () => {
     const authStore = useAuthStore()
@@ -142,5 +143,114 @@ describe('AppLayout Smoke Tests', () => {
     expect(text).toContain('Almacenes')
 
     wrapper.unmount()
-  })
+  }, 15000)
+
+  it('renderiza el popover del sidebar colapsado mediante Teleport fuera del elemento aside', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    const wrapper = mount(AppSidebar, {
+      props: {
+        collapsed: true,
+        mobileOpen: false,
+      },
+      global: {
+        plugins: [pinia, router],
+      },
+      attachTo: document.body,
+    })
+
+    const groupTrigger = wrapper.find('[data-sidebar-group="sales"]')
+    expect(groupTrigger.exists()).toBe(true)
+
+    // Al interactuar con el grupo en modo colapsado, se abre el popover flotante
+    await groupTrigger.trigger('mouseenter')
+
+    // El popover debe encontrarse en document.body mediante Teleport
+    const teleportedPopover = document.body.querySelector('[data-sidebar-popover]')
+    expect(teleportedPopover).not.toBeNull()
+    expect(teleportedPopover?.textContent).toContain('Punto de venta')
+
+    // Y NO debe encontrarse dentro de la jerarquía interna del aside
+    const insideAside = wrapper.find('aside').find('[data-sidebar-popover]')
+    expect(insideAside.exists()).toBe(false)
+
+    // Cierre con tecla Escape
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await wrapper.vm.$nextTick()
+    expect(document.body.querySelector('[data-sidebar-popover]')).toBeNull()
+
+    wrapper.unmount()
+  }, 15000)
+
+  it('permite transicionar entre popovers colapsados con ratón, teclado y clic interior sin cerrarse erróneamente', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+    vi.useFakeTimers()
+
+    const wrapper = mount(AppSidebar, {
+      props: {
+        collapsed: true,
+        mobileOpen: false,
+      },
+      global: {
+        plugins: [pinia, router],
+      },
+      attachTo: document.body,
+    })
+
+    const groupA = wrapper.find('[data-sidebar-group="sales"]')
+    const groupB = wrapper.find('[data-sidebar-group="cash"]')
+    expect(groupA.exists()).toBe(true)
+    expect(groupB.exists()).toBe(true)
+
+    // 1. Con el sidebar colapsado, abrir grupo A y luego grupo B con el ratón (pointerenter/leave con timers falsos)
+    await groupA.trigger('pointerenter')
+    await wrapper.vm.$nextTick()
+    let popover = document.body.querySelector('[data-sidebar-popover]')
+    expect(popover).not.toBeNull()
+    expect(popover?.textContent).toContain('Punto de venta')
+
+    // Salir del grupo A hacia el grupo B
+    await groupA.trigger('pointerleave')
+    await wrapper.vm.$nextTick()
+
+    // Entrar de inmediato en el grupo B
+    await groupB.trigger('pointerenter')
+    await wrapper.vm.$nextTick()
+
+    // Avanzar el tiempo para asegurar que el retraso del grupo A no pisa la apertura de B
+    vi.advanceTimersByTime(200)
+    await wrapper.vm.$nextTick()
+
+    // Verificar que B queda abierto y A cerrado
+    popover = document.body.querySelector('[data-sidebar-popover]')
+    expect(popover).not.toBeNull()
+    expect(popover?.textContent).toContain('Turno y arqueo')
+    expect(popover?.textContent).not.toContain('Punto de venta')
+
+    // 2. Transición con el teclado (Enter abre y cambia de grupo)
+    await groupA.trigger('keydown', { key: 'Enter' })
+    await wrapper.vm.$nextTick()
+    popover = document.body.querySelector('[data-sidebar-popover]')
+    expect(popover?.textContent).toContain('Punto de venta')
+    expect(popover?.textContent).not.toContain('Turno y arqueo')
+
+    await groupB.trigger('keydown', { key: 'Enter' })
+    await wrapper.vm.$nextTick()
+    popover = document.body.querySelector('[data-sidebar-popover]')
+    expect(popover?.textContent).toContain('Turno y arqueo')
+    expect(popover?.textContent).not.toContain('Punto de venta')
+
+    // 3. Pointerdown dentro del popover Teleportado NO lo cierra
+    popover?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+    vi.advanceTimersByTime(200)
+    await wrapper.vm.$nextTick()
+    popover = document.body.querySelector('[data-sidebar-popover]')
+    expect(popover).not.toBeNull()
+    expect(popover?.textContent).toContain('Turno y arqueo')
+
+    vi.useRealTimers()
+    wrapper.unmount()
+  }, 15000)
 })

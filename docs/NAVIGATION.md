@@ -119,3 +119,18 @@ Cree la vista dentro de su correspondiente carpeta de características (`src/fea
   - En resoluciones $< 1024\text{px}$: Se convierte en panel lateral superpuesto (_off-canvas drawer_) con fondo translúcido y botón de menú en la barra superior.
 - **Soporte Kiosco:** La opción `layout: 'fullscreen'` en el `meta` de una ruta permite renderizar vistas especiales (como terminales de autoservicio o pantallas completas de despacho) sin sidebar ni topbar.
 - **Accesibilidad:** Enlace de salto directo al contenido principal (_skip link_), roles semánticos HTML5 (`aside`, `header`, `nav`, `main`) y navegación completa por teclado con indicador visible de foco.
+
+---
+
+## 5. Módulos y Rutas Implementadas
+
+| Ruta                    | Nombre                 | Componente               | Permiso Requerido     | Descripción                                                  |
+| :---------------------- | :--------------------- | :----------------------- | :-------------------- | :----------------------------------------------------------- |
+| `/`                     | `home`                 | `AppHomeView.vue`        | Público (autenticado) | Tablero inicial y accesos directos                           |
+| `/inventory/stock`      | `inventory-stock`      | `InventoryStockView.vue` | `inventory.view`      | Existencias físicas, filtros, valoración y ficha de producto |
+| `/inventory/warehouses` | `inventory-warehouses` | `WarehousesView.vue`     | `inventory.view`      | Panel dual de almacenes y localizaciones con CRUD            |
+| `/admin/components`     | `dev-components`       | `DevComponentsView.vue`  | `users.manage`        | Catálogo interactivo de componentes compartidos              |
+| `/legacy/*`             | `legacy-*`             | `LegacyShell.vue`        | Solo desarrollo       | Pantallas legadas de referencia visual                       |
+| `/login`                | `login`                | `LoginView.vue`          | Público               | Autenticación de usuarios                                    |
+| `/forbidden`            | `forbidden`            | `ForbiddenView.vue`      | Público (autenticado) | Pantalla 403 por falta de permisos                           |
+| `/:pathMatch(.*)*`      | `not-found`            | `NotFoundView.vue`       | Público               | Pantalla 404 para rutas inexistentes                         |
