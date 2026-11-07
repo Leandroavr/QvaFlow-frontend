@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createMemoryHistory, type Router } from 'vue-router'
 import AppLayout from '../AppLayout.vue'
+import AppSidebar from '../AppSidebar.vue'
 import { routes } from '../../router'
 import { useAuthStore } from '../../../features/auth/stores/authStore'
 
@@ -140,6 +141,44 @@ describe('AppLayout Smoke Tests', () => {
     expect(text).toContain('Inventario')
     expect(text).toContain('Stock')
     expect(text).toContain('Almacenes')
+
+    wrapper.unmount()
+  }, 15000)
+
+  it('renderiza el popover del sidebar colapsado mediante Teleport fuera del elemento aside', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    const wrapper = mount(AppSidebar, {
+      props: {
+        collapsed: true,
+        mobileOpen: false,
+      },
+      global: {
+        plugins: [pinia, router],
+      },
+      attachTo: document.body,
+    })
+
+    const groupTrigger = wrapper.find('[data-sidebar-group="sales"]')
+    expect(groupTrigger.exists()).toBe(true)
+
+    // Al interactuar con el grupo en modo colapsado, se abre el popover flotante
+    await groupTrigger.trigger('mouseenter')
+
+    // El popover debe encontrarse en document.body mediante Teleport
+    const teleportedPopover = document.body.querySelector('[data-sidebar-popover]')
+    expect(teleportedPopover).not.toBeNull()
+    expect(teleportedPopover?.textContent).toContain('Punto de venta')
+
+    // Y NO debe encontrarse dentro de la jerarquía interna del aside
+    const insideAside = wrapper.find('aside').find('[data-sidebar-popover]')
+    expect(insideAside.exists()).toBe(false)
+
+    // Cierre con tecla Escape
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await wrapper.vm.$nextTick()
+    expect(document.body.querySelector('[data-sidebar-popover]')).toBeNull()
 
     wrapper.unmount()
   }, 15000)
