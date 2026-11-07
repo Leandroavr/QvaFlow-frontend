@@ -182,4 +182,75 @@ describe('AppLayout Smoke Tests', () => {
 
     wrapper.unmount()
   }, 15000)
+
+  it('permite transicionar entre popovers colapsados con ratón, teclado y clic interior sin cerrarse erróneamente', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+    vi.useFakeTimers()
+
+    const wrapper = mount(AppSidebar, {
+      props: {
+        collapsed: true,
+        mobileOpen: false,
+      },
+      global: {
+        plugins: [pinia, router],
+      },
+      attachTo: document.body,
+    })
+
+    const groupA = wrapper.find('[data-sidebar-group="sales"]')
+    const groupB = wrapper.find('[data-sidebar-group="cash"]')
+    expect(groupA.exists()).toBe(true)
+    expect(groupB.exists()).toBe(true)
+
+    // 1. Con el sidebar colapsado, abrir grupo A y luego grupo B con el ratón (pointerenter/leave con timers falsos)
+    await groupA.trigger('pointerenter')
+    await wrapper.vm.$nextTick()
+    let popover = document.body.querySelector('[data-sidebar-popover]')
+    expect(popover).not.toBeNull()
+    expect(popover?.textContent).toContain('Punto de venta')
+
+    // Salir del grupo A hacia el grupo B
+    await groupA.trigger('pointerleave')
+    await wrapper.vm.$nextTick()
+
+    // Entrar de inmediato en el grupo B
+    await groupB.trigger('pointerenter')
+    await wrapper.vm.$nextTick()
+
+    // Avanzar el tiempo para asegurar que el retraso del grupo A no pisa la apertura de B
+    vi.advanceTimersByTime(200)
+    await wrapper.vm.$nextTick()
+
+    // Verificar que B queda abierto y A cerrado
+    popover = document.body.querySelector('[data-sidebar-popover]')
+    expect(popover).not.toBeNull()
+    expect(popover?.textContent).toContain('Turno y arqueo')
+    expect(popover?.textContent).not.toContain('Punto de venta')
+
+    // 2. Transición con el teclado (Enter abre y cambia de grupo)
+    await groupA.trigger('keydown', { key: 'Enter' })
+    await wrapper.vm.$nextTick()
+    popover = document.body.querySelector('[data-sidebar-popover]')
+    expect(popover?.textContent).toContain('Punto de venta')
+    expect(popover?.textContent).not.toContain('Turno y arqueo')
+
+    await groupB.trigger('keydown', { key: 'Enter' })
+    await wrapper.vm.$nextTick()
+    popover = document.body.querySelector('[data-sidebar-popover]')
+    expect(popover?.textContent).toContain('Turno y arqueo')
+    expect(popover?.textContent).not.toContain('Punto de venta')
+
+    // 3. Pointerdown dentro del popover Teleportado NO lo cierra
+    popover?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+    vi.advanceTimersByTime(200)
+    await wrapper.vm.$nextTick()
+    popover = document.body.querySelector('[data-sidebar-popover]')
+    expect(popover).not.toBeNull()
+    expect(popover?.textContent).toContain('Turno y arqueo')
+
+    vi.useRealTimers()
+    wrapper.unmount()
+  }, 15000)
 })
