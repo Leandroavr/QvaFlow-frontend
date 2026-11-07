@@ -105,11 +105,7 @@
 
             <!-- 2. Grupo con hijos (ej: Ventas, Caja, Inventario) -->
             <template v-else>
-              <div
-                class="relative"
-                @mouseenter="handleGroupMouseEnter($event, item.id)"
-                @mouseleave="handleGroupMouseLeave"
-              >
+              <div class="relative">
                 <!-- Botón de cabecera del grupo -->
                 <button
                   type="button"
@@ -126,13 +122,13 @@
                   :aria-haspopup="collapsed && !mobileOpen ? 'menu' : undefined"
                   :title="item.label"
                   @click="toggleGroup(item.id)"
-                  @mouseenter="handleGroupMouseEnter($event, item.id)"
-                  @mouseleave="handleGroupMouseLeave"
+                  @pointerenter="handleTriggerPointerEnter($event, item.id)"
+                  @pointerleave="handleTriggerPointerLeave(item.id)"
+                  @mouseenter="handleTriggerPointerEnter($event, item.id)"
+                  @mouseleave="handleTriggerPointerLeave(item.id)"
                   @focusin="handleGroupFocusIn($event, item.id)"
-                  @focusout="handleGroupFocusOut"
-                  @keydown.enter.prevent="toggleGroup(item.id)"
-                  @keydown.space.prevent="toggleGroup(item.id)"
-                  @keydown.escape="closePopover"
+                  @focusout="handleGroupFocusOut($event, item.id)"
+                  @keydown="handleGroupKeydown($event, item.id)"
                 >
                   <!-- Indicador de grupo activo si está colapsado -->
                   <span
@@ -222,16 +218,19 @@
                 <Teleport to="body">
                   <div
                     v-if="activePopoverId === item.id && collapsed && !mobileOpen"
+                    :id="`popover-${item.id}`"
                     class="fixed z-[var(--z-popover)] w-52 rounded-xl border border-border-subtle bg-sidebar-bg p-2 text-sidebar-text shadow-2xl ring-1 ring-black/20"
                     :style="{ top: `${popoverTop}px`, left: `${popoverLeft}px` }"
                     role="menu"
                     data-sidebar-popover
                     :aria-label="item.label"
                     tabindex="-1"
-                    @mouseenter="cancelPopoverClose"
-                    @mouseleave="handleGroupMouseLeave"
-                    @keydown.escape="closePopover"
-                    @focusout="handlePopoverFocusOut"
+                    @pointerenter="handlePopoverPointerEnter"
+                    @pointerleave="handlePopoverPointerLeave(item.id)"
+                    @mouseenter="handlePopoverPointerEnter"
+                    @mouseleave="handlePopoverPointerLeave(item.id)"
+                    @keydown="handlePopoverKeydown"
+                    @focusout="handlePopoverFocusOut($event, item.id)"
                   >
                     <!-- Cabecera del popover -->
                     <div
@@ -348,7 +347,9 @@ const openGroups = ref<Set<string>>(new Set())
 const activePopoverId = ref<string | null>(null)
 const popoverTop = ref<number>(0)
 const popoverLeft = ref<number>(70)
+const lastTriggerElement = ref<HTMLElement | null>(null)
 let closeTimeout: ReturnType<typeof setTimeout> | null = null
+let isRestoringFocus = false
 
 // Funciones de navegación y estado de grupos
 const isGroupOpen = (groupId: string): boolean => {
@@ -357,10 +358,16 @@ const isGroupOpen = (groupId: string): boolean => {
 
 const toggleGroup = (groupId: string) => {
   if (props.collapsed && !props.mobileOpen) {
-    // Si está colapsado, al hacer clic en un grupo expandimos el sidebar
-    emit('toggle-collapse')
-    openGroups.value.add(groupId)
-    activePopoverId.value = null
+    if (activePopoverId.value === groupId) {
+      closePopover()
+    } else {
+      const trigger = document.querySelector(
+        `[data-sidebar-group="${groupId}"]`
+      ) as HTMLElement | null
+      if (trigger) {
+        openPopover(groupId, trigger)
+      }
+    }
     return
   }
 
@@ -403,63 +410,123 @@ const handleItemClick = (e?: Event) => {
 }
 
 // Control del Popover en modo colapsado
-const closePopover = (e?: Event) => {
-  if (e && 'detail' in e && (e as MouseEvent).detail !== 0) {
-    ;(e.currentTarget as HTMLElement)?.blur()
+const cancelCloseTimer = () => {
+  if (closeTimeout) {
+    clearTimeout(closeTimeout)
+    closeTimeout = null
   }
-  if (closeTimeout) clearTimeout(closeTimeout)
-  activePopoverId.value = null
 }
 
-const updatePopoverPosition = (trigger: HTMLElement, groupId: string) => {
+const openPopover = (groupId: string, trigger: HTMLElement) => {
+  if (!props.collapsed || props.mobileOpen) return
+  cancelCloseTimer()
+  lastTriggerElement.value = trigger
   const rect = trigger.getBoundingClientRect()
   popoverTop.value = Math.max(8, rect.top)
   popoverLeft.value = Math.round(rect.right + 6)
   activePopoverId.value = groupId
 }
 
-const handleGroupMouseEnter = (event: MouseEvent, groupId: string) => {
+const scheduleClosePopover = (groupId?: string) => {
   if (!props.collapsed || props.mobileOpen) return
-  if (closeTimeout) clearTimeout(closeTimeout)
-
-  const el = event.currentTarget as HTMLElement
-  const trigger = el.tagName === 'BUTTON' ? el : el.querySelector('button') || el
-  updatePopoverPosition(trigger, groupId)
-}
-
-const handleGroupMouseLeave = () => {
-  if (!props.collapsed || props.mobileOpen) return
+  cancelCloseTimer()
   closeTimeout = setTimeout(() => {
-    activePopoverId.value = null
+    // Si se especificó groupId, solo cerramos si el popover activo no ha cambiado
+    if (!groupId || activePopoverId.value === groupId) {
+      activePopoverId.value = null
+    }
+    closeTimeout = null
   }, 150)
 }
 
-const cancelPopoverClose = () => {
-  if (closeTimeout) clearTimeout(closeTimeout)
+const closePopover = (e?: Event) => {
+  if (e && 'detail' in e && (e as MouseEvent).detail !== 0) {
+    ;(e.currentTarget as HTMLElement)?.blur()
+  }
+  cancelCloseTimer()
+  activePopoverId.value = null
+}
+
+const closePopoverAndRestoreFocus = () => {
+  const trigger = lastTriggerElement.value
+  closePopover()
+  if (trigger && typeof trigger.focus === 'function') {
+    isRestoringFocus = true
+    trigger.focus()
+    queueMicrotask(() => {
+      isRestoringFocus = false
+    })
+  }
+}
+
+const handleTriggerPointerEnter = (event: Event, groupId: string) => {
+  if (!props.collapsed || props.mobileOpen) return
+  const el = event.currentTarget as HTMLElement
+  const trigger = el.tagName === 'BUTTON' ? el : el.querySelector('button') || el
+  openPopover(groupId, trigger)
+}
+
+const handleTriggerPointerLeave = (groupId: string) => {
+  if (!props.collapsed || props.mobileOpen) return
+  scheduleClosePopover(groupId)
+}
+
+const handlePopoverPointerEnter = () => {
+  cancelCloseTimer()
+}
+
+const handlePopoverPointerLeave = (groupId: string) => {
+  scheduleClosePopover(groupId)
+}
+
+const handleGroupKeydown = (event: KeyboardEvent, groupId: string) => {
+  if (props.collapsed && !props.mobileOpen) {
+    const trigger = event.currentTarget as HTMLElement
+    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+      event.preventDefault()
+      if (activePopoverId.value === groupId) {
+        closePopover()
+      } else {
+        openPopover(groupId, trigger)
+      }
+    } else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      if (activePopoverId.value === groupId) {
+        event.preventDefault()
+        const popoverEl = document.querySelector(`[data-sidebar-popover]`)
+        const firstLink = popoverEl?.querySelector('a') as HTMLElement | null
+        firstLink?.focus()
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault()
+        openPopover(groupId, trigger)
+      }
+    } else if (event.key === 'Escape') {
+      event.preventDefault()
+      closePopoverAndRestoreFocus()
+    }
+  } else {
+    if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+      event.preventDefault()
+      toggleGroup(groupId)
+    }
+  }
+}
+
+const handlePopoverKeydown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape' || event.key === 'ArrowLeft') {
+    event.preventDefault()
+    closePopoverAndRestoreFocus()
+  }
 }
 
 const handleGroupFocusIn = (event: FocusEvent, groupId: string) => {
+  if (isRestoringFocus) return
   if (!props.collapsed || props.mobileOpen) return
-  if (closeTimeout) clearTimeout(closeTimeout)
-
   const el = event.currentTarget as HTMLElement
   const trigger = el.tagName === 'BUTTON' ? el : el.querySelector('button') || el
-  updatePopoverPosition(trigger, groupId)
+  openPopover(groupId, trigger)
 }
 
-const handleGroupFocusOut = (event: FocusEvent) => {
-  if (!props.collapsed || props.mobileOpen) return
-  const relatedTarget = event.relatedTarget as HTMLElement | null
-  // Si el foco se mueve a un hijo dentro del popover teleportado, mantener abierto
-  if (relatedTarget && relatedTarget.closest('[data-sidebar-popover]')) {
-    return
-  }
-  closeTimeout = setTimeout(() => {
-    activePopoverId.value = null
-  }, 150)
-}
-
-const handlePopoverFocusOut = (event: FocusEvent) => {
+const handleGroupFocusOut = (event: FocusEvent, groupId: string) => {
   if (!props.collapsed || props.mobileOpen) return
   const relatedTarget = event.relatedTarget as HTMLElement | null
   if (
@@ -469,12 +536,23 @@ const handlePopoverFocusOut = (event: FocusEvent) => {
   ) {
     return
   }
-  closeTimeout = setTimeout(() => {
-    activePopoverId.value = null
-  }, 150)
+  scheduleClosePopover(groupId)
 }
 
-const handleClickOutside = (event: MouseEvent) => {
+const handlePopoverFocusOut = (event: FocusEvent, groupId: string) => {
+  if (!props.collapsed || props.mobileOpen) return
+  const relatedTarget = event.relatedTarget as HTMLElement | null
+  if (
+    relatedTarget &&
+    (relatedTarget.closest('[data-sidebar-popover]') ||
+      relatedTarget.closest('[data-sidebar-group]'))
+  ) {
+    return
+  }
+  scheduleClosePopover(groupId)
+}
+
+const handleClickOutside = (event: MouseEvent | PointerEvent) => {
   if (!activePopoverId.value) return
   const target = event.target as HTMLElement | null
   if (
@@ -488,7 +566,7 @@ const handleClickOutside = (event: MouseEvent) => {
 
 const handleDocumentKeyDown = (event: KeyboardEvent) => {
   if (event.key === 'Escape' && activePopoverId.value) {
-    closePopover()
+    closePopoverAndRestoreFocus()
   }
 }
 
@@ -502,7 +580,7 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('pointerdown', handleClickOutside)
   document.removeEventListener('keydown', handleDocumentKeyDown)
-  if (closeTimeout) clearTimeout(closeTimeout)
+  cancelCloseTimer()
 })
 
 watch(
