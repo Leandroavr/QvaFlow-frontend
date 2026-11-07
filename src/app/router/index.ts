@@ -129,7 +129,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'inventory/transfers',
         name: 'inventory-transfers',
-        component: () => import('../views/ModulePlaceholderView.vue'),
+        component: () => import('../views/inventory/InventoryTransfersView.vue'),
         meta: {
           permission: 'inventory.transfer',
           title: 'Movimientos y Traslados - QvaFlow',
