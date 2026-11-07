@@ -598,8 +598,8 @@ _(Nota: Si el usuario carece de `products.view_cost`, el campo `costValue` es om
   - `perPage`: int (defecto 10, opciones 10, 20, 50, 100).
   - `sort`: string con formato `campo:asc` o `campo:desc` (ej. `date:desc`, `noDocument:asc`).
   - `search`: string de búsqueda por número de documento o motivo.
-  - `desde` / `dateFrom`: string ISO 8601 o fecha (`YYYY-MM-DD`).
-  - `hasta` / `dateTo`: string ISO 8601 o fecha (`YYYY-MM-DD`).
+  - `desde`: string ISO 8601 o fecha (`YYYY-MM-DD`).
+  - `hasta`: string ISO 8601 o fecha (`YYYY-MM-DD`).
   - `status`: string (`'DRAFT'` | `'CONFIRMED'` | `'CANCELLED'`).
 - **Respuesta Exitosa (200 OK):**
 
@@ -684,7 +684,6 @@ _(Nota: Si el usuario carece de `products.view_cost`, el campo `costValue` es om
 ```json
 {
   "reason": "Reubicación de stock por temporada",
-  "status": "CONFIRMED",
   "items": [
     {
       "productCode": "78910001",
@@ -696,7 +695,7 @@ _(Nota: Si el usuario carece de `products.view_cost`, el campo `costValue` es om
 }
 ```
 
-_(Nota: El campo `status` es opcional; por defecto el servidor lo registra como `'CONFIRMED'` y aplica los movimientos de inventario de forma inmediata)._
+_(Nota: El estado del documento es asignado automáticamente por el servidor como `'CONFIRMED'`, aplicando los movimientos de inventario de forma inmediata)._
 
 - **Respuesta Exitosa (201 Created):** Retorna el objeto `StockTransfer` creado.
 - **Errores específicos:**
@@ -775,8 +774,8 @@ _(Nota: El campo `status` es opcional; por defecto el servidor lo registra como 
   - `perPage`: int (defecto 10, opciones 10, 20, 50, 100).
   - `sort`: string con formato `campo:asc` o `campo:desc` (ej. `date:desc`, `noDocument:asc`).
   - `search`: string de búsqueda por número de documento o motivo.
-  - `desde` / `dateFrom`: string ISO 8601 o fecha (`YYYY-MM-DD`).
-  - `hasta` / `dateTo`: string ISO 8601 o fecha (`YYYY-MM-DD`).
+  - `desde`: string ISO 8601 o fecha (`YYYY-MM-DD`).
+  - `hasta`: string ISO 8601 o fecha (`YYYY-MM-DD`).
   - `status`: string (`'DRAFT'` | `'CONFIRMED'` | `'CANCELLED'`).
 - **Respuesta Exitosa (200 OK):**
 
@@ -864,7 +863,6 @@ _(Nota: El campo `status` es opcional; por defecto el servidor lo registra como 
 ```json
 {
   "reason": "Conteo físico fin de mes y baja por deterioro",
-  "status": "CONFIRMED",
   "items": [
     {
       "productCode": "78910001",
@@ -884,7 +882,7 @@ _(Nota: El campo `status` es opcional; por defecto el servidor lo registra como 
 >
 > - **Conteo Cero es Válido:** El valor `countedQuantity: "0.00"` es **completamente VÁLIDO** (representa rotura total, merma total o producto agotado).
 > - **Cálculo Atómico en Servidor:** El cliente envía únicamente la cantidad física contada (`countedQuantity`). El backend consulta el stock actual en dicha localización (`systemQuantity`) y calcula atómicamente la variación (`difference = countedQuantity - systemQuantity`).
-> - **Estado por Defecto:** El campo `status` es opcional; por defecto el servidor lo procesa como `'CONFIRMED'` y asienta el nuevo valor de stock inmediatamente.
+> - **Estado Asignado por Servidor:** El servidor asigna automáticamente `'CONFIRMED'` y asienta el nuevo valor de stock inmediatamente.
 
 - **Respuesta Exitosa (201 Created):** Retorna el objeto `InventoryAdjustment` creado con las cantidades del sistema y diferencias calculadas.
 - **Errores específicos:**

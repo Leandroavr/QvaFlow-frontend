@@ -83,11 +83,8 @@ export type DocumentStatus = 'DRAFT' | 'CONFIRMED' | 'CANCELLED'
  * Reutiliza PaginationParams (page, perPage, sort, search) y añade rangos de fecha y estado.
  */
 export interface InventoryDocumentQueryParams extends PaginationParams {
-  pageSize?: number
   desde?: string
   hasta?: string
-  dateFrom?: string
-  dateTo?: string
   status?: DocumentStatus | string
 }
 
@@ -147,6 +144,7 @@ export interface InventoryAdjustmentItem {
   productCode: string
   productName: string
   locationCode: string
+  locationName?: string
   warehouseName: string
   systemQuantity: DecimalString
   countedQuantity: DecimalString
