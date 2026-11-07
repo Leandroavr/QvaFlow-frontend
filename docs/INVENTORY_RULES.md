@@ -120,17 +120,175 @@ Este documento detalla las entidades, validaciones, flujos de traslados/ajustes,
 
 ---
 
-## 7. A Definir con el Backend
+## 7. Traslados (`Movimiento_almacenes` / `Items_Mov_almacenes`)
 
-1. **Cálculo de Stock Bajo y Estado por Producto:**
-   * El campo `status` es del producto, calculado por el backend (propuesta) sobre el **total acumulado** del producto sumando todas sus localizaciones: `total <= 0 -> 'out'`, `total <= minStock -> 'low'`, de lo contrario `'ok'`. Un producto sin filas de stock computa como `'out'`. Asimismo, los contadores del resumen global (`lowStockCount` y `outOfStockCount`) cuantifican productos únicos en ese estado y no filas físicas.
-2. **Campo de Stock Mínimo en Producto:**
-   * La entidad Producto actual no dispone de un campo explícito para stock mínimo (`minStock`). Queda pendiente coordinar con el backend si se añade dicha columna al modelo de productos o si se establece un umbral mínimo global por defecto (ej. 10 unidades).
-3. **Creación de Almacenes sin Localizaciones:**
-   * A diferencia del legado, se permite crear y mantener almacenes sin localizaciones asignadas obligatorias (el panel de localizaciones mostrará un estado vacío con acción de creación si el usuario posee permiso).
-4. **Generación de Códigos de Almacenes y Localizaciones:**
-   * ¿El backend permitirá al usuario ingresar un código alfanumérico manual (ej. `ALM-CENTRAL`) o generará automáticamente slugs / códigos secuenciales si viene vacío?
-5. **Distribución Multi-Localización por Producto:**
-   * En el listado `/api/inventory/stock`, cada fila representa la existencia física en una localización específica con su desglose correspondiente, mientras que el badge de estado refleja el estado global consolidado del producto.
-6. **Validación de Integridad Referencial al Eliminar:**
-   * Se requiere confirmar si al intentar eliminar una localización con stock en cero pero con movimientos históricos pasados, se debe archivar/inactivar (soft-delete) o si solo se bloquea con 409 cuando el stock actual es mayor a cero.
+Análisis exhaustivo extraído del prototipo legado (`src/modules/inventory/`).
+
+### 7.1 Campos del Documento y de cada Ítem
+
+#### Documento Cabecera (`MovimientoAlmacenes` / `Movimiento_almacenes`)
+* `noDocument: string` — Número identificador del documento autogenerado con prefijo `'MOV-ALM-'` seguido de 6 dígitos de timestamp (`src/modules/inventory/services/inventoryService.ts:231`, `src/modules/inventory/types/inventory.ts:58`).
+* `fechaMovimiento: string` — Fecha y hora del movimiento en formato `'YYYY-MM-DD HH:mm'` (`src/modules/inventory/services/inventoryService.ts:232`, `src/modules/inventory/types/inventory.ts:59`).
+* `estado?: string` — Estado de control interno en base de datos; fijado con valor literal `'1'` (completado) en la creación (`src/modules/inventory/services/inventoryService.ts:270`, `src/modules/inventory/types/inventory.ts:60`).
+* `activo?: string` — Flag de registro activo / borrado lógico; fijado con valor literal `'1'` (`src/modules/inventory/services/inventoryService.ts:271`, `src/modules/inventory/types/inventory.ts:61`).
+* `razon?: string` — Motivo u observación textual del traslado (`src/modules/inventory/services/inventoryService.ts:222,273`, `src/modules/inventory/types/inventory.ts:63`).
+* `items: ItemMovAlmacenes[]` — Colección de líneas o ítems trasladados (`src/modules/inventory/types/inventory.ts:62`).
+* *Usuario / Creador (`userId`, `createdBy`):* **No definido en el legado** (la interfaz y servicios no persisten el identificador del usuario que ejecuta el movimiento).
+* *Almacén Origen / Almacén Destino en cabecera:* **No definido en el legado** (las localizaciones de origen y destino se definen a nivel de cada ítem en `ItemMovAlmacenes`).
+
+#### Ítem del Traslado (`ItemMovAlmacenes` / `Items_Mov_almacenes`)
+* `producto: string` — Código alfanumérico o identificador del producto en inventario (`src/modules/inventory/types/inventory.ts:47`).
+* `productName?: string` — Nombre legible del producto (`src/modules/inventory/types/inventory.ts:48`).
+* `cantidad: number` — Cantidad de unidades físicas a trasladar (`src/modules/inventory/types/inventory.ts:49`). Tipo numérico de punto flotante en JS.
+* `localizacion1: string` — Código identificador de la localización física de origen (`src/modules/inventory/types/inventory.ts:50`).
+* `localizacion2: string` — Código identificador de la localización física de destino (`src/modules/inventory/types/inventory.ts:51`).
+
+#### Estructura alternativa para modal unitario (`CreateMovementDto` / `InventoryMovement`)
+En el modal de la interfaz de usuario se utilizaba un registro unitario por producto con:
+* `id: string` — Prefijo `'TRF-'` o `'MOV-'` + timestamp (`src/modules/inventory/services/inventoryService.ts:253,328`).
+* `productId: number`, `productName: string`, `type: 'TRASLADO'`, `quantity: number`, `warehouse: string`, `location?: string`, `targetWarehouse?: string`, `targetLocation?: string`, `reason: string`, `createdAt: string` (`src/modules/inventory/types/inventory.ts:66-89`).
+
+### 7.2 Estados Posibles y Transiciones
+* `estado`: Único valor registrado es `'1'` (completado) en `src/modules/inventory/services/inventoryService.ts:270`.
+* Flujo de estados (Borrador / En Tránsito / Recibido / Cancelado): **No definido en el legado**. El traslado se liquida y asienta inmediatamente al enviar la solicitud sin transiciones intermedias.
+
+### 7.3 Validaciones
+1. **Producto obligatorio:** `productId` / `producto` requerido (`src/modules/inventory/components/InventoryMovementModal.vue:241`).
+2. **Cantidad obligatoria y positiva:** `quantity` requerida, de tipo numérico con valor mínimo de 1 (`min: 1`, `src/modules/inventory/components/InventoryMovementModal.vue:135,242-245`).
+3. **Localizaciones obligatorias:** `location` (origen) y `targetLocation` (destino) requeridas (`src/modules/inventory/components/InventoryMovementModal.vue:83,107,253-256`).
+4. **Origen distinto de destino:** `location !== targetLocation`. El formulario filtra dinámicamente las opciones de destino para excluir el origen seleccionado (`src/modules/inventory/components/InventoryMovementModal.vue:207-209`), y en la validación del submit emite error bloqueante: *"La localización de origen y destino no pueden ser la misma."* (`src/modules/inventory/components/InventoryMovementModal.vue:257-260`).
+5. **Stock suficiente en origen:** `stock >= quantity`. Se valida en el servicio antes de aplicar el movimiento. Si el stock en origen es menor a la cantidad a trasladar, lanza error bloqueante: *"Stock insuficiente de \"[producto]\" para realizar el traslado."* o *"Stock insuficiente para trasladar X unidades."* (`src/modules/inventory/services/inventoryService.ts:241-245,310-312`).
+
+### 7.4 Efecto sobre el Stock
+* **Momento de modificación:** Inmediato al invocar `recordWarehouseMovement` o `recordMovement`.
+* **Mecanismo:**
+  1. Resta la cantidad al stock de la localización origen: `productItem.stock -= item.cantidad` (`src/modules/inventory/services/inventoryService.ts:246,313`).
+  2. En el modelo desnormalizado del legado (donde el producto tenía una sola localización global en memoria), reasignaba `location = item.localizacion2` y sumaba la cantidad: `productItem.stock += item.cantidad` (`src/modules/inventory/services/inventoryService.ts:247-248,318-320`).
+  3. Actualiza el campo `lastUpdated` del producto con la fecha/hora actual (`src/modules/inventory/services/inventoryService.ts:249,325`).
+  4. Inserta un registro de auditoría en la lista de movimientos con `type: 'TRASLADO'`, `location: origen`, `targetLocation: destino`, cantidad y fecha (`src/modules/inventory/services/inventoryService.ts:252-264`).
+
+### 7.5 Pantallas (Listado y Formulario)
+* **Pantalla de Listado de Traslados:** **No definido en el legado**.
+  * No existía una vista dedicada para listar documentos de traslados (`/inventory/transfers`).
+  * Las existencias se visualizaban en la vista consolidada de stock (`src/modules/inventory/views/InventoryStockView.vue:81-286`), que cuenta con:
+    * *KPIs superiores:* Unidades Totales, Valor en Costo (si tiene permiso), Bajo Stock (< 10), Agotados (0) (`src/modules/inventory/views/InventoryStockView.vue:4-79`).
+    * *Filtros:* Input de búsqueda (código o nombre), select de Almacén, select de Localización, select de Categoría y botón Refrescar (`src/modules/inventory/views/InventoryStockView.vue:89-155`).
+    * *Columnas de tabla:* Código (120px), Producto (con sorter y fecha actualización), Categoría (120px), Almacén y Localización (210px), P. Costo (110px, condicional), P. Venta (110px), Stock Actual (160px con badge de color y tag de alerta) y Acciones (130px) (`src/modules/inventory/views/InventoryStockView.vue:327-390`).
+    * *Acciones:* Botón global *"Movimiento / Traslado"* en cabecera (`src/modules/inventory/views/InventoryStockView.vue:175`) y botón en cada fila *"Trasladar / Ajustar"* (`src/modules/inventory/views/InventoryStockView.vue:281`).
+* **Pantalla de Formulario (Modal de Movimiento):**
+  * Implementado en `src/modules/inventory/components/InventoryMovementModal.vue`.
+  * *Campos mostrados al seleccionar tipo "TRASLADO":*
+    * Select de Tipo: Valor fijo `'TRASLADO'` ("Traslado entre Localizaciones").
+    * Select de Producto: Búsqueda con autocompletado mostrando nombre y badge de stock actual (`src/modules/inventory/components/InventoryMovementModal.vue:29-54`).
+    * Select Localización Origen: Lista de localizaciones (`src/modules/inventory/components/InventoryMovementModal.vue:80-101`).
+    * Select Localización Destino: Lista filtrada excluyendo el origen (`src/modules/inventory/components/InventoryMovementModal.vue:104-125`).
+    * Input numérico Cantidad: Etiqueta "Cantidad a Mover" con `:min="1"` y leyenda informativa de stock disponible (`src/modules/inventory/components/InventoryMovementModal.vue:129-150`).
+    * Textarea Motivo: Justificación textual (`src/modules/inventory/components/InventoryMovementModal.vue:152-159`).
+  * *Acciones del modal:* Botón principal *"Procesar Movimiento"* y botón secundario *"Cancelar"* (`src/modules/inventory/components/InventoryMovementModal.vue:6-10`).
+
+### 7.6 Permisos Usados o Implícitos
+* Permiso en módulo de autenticación legado: `'MANAGE_INVENTORY'` (`src/modules/auth/types/auth.ts:10`, `src/modules/auth/components/UserRoleModal.vue:164-166`). Asignado a los perfiles `ADMIN` y `WAREHOUSE`.
+* En la vista legada `InventoryStockView.vue`: El acceso al modal de traslados no poseía chequeo de permiso específico a nivel de botón; cualquier usuario que ingresaba a la pantalla podía ejecutar traslados.
+* En el contrato API moderno (`docs/API_CONTRACT.md:164,354`): Se formalizó el permiso granular `'inventory.transfer'`.
+
+---
+
+## 8. Ajustes (`Ajuste_inventario` / `Items_ajuste_inventario`)
+
+Análisis exhaustivo extraído del prototipo legado (`src/modules/inventory/`).
+
+### 8.1 Campos del Documento y de cada Ítem
+
+#### Documento Cabecera (`Ajuste_inventario`)
+* En el código frontend legado, **no existe una interfaz de cabecera formal `AjusteInventario`** con número de folio de documento propio.
+* Los ajustes se guardaban como entradas de auditoría unitaria `InventoryMovement` (`src/modules/inventory/types/inventory.ts:66-78`):
+  * `id: string` — Identificador autogenerado con prefijo `'MOV-'` seguido de 6 dígitos de timestamp (`src/modules/inventory/services/inventoryService.ts:328`).
+  * `productId: number` — Identificador numérico del producto ajustado (`src/modules/inventory/types/inventory.ts:68`).
+  * `productName: string` — Nombre del producto (`src/modules/inventory/types/inventory.ts:69`).
+  * `type: TipoMovimiento` — Valor fijo `'AJUSTE'` (`src/modules/inventory/types/inventory.ts:70`).
+  * `quantity: number` — Nuevo valor absoluto de stock físico resultante (`src/modules/inventory/types/inventory.ts:71`).
+  * `warehouse: string` — Almacén donde se ubica el ítem (`src/modules/inventory/types/inventory.ts:72`).
+  * `location?: string` — Localización donde se ubica el ítem (`src/modules/inventory/types/inventory.ts:73`).
+  * `reason: string` — Justificación o motivo del ajuste (`src/modules/inventory/types/inventory.ts:76`).
+  * `createdAt: string` — Fecha y hora del ajuste en formato `'YYYY-MM-DD HH:mm'` (`src/modules/inventory/types/inventory.ts:77`).
+* *Número de documento formal (ej: `AJU-2026-0001`):* **No definido en el legado**.
+* *Estado (`estado` / `status`):* **No definido en el legado**.
+* *Usuario ejecutor / aprobador (`appliedBy`, `approvedBy`):* **No definido en el legado**.
+
+#### Ítem del Ajuste (`Items_ajuste_inventario`)
+* En el legado, el formulario no admitía ajustes multi-línea; cada ajuste se procesaba unitariamente por producto mediante `CreateMovementDto` (`src/modules/inventory/types/inventory.ts:80-89`):
+  * `productId: number` — ID del producto.
+  * `type: 'AJUSTE'` — Tipo de movimiento.
+  * `quantity: number` — Cantidad física contada.
+  * `warehouse: string` — Almacén.
+  * `location?: string` — Localización.
+  * `reason: string` — Justificación.
+* *Stock del sistema previo al ajuste (`systemStock`):* **No definido en el legado** como campo persistido en el movimiento (solo se consultaba para mostrarlo en el texto de ayuda del modal).
+* *Diferencia calculada (`difference = physical - system`):* **No definido en el legado** (no se calculaba ni persistía la variación cuantitativa).
+* *Costo unitario del ajuste y valorización monetaria de la diferencia:* **No definido en el legado**.
+
+### 8.2 Estados Posibles y Transiciones
+* Estados y ciclo de vida (Borrador / Pendiente de Aprobación / Aplicado / Rechazado): **No definido en el legado**.
+* El ajuste se aplicaba de manera inmediata e irrevocable sobre el stock al presionar el botón del modal.
+
+### 8.3 Validaciones
+1. **Tipo de movimiento:** Requerido con valor `'AJUSTE'` (`src/modules/inventory/components/InventoryMovementModal.vue:240`).
+2. **Producto obligatorio:** Requerido (`src/modules/inventory/components/InventoryMovementModal.vue:241`).
+3. **Cantidad obligatoria y positiva:** `:min="1"` (`src/modules/inventory/components/InventoryMovementModal.vue:135,242-245`).
+   * *Inconsistencia del legado:* Al exigir `:min="1"`, el modal impedía ajustar un stock a 0 unidades mediante esta vía, a pesar de que 0 era un stock válido (Agotado).
+4. **Localización obligatoria:** Requerida a través del campo simple `location` (`src/modules/inventory/components/InventoryMovementModal.vue:58-75`).
+5. **Validación de suficiencia de stock:** **No aplica** por diseño. El ajuste puede fijar un stock superior o inferior al actual (`docs/INVENTORY_RULES.md:81`).
+6. **Validación de diferencia máxima permitida o tolerancia:** **No definido en el legado**.
+
+### 8.4 Efecto sobre el Stock
+* **Momento de modificación:** Inmediato al invocar `inventoryService.recordMovement` con `type === 'AJUSTE'`.
+* **Mecanismo:**
+  * En `src/modules/inventory/services/inventoryService.ts`, línea 321-323:
+    ```ts
+    } else if (dto.type === 'AJUSTE') {
+      currentItem.stock = dto.quantity
+    }
+    ```
+    La cantidad introducida **reemplaza de forma absoluta** el valor previo de existencias: $\text{stock} = \text{dto.quantity}$. No se suma ni se resta un diferencial, se reasigna directamente el stock al valor físico introducido.
+  * Actualiza la fecha de último movimiento `lastUpdated` del producto con la fecha/hora actual (`src/modules/inventory/services/inventoryService.ts:325`).
+  * Genera el registro de auditoría en `localMovements` con `type: 'AJUSTE'`, la cantidad resultante y el motivo (`src/modules/inventory/services/inventoryService.ts:327-342`).
+
+### 8.5 Pantallas (Listado y Formulario)
+* **Pantalla de Listado de Ajustes:** **No definido en el legado**.
+  * No existía una pantalla o pestaña exclusiva para consultar el historial de ajustes de inventario. Solo se gestionaban desde la tabla de existencias de `InventoryStockView.vue`.
+* **Pantalla de Formulario (Modal de Movimiento):**
+  * Mismo modal unitario `InventoryMovementModal.vue`.
+  * Al seleccionar `type === 'AJUSTE'`:
+    * La etiqueta del campo de cantidad cambia dinámicamente a **"Nuevo Stock Total Resultante"** (`src/modules/inventory/components/InventoryMovementModal.vue:130`).
+    * El texto de ayuda muestra el stock actual de referencia: *"Stock actual: X [unidad] en [Almacén] ([Localización])"* (`src/modules/inventory/components/InventoryMovementModal.vue:140-148`).
+    * Muestra un único selector de localización (`src/modules/inventory/components/InventoryMovementModal.vue:57-75`), a diferencia del grid de origen/destino usado en traslados.
+    * Textarea de motivo para justificar la descuadratura o merma (`src/modules/inventory/components/InventoryMovementModal.vue:152-159`).
+
+### 8.6 Permisos Usados o Implícitos
+* Permiso general en módulo auth legado: `'MANAGE_INVENTORY'` (`src/modules/auth/types/auth.ts:10`, `src/modules/auth/components/UserRoleModal.vue:164-166`: *"Ajustes físicos, mermas y traslados entre almacenes"*).
+* En el contrato API moderno (`docs/API_CONTRACT.md:353`): Se formalizó el permiso específico `'inventory.adjust'` (*"Registrar cuadraturas y ajustes de conteo físico"*).
+
+---
+
+## 9. Dudas para el Backend
+
+Aspectos técnicos y de negocio que **no están definidos en el legado** y requieren definición con el equipo de backend para la nueva implementación:
+
+1. **Modelo de Documentos de Traslado (Cabecera y Detalle):**
+   * En el legado coexistían dos conceptos: la interfaz `MovimientoAlmacenes` (diseñada como documento cabecera con múltiples ítems `ItemMovAlmacenes[]`), pero en la interfaz de usuario solo existía un modal unitario (`InventoryMovementModal`) para mover un solo producto a la vez. ¿El nuevo endpoint `/api/inventory/transfers` recibirá documentos con múltiples líneas de productos en una sola transacción o traslados individuales?
+2. **Modelo de Documentos de Ajuste (`Ajuste_inventario`):**
+   * El legado no poseía entidad de documento para ajustes (solo sobreescritura `stock = quantity`). ¿Cuál será el esquema canónico del backend para un documento de ajuste? Se sugiere:
+     * Cabecera: `id`, `documentNumber` (ej. `AJU-0001`), `warehouseCode`, `status` (`DRAFT`, `APPLIED`, `CANCELLED`), `reason`, `createdAt`, `appliedAt`, `createdBy`.
+     * Líneas: `id`, `productCode`, `locationCode`, `systemQuantity` (stock antes del conteo), `countedQuantity` (físico), `differenceQuantity` (+/-), `unitCost`, `totalDifferenceValue`.
+3. **Flujo de Estados y Ciclo de Vida:**
+   * En el legado los traslados y ajustes se aplicaban de forma instantánea e irrevocable sin estados intermedios. ¿Habrá flujo de estados formal en el backend?
+     * Para traslados: ¿Habrá estado `IN_TRANSIT` (para mercancía que sale de un almacén pero aún no ha sido recibida en el destino) o confirmación de recepción?
+     * Para ajustes: ¿Habrá estado `DRAFT` que requiera aprobación de un supervisor si la diferencia monetaria supera un umbral fijado?
+4. **Permisión de Ajustes a Cero:**
+   * El validador `:min="1"` del formulario legado impedía ajustar el stock a `0` unidades (ej. por pérdida total o merma). Se requiere confirmar que el backend aceptará `countedQuantity: 0`.
+5. **Alcance de Traslados (Internos vs. Entre Almacenes):**
+   * Con el nuevo modelo normalizado donde cada localización pertenece a un almacén (`Location.warehouseCode`), ¿un traslado puede realizarse entre dos localizaciones del mismo almacén (reubicación interna) y entre localizaciones de distintos almacenes (traslado externo)? ¿Se enviará `sourceWarehouseCode` y `targetWarehouseCode` en la cabecera?
+6. **Tratamiento Contable de Costos en Ajustes:**
+   * Al registrar un ajuste que incrementa el stock, ¿con qué costo unitario ingresan las nuevas unidades (costo promedio actual, último costo de compra o costo manual especificado en la línea)?
+7. **Permisos Granulares:**
+   * En `docs/API_CONTRACT.md` se definieron `inventory.transfer` e `inventory.adjust`. ¿Se requerirán permisos diferenciados para crear borradores vs. autorizar/aprobar ajustes con impacto económico?
