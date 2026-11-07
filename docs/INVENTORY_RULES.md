@@ -34,7 +34,7 @@ Este documento detalla las entidades, validaciones, flujos de traslados/ajustes,
 
 ### 1.4 Movimientos y Traslados (`InventoryMovement` / `ItemMovAlmacenes`)
 * `TipoMovimiento: 'ENTRADA' | 'SALIDA' | 'TRASLADO' | 'AJUSTE'`
-* Documento de traslado: `noDocument`, `fechaMovimiento`, `estado` (`'1'` completado), `activo` (`'1'`), `razon`, `items: [{ producto, cantidad, localizacion1, localizacion2 }]`.
+* Documento de traslado: `noDocument`, `fechaMovimiento`, `estado` (valor literal `'1'`; el significado no está confirmado en el legado), `activo` (`'1'`), `razon`, `items: [{ producto, cantidad, localizacion1, localizacion2 }]`.
 * Registro histórico: `id`, `productId`, `productName`, `type`, `quantity`, `warehouse`, `location`, `targetWarehouse`, `targetLocation`, `reason`, `createdAt`.
 
 ---
@@ -76,8 +76,7 @@ Este documento detalla las entidades, validaciones, flujos de traslados/ajustes,
 
 ### 4.2 Ajustar (`AJUSTE`)
 * Se utiliza para cuadraturas de conteo físico o inventario ciego.
-* La cantidad ingresada por el usuario reemplaza directamente el valor de stock existente:
-  $$\text{stock} = \text{cantidad\_ingresada}$$
+* La cantidad ingresada por el usuario reemplaza directamente el valor de stock existente: `stock = dto.quantity`.
 * No valida suficiencia de stock, ya que puede aumentar o disminuir el inventario según el recuento real.
 * Genera un registro de auditoría con tipo `AJUSTE` indicando el motivo justificado.
 
@@ -129,7 +128,7 @@ Análisis exhaustivo extraído del prototipo legado (`src/modules/inventory/`).
 #### Documento Cabecera (`MovimientoAlmacenes` / `Movimiento_almacenes`)
 * `noDocument: string` — Número identificador del documento autogenerado con prefijo `'MOV-ALM-'` seguido de 6 dígitos de timestamp (`src/modules/inventory/services/inventoryService.ts:231`, `src/modules/inventory/types/inventory.ts:58`).
 * `fechaMovimiento: string` — Fecha y hora del movimiento en formato `'YYYY-MM-DD HH:mm'` (`src/modules/inventory/services/inventoryService.ts:232`, `src/modules/inventory/types/inventory.ts:59`).
-* `estado?: string` — Estado de control interno en base de datos; fijado con valor literal `'1'` (completado) en la creación (`src/modules/inventory/services/inventoryService.ts:270`, `src/modules/inventory/types/inventory.ts:60`).
+* `estado?: string` — Estado de control interno en base de datos: valor literal `'1'`; el significado no está confirmado en el legado (`src/modules/inventory/services/inventoryService.ts:270`, `src/modules/inventory/types/inventory.ts:60`).
 * `activo?: string` — Flag de registro activo / borrado lógico; fijado con valor literal `'1'` (`src/modules/inventory/services/inventoryService.ts:271`, `src/modules/inventory/types/inventory.ts:61`).
 * `razon?: string` — Motivo u observación textual del traslado (`src/modules/inventory/services/inventoryService.ts:222,273`, `src/modules/inventory/types/inventory.ts:63`).
 * `items: ItemMovAlmacenes[]` — Colección de líneas o ítems trasladados (`src/modules/inventory/types/inventory.ts:62`).
@@ -149,7 +148,7 @@ En el modal de la interfaz de usuario se utilizaba un registro unitario por prod
 * `productId: number`, `productName: string`, `type: 'TRASLADO'`, `quantity: number`, `warehouse: string`, `location?: string`, `targetWarehouse?: string`, `targetLocation?: string`, `reason: string`, `createdAt: string` (`src/modules/inventory/types/inventory.ts:66-89`).
 
 ### 7.2 Estados Posibles y Transiciones
-* `estado`: Único valor registrado es `'1'` (completado) en `src/modules/inventory/services/inventoryService.ts:270`.
+* `estado`: Único valor registrado es el valor literal `'1'`; el significado no está confirmado en el legado (`src/modules/inventory/services/inventoryService.ts:270`).
 * Flujo de estados (Borrador / En Tránsito / Recibido / Cancelado): **No definido en el legado**. El traslado se liquida y asienta inmediatamente al enviar la solicitud sin transiciones intermedias.
 
 ### 7.3 Validaciones
@@ -243,13 +242,7 @@ Análisis exhaustivo extraído del prototipo legado (`src/modules/inventory/`).
 ### 8.4 Efecto sobre el Stock
 * **Momento de modificación:** Inmediato al invocar `inventoryService.recordMovement` con `type === 'AJUSTE'`.
 * **Mecanismo:**
-  * En `src/modules/inventory/services/inventoryService.ts`, línea 321-323:
-    ```ts
-    } else if (dto.type === 'AJUSTE') {
-      currentItem.stock = dto.quantity
-    }
-    ```
-    La cantidad introducida **reemplaza de forma absoluta** el valor previo de existencias: $\text{stock} = \text{dto.quantity}$. No se suma ni se resta un diferencial, se reasigna directamente el stock al valor físico introducido.
+  * En `src/modules/inventory/services/inventoryService.ts:321-323`, la cantidad introducida reemplaza directamente el valor de stock existente: `stock = dto.quantity`.
   * Actualiza la fecha de último movimiento `lastUpdated` del producto con la fecha/hora actual (`src/modules/inventory/services/inventoryService.ts:325`).
   * Genera el registro de auditoría en `localMovements` con `type: 'AJUSTE'`, la cantidad resultante y el motivo (`src/modules/inventory/services/inventoryService.ts:327-342`).
 
