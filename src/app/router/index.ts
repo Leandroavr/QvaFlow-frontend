@@ -140,7 +140,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'inventory/adjustments',
         name: 'inventory-adjustments',
-        component: () => import('../views/ModulePlaceholderView.vue'),
+        component: () => import('../views/inventory/InventoryAdjustmentsView.vue'),
         meta: {
           permission: 'inventory.adjust',
           title: 'Ajustes de Inventario - QvaFlow',
