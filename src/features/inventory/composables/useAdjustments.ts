@@ -1,6 +1,14 @@
 import { ref, computed } from 'vue'
 import { inventoryService } from '@/services'
-import type { InventoryAdjustment, InventoryAdjustmentQueryParams, DocumentStatus } from '../types'
+import type {
+  InventoryAdjustment,
+  InventoryAdjustmentQueryParams,
+  CreateInventoryAdjustmentDto,
+  DocumentStatus,
+  StockItem,
+  Location,
+  Warehouse,
+} from '../types'
 import type { Id } from '@/shared/types/api'
 import { ApiError } from '@/shared/types/api'
 
@@ -21,9 +29,19 @@ export function useAdjustments() {
   const selectedAdjustment = ref<InventoryAdjustment | null>(null)
   const isLoadingDetail = ref<boolean>(false)
 
-  // Estados de carga y error
+  // Estados de carga y error para listado y detalle
   const isLoading = ref<boolean>(false)
   const error = ref<string | null>(null)
+
+  // Estados de creación y validación de formulario
+  const isSubmitting = ref<boolean>(false)
+  const fieldErrors = ref<Record<string, string[]>>({})
+
+  // Opciones de soporte para el formulario (existencias, localizaciones, almacenes)
+  const availableStock = ref<StockItem[]>([])
+  const locations = ref<Location[]>([])
+  const warehouses = ref<Warehouse[]>([])
+  const isLoadingOptions = ref<boolean>(false)
 
   const hasActiveFilters = computed<boolean>(() => {
     return (
@@ -80,6 +98,49 @@ export function useAdjustments() {
     }
   }
 
+  async function fetchAdjustmentOptions(): Promise<void> {
+    isLoadingOptions.value = true
+    error.value = null
+    try {
+      const [stockRes, locsRes, whRes] = await Promise.all([
+        inventoryService.getStock({ perPage: 100 }),
+        inventoryService.getLocations(),
+        inventoryService.getWarehouses(),
+      ])
+      availableStock.value = stockRes.items
+      locations.value = locsRes
+      warehouses.value = whRes
+    } catch (err) {
+      error.value =
+        err instanceof ApiError ? err.message : 'Error al cargar las opciones de inventario'
+    } finally {
+      isLoadingOptions.value = false
+    }
+  }
+
+  async function createAdjustment(dto: CreateInventoryAdjustmentDto): Promise<InventoryAdjustment> {
+    isSubmitting.value = true
+    error.value = null
+    fieldErrors.value = {}
+
+    try {
+      const created = await inventoryService.createAdjustment(dto)
+      return created
+    } catch (err) {
+      if (err instanceof ApiError) {
+        error.value = err.message
+        if ((err.statusCode === 400 || err.code === 'VALIDATION_ERROR') && err.details) {
+          fieldErrors.value = err.details as Record<string, string[]>
+        }
+      } else {
+        error.value = 'Error al registrar el ajuste de inventario'
+      }
+      throw err
+    } finally {
+      isSubmitting.value = false
+    }
+  }
+
   function selectAdjustment(adjustment: InventoryAdjustment | null) {
     selectedAdjustment.value = adjustment
   }
@@ -107,9 +168,17 @@ export function useAdjustments() {
     isLoading,
     isLoadingDetail,
     error,
+    isSubmitting,
+    fieldErrors,
+    availableStock,
+    locations,
+    warehouses,
+    isLoadingOptions,
     hasActiveFilters,
     fetchAdjustments,
     fetchAdjustmentById,
+    fetchAdjustmentOptions,
+    createAdjustment,
     selectAdjustment,
     resetFilters,
   }

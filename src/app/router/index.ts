@@ -159,6 +159,17 @@ export const routes: RouteRecordRaw[] = [
           parentBreadcrumb: 'Inventario',
         },
       },
+      {
+        path: 'inventory/adjustments/new',
+        name: 'inventory-adjustments-new',
+        component: () => import('../views/inventory/InventoryAdjustmentCreateView.vue'),
+        meta: {
+          permission: 'inventory.adjust',
+          title: 'Nuevo Ajuste - QvaFlow',
+          breadcrumb: 'Nuevo ajuste',
+          parentBreadcrumb: 'Ajustes de inventario',
+        },
+      },
       // Productos
       {
         path: 'products/catalog',
