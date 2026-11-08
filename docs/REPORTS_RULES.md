@@ -55,14 +55,14 @@ En `ReportsDashboardView.vue` y `reportsService.ts` se definen los siguientes in
 - **Fórmula:** Suma del importe de todas las ventas del período (`reportsService.ts:279`).
 - **Formateo en UI:**
   - Monto principal: `formatearMoneda(salesCUP, 'CUP')` en color verde esmeralda (`text-emerald-600`), ej: `145,850.00 CUP` (`ReportsDashboardView.vue:89-91`).
-  - Subtexto complementario: `$${salesUSD.toFixed(2)} USD • ${salesCount} tickets` (`ReportsDashboardView.vue:92-95`).
+  - Subtexto complementario: `${salesUSD.toFixed(2)} USD • ${salesCount} tickets` (`ReportsDashboardView.vue:92-95`).
 
 ### 3.2 Compras (Egresos)
 - **Campos del modelo:** `purchasesCUP: number`, `purchasesUSD: number`, `purchasesCount: number` (`types/reports.ts:46-48`).
 - **Fórmula:** Suma del importe de todas las compras a proveedores del período (`reportsService.ts:281`).
 - **Formateo en UI:**
   - Monto principal: `formatearMoneda(purchasesCUP, 'CUP')` en color rojo (`text-rose-600`), ej: `84,200.00 CUP` (`ReportsDashboardView.vue:112-114`).
-  - Subtexto complementario: `$${purchasesUSD.toFixed(2)} USD • ${purchasesCount} facturas` (`ReportsDashboardView.vue:115-118`).
+  - Subtexto complementario: `${purchasesUSD.toFixed(2)} USD • ${purchasesCount} facturas` (`ReportsDashboardView.vue:115-118`).
 
 ### 3.3 Ganancia Bruta (Ventas - Compras)
 - **Campos del modelo:** `grossProfitCUP: number`, `grossProfitUSD: number` (`types/reports.ts:49-50`).
@@ -72,7 +72,7 @@ En `ReportsDashboardView.vue` y `reportsService.ts` se definen los siguientes in
   Cálculo explícito en `reportsService.ts:283-284`.
 - **Formateo en UI:**
   - Monto principal: `formatearMoneda(grossProfitCUP, 'CUP')` (`ReportsDashboardView.vue:143`).
-  - Subtexto complementario: `$${grossProfitUSD.toFixed(2)} USD neto` (`ReportsDashboardView.vue:145-147`).
+  - Subtexto complementario: `${grossProfitUSD.toFixed(2)} USD neto` (`ReportsDashboardView.vue:145-147`).
   - Color dinámico: `text-qvaflow-navy` (azul marino) si >= 0, o `text-rose-600` (rojo) si < 0 (`ReportsDashboardView.vue:137-141`).
 - **Observación analítica (a confirmar con backend):** El legado define la "Ganancia Bruta" como la simple resta de caja entre ventas totales y compras totales del mes. No toma en consideración el costo de la mercancía efectivamente vendida (COGS / Cost of Goods Sold) ni el stock que permanece en almacén, lo que distorsiona el margen comercial real si se realiza una compra masiva para inventario.
 
@@ -139,7 +139,7 @@ Ubicada en `ReportsDashboardView.vue:217-283` y configurada en `movementsColumns
 | **Referencia** | `reference` | 130px | Izquierda | Texto monoespaciado (`font-mono text-xs font-bold`). Ej: `TICK-908123`, `FAC-2026-001`. |
 | **Concepto / Descripción** | `description` | Flexible | Izquierda | Título: `description` (`font-semibold`). Subtítulo: `${category} • ${warehouse}` (`text-[10px] text-slate-400`). |
 | **Importe CUP** | `amountCUP` | 140px | Derecha | Con signo: `+` si Venta (verde `text-emerald-700`), `-` si Compra (rojo `text-rose-700`). Formateado con `formatearMoneda`. |
-| **Importe USD** | `amountUSD` | 130px | Derecha | Texto monoespaciado: `$${amountUSD.toFixed(2)} USD`. |
+| **Importe USD** | `amountUSD` | 130px | Derecha | Texto monoespaciado: `${amountUSD.toFixed(2)} USD`. |
 | **Forma de Pago** | `paymentMethod` | 150px | Izquierda | Texto del método de pago (ej. `CUP Efectivo`, `Transferencia Bancaria`, `Transfermóvil QR`, `USD Efectivo`). |
 
 - **Orden:** El array mock viene ordenado por fecha descendente. La tabla no define `sorter` interactivo en las columnas.
