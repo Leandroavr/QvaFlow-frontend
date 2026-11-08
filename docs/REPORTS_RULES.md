@@ -66,38 +66,39 @@ En `ReportsDashboardView.vue` y `reportsService.ts` se definen los siguientes in
 
 ### 3.3 Ganancia Bruta (Ventas - Compras)
 - **Campos del modelo:** `grossProfitCUP: number`, `grossProfitUSD: number` (`types/reports.ts:49-50`).
-- **Fórmula:**
-  $$\text{grossProfitCUP} = \text{salesCUP} - \text{purchasesCUP}$$
-  $$\text{grossProfitUSD} = \text{salesUSD} - \text{purchasesUSD}$$
+- **Fórmulas:**
+  `grossProfitCUP = salesCUP - purchasesCUP`
+  `grossProfitUSD = salesUSD - purchasesUSD`
   Cálculo explícito en `reportsService.ts:283-284`.
 - **Formateo en UI:**
   - Monto principal: `formatearMoneda(grossProfitCUP, 'CUP')` (`ReportsDashboardView.vue:143`).
   - Subtexto complementario: `$${grossProfitUSD.toFixed(2)} USD neto` (`ReportsDashboardView.vue:145-147`).
-  - Color dinámico: `text-qvaflow-navy` (azul marino) si $\ge 0$, o `text-rose-600` (rojo) si $< 0$ (`ReportsDashboardView.vue:137-141`).
+  - Color dinámico: `text-qvaflow-navy` (azul marino) si >= 0, o `text-rose-600` (rojo) si < 0 (`ReportsDashboardView.vue:137-141`).
 - **Observación analítica (a confirmar con backend):** El legado define la "Ganancia Bruta" como la simple resta de caja entre ventas totales y compras totales del mes. No toma en consideración el costo de la mercancía efectivamente vendida (COGS / Cost of Goods Sold) ni el stock que permanece en almacén, lo que distorsiona el margen comercial real si se realiza una compra masiva para inventario.
 
 ### 3.4 Rentabilidad Comercial
 - **Campo del modelo:** `marginPercent: number` (`types/reports.ts:51`).
 - **Fórmula:**
-  $$\text{marginPercent} = \text{salesCUP} > 0 \ ? \ \left(\frac{\text{grossProfitCUP}}{\text{salesCUP}} \times 100\right) : 0$$
+  `marginPercent = salesCUP > 0 ? (grossProfitCUP / salesCUP) * 100 : 0`
   Redondeado a 2 decimales (`reportsService.ts:285-286`).
 - **Formateo en UI:**
   - Texto principal: `${marginPercent}%` en tamaño grande `text-2xl font-black` (`ReportsDashboardView.vue:165-167`).
   - Badge fijo: `"Saludable"` con clases `bg-emerald-100 text-emerald-800` (`ReportsDashboardView.vue:168-170`).
   - Subtexto: `"Margen sobre ventas"` (`ReportsDashboardView.vue:172`).
-- **Observación analítica (a confirmar con backend):** La etiqueta "Saludable" se muestra siempre fija y no evalúa si el porcentaje cae por debajo de umbrales críticos (ej. $< 15\%$ o negativo).
+- **Observación analítica (a confirmar con backend):** La etiqueta "Saludable" se muestra siempre fija y no evalúa si el porcentaje cae por debajo de umbrales críticos (ej. < 15% o negativo).
 
-### 3.5 Indicadores en Modelo pero no Mostrados en Vista (`MonthlyKpis`)
-En [`src/modules/reports/types/reports.ts:27-33`](file:///c:/Users/leandro.valdes/Desktop/Proyectos/qvaflow-frontend/src/modules/reports/types/reports.ts#L27-L33) y en el mock (`reportsService.ts:11-17`), existen campos de un endpoint `/reports/kpis` (`reportsService.ts:327`) que **no se muestran** en las tarjetas de la vista legada:
+### 3.5 Indicadores en Modelo pero no Mostrados en Vista (`MonthlyKpis`) (datos mock sin uso en la vista, no migrar)
+En [`src/modules/reports/types/reports.ts:27-33`](file:///c:/Users/leandro.valdes/Desktop/Proyectos/qvaflow-frontend/src/modules/reports/types/reports.ts#L27-L33) y en el mock (`reportsService.ts:11-17`), existen campos de un endpoint `/reports/kpis` (`reportsService.ts:327`) que **no se muestran** en las tarjetas de la vista legada (datos mock sin uso en la vista, no migrar):
 - `totalRevenue: 145850`
 - `estimatedProfit: 48200`
 - `profitMarginPercent: 33.05`
 - `totalTransactions: 384`
-- `averageTicket: 379.8` ($\text{averageTicket} = \text{totalRevenue} / \text{totalTransactions}$)
+- `averageTicket: 379.8` (`averageTicket = totalRevenue / totalTransactions`)
 
 ### 3.6 Capital Inmovilizado / Retenido
-- **Fórmula:** $\sum (\text{tiedUpCapital})$, donde para cada producto ocioso:
-  $$\text{tiedUpCapital} = \text{stock} \times \text{costPrice}$$
+- **Fórmulas:**
+  `tiedUpCapital = stock * costPrice`
+  `totalIdleCapital = sum(tiedUpCapital)`
   Definido en `reportsStore.ts:35-37` y `types/reports.ts:23`.
 - **Formateo en UI:** `formatearMoneda(totalIdleCapital, 'CUP')` mostrado en la cabecera de la tabla de productos ociosos (`ReportsDashboardView.vue:371`).
 
@@ -114,7 +115,7 @@ El análisis de dependencias de [`package.json`](file:///c:/Users/leandro.valdes
        - Serie 1 (Ingresos por Ventas): Color `bg-emerald-500`. Ancho calculado con `:style="{ width: `${salesRatioPercent}%` }"`.
        - Serie 2 (Egresos por Compras): Color `bg-rose-500`. Ancho calculado con `:style="{ width: `${100 - salesRatioPercent}%` }"`.
      - Fórmula del ratio (`ReportsDashboardView.vue:450-456`):
-       $$\text{salesRatioPercent} = \text{total} \le 0 \ ? \ 50 : \text{Math.round}\left(\frac{\text{sales}}{\text{sales} + \text{purchases}} \times 100\right)$$
+       `salesRatioPercent = total <= 0 ? 50 : Math.round(sales / (sales + purchases) * 100)`
      - Agrupación temporal: No tiene ejes X ni Y, ni desglose temporal día a día; representa la relación estática del mes seleccionado.
   2. **Barras de Rotación Relativa de Productos** (`ReportsDashboardView.vue:335-340`):
      - Tipo: Componente `<a-progress>` de Ant Design Vue.
@@ -134,7 +135,7 @@ Ubicada en `ReportsDashboardView.vue:217-283` y configurada en `movementsColumns
 | Columna | Clave (`key`) | Ancho | Alineación | Renderizado y Formato |
 | :--- | :--- | :--- | :--- | :--- |
 | **Fecha** | `date` | 140px | Izquierda | Texto simple en formato `"DD/MM/YYYY HH:mm"`. |
-| **Tipo** | `type` | 110px | Izquierda | Badge: `"📈 Venta"` (`bg-emerald-100 text-emerald-800`) o `"🛒 Compra"` (`bg-rose-100 text-rose-800`). |
+| **Tipo** | `type` | 110px | Izquierda | Badge: "[emoji de gráfico] Venta" (`bg-emerald-100 text-emerald-800`) o "[emoji de carrito] Compra" (`bg-rose-100 text-rose-800`) (los emojis no se migran). |
 | **Referencia** | `reference` | 130px | Izquierda | Texto monoespaciado (`font-mono text-xs font-bold`). Ej: `TICK-908123`, `FAC-2026-001`. |
 | **Concepto / Descripción** | `description` | Flexible | Izquierda | Título: `description` (`font-semibold`). Subtítulo: `${category} • ${warehouse}` (`text-[10px] text-slate-400`). |
 | **Importe CUP** | `amountCUP` | 140px | Derecha | Con signo: `+` si Venta (verde `text-emerald-700`), `-` si Compra (rojo `text-rose-700`). Formateado con `formatearMoneda`. |
@@ -164,7 +165,7 @@ Ubicada en `ReportsDashboardView.vue:375-427` y configurada en `idleColumns` (`R
 | **Producto / Almacén** | `product` | Flexible | Izquierda | Nombre del producto y subtítulo con nombre del almacén (`warehouse`). |
 | **Stock** | `stock` | 80px | Izquierda | Cantidad y unidad de medida: `${stock} ${unit}`. |
 | **Retenido** | `tiedUpCapital` | 105px | Derecha | Capital inmovilizado en color rojo (`text-rose-600`), formateado en CUP. |
-| **Inactividad** | `inactivity` | 85px | Izquierda | Badge: `${daysWithoutSale} días`. Si $> 40$ días fondo rojo (`bg-red-100 text-red-800`), si no fondo ámbar (`bg-amber-100 text-amber-800`). |
+| **Inactividad** | `inactivity` | 85px | Izquierda | Badge: `${daysWithoutSale} días`. Si > 40 días fondo rojo (`bg-red-100 text-red-800`), si no fondo ámbar (`bg-amber-100 text-amber-800`). |
 | **Acción** | `action` | 70px | Centro | Botón de enlace `"Ofertar"` (`ReportsDashboardView.vue:417-425`) que dispara `handleOfferAction` emitiendo un toast informativo. |
 
 - **Paginación:** Desactivada (`:pagination="false"`).
@@ -194,7 +195,7 @@ Las entidades del dominio legado que alimentan las analíticas son:
 El legado opera bajo un esquema bimonetario simplificado:
 - **Monedas en reportes:** Cada registro financiero maneja importes paralelos en **CUP** y **USD** (`amountCUP`, `amountUSD`, `salesCUP`, `salesUSD`, `purchasesCUP`, `purchasesUSD`).
 - **Conversión en el código:**
-  - En los mocks de reportes (`reportsService.ts:20-60, 63-168`), los importes en USD están **fijos y precalculados** a una tasa de cambio aproximada de $1 \text{ USD} \approx 360 \text{ CUP}$ (ej. 145,850 CUP equivalen a 405.14 USD).
+  - En los mocks de reportes (`reportsService.ts:20-60, 63-168`), los importes en USD están **fijos y precalculados** a una tasa de cambio aproximada de 1 USD ~ 360 CUP (ej. 145,850 CUP equivalen a 405.14 USD).
   - No existe un conversor dinámico ni llamada al servicio de tasas de cambio dentro del módulo de reportes.
 - **Otras monedas (`MLC`, `EUR`, `CUP_TRANSFER`)**: Aparecen en el POS como formas de cobro (`pos.ts:8`), pero en los reportes solo se reflejan como texto en la columna "Forma de Pago" (ej. `"Transfermóvil QR"`, `"USD Efectivo"`), sin consolidar saldos específicos por cada moneda.
 
@@ -240,7 +241,7 @@ El legado opera bajo un esquema bimonetario simplificado:
 | Aspecto | Prototipo Legado (`src/modules/reports/`) | Nueva Arquitectura SPA QvaFlow |
 | :--- | :--- | :--- |
 | **Representación Numérica** | Números de punto flotante de JavaScript (`number`), ej: `145850`, `405.14`. | Cadenas decimales exactas (`DecimalString`), ej: `'145850.00'`. Sin aritmética de punto flotante. |
-| **Componentes de UI** | Componentes de `ant-design-vue` (`a-select`, `a-table`, `a-tabs`, `a-progress`, `a-button`) y emojis en textos (`📅`, `📈`, `🛒`, `💰`, `📊`, `🏆`, `⚠️`). | Componentes propios de `src/shared/ui` (`DataTable`, `BaseSelect`, `BaseButton`, `BaseCard`, `PageHeader`, `BaseBadge`), solo iconos de `lucide-vue-next` y sin emojis. |
+| **Componentes de UI** | Componentes de `ant-design-vue` (`a-select`, `a-table`, `a-tabs`, `a-progress`, `a-button`) y emojis en textos (calendario, gráfico, carrito, bolsa de dinero, gráfico de barras, trofeo, advertencia; los emojis no se migran). | Componentes propios de `src/shared/ui` (`DataTable`, `BaseSelect`, `BaseButton`, `BaseCard`, `PageHeader`, `BaseBadge`), solo iconos de `lucide-vue-next` y sin emojis. |
 | **Estilos y Colores** | Clases CSS arbitrarias (`text-emerald-600`, `text-rose-600`, `text-qvaflow-navy`). | Tokens CSS semánticos estrictos (`--state-success`, `--state-error`, `--primary`, `--surface-card`, `--content-primary`). |
 | **Formato de Permisos** | Nombres en mayúsculas (`VIEW_REPORTS`, `VIEW_COSTS`). | Formato estándar `modulo.accion` (`reports.view`, `reports.export`, `products.view_cost`). |
 | **Gestión de Notificaciones** | `message.error` / `message.info` de Ant Design. | `toast.error` / `toast.success` de `vue-sonner`. |
@@ -255,7 +256,7 @@ Para completar la migración sin forzar cálculos pesados en el cliente, se requ
 1. **Agregados y Consolidación en el Servidor**:
    - ¿El backend dispondrá de un endpoint de resumen financiero (ej. `GET /api/reports/finance-summary?desde=...&hasta=...`) que devuelva los totales precalculados (`salesTotal`, `purchasesTotal`, `grossProfit`, `marginPercent`, `transactionsCount`) para evitar descargar miles de transacciones al navegador?
 2. **Definición Contable de Ganancia y Margen**:
-   - ¿La ganancia bruta debe mantenerse como en el legado ($Ventas - Compras$) o debe calcularse contablemente como $Ventas - \text{Costo de Mercancía Vendida (COGS)}$?
+   - ¿La ganancia bruta debe mantenerse como en el legado (`Ventas - Compras`) o debe calcularse contablemente como `Ventas - Costo de Mercancía Vendida (COGS)`?
 3. **Granularidad de Filtros de Período**:
    - ¿El backend admitirá rangos flexibles de fechas con parámetros estándar `desde` y `hasta` (ISO 8601 `YYYY-MM-DD`), además de atajos de conveniencia (mes actual, mes anterior, hoy, últimos 7 días)?
 4. **Paginación del Detalle de Operaciones**:
