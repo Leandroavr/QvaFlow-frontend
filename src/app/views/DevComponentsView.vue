@@ -732,6 +732,120 @@
           </DataTable>
         </div>
       </section>
+
+      <!-- 13. BASE CHART -->
+      <section class="space-y-4">
+        <div class="border-b border-border-subtle pb-2">
+          <h2 class="text-base font-bold text-content-primary">
+            13. BaseChart (ECharts con Tree-shaking y renderizado SVG)
+          </h2>
+          <p class="text-xs text-content-muted">
+            Componente gráfico reactivo con carga diferida, adaptación automática al tema
+            claro/oscuro, soporte de accesibilidad (role="img", alternativa en tabla accesible) y
+            estados de carga/vacío.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <!-- Ejemplo 1: Barras Agrupadas -->
+          <div class="border-border-default space-y-3 rounded-xl border bg-surface-card p-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-semibold text-content-primary">
+                  Ventas vs Compras (Barras agrupadas)
+                </h3>
+                <p class="text-xs text-content-muted">
+                  Valores financieros expresados en string decimal
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <BaseButton
+                  variant="secondary"
+                  density="compact"
+                  @click="chartDemoLoading = !chartDemoLoading"
+                >
+                  {{ chartDemoLoading ? 'Quitar Loading' : 'Simular Loading' }}
+                </BaseButton>
+                <BaseButton
+                  variant="secondary"
+                  density="compact"
+                  @click="chartDemoEmpty = !chartDemoEmpty"
+                >
+                  {{ chartDemoEmpty ? 'Quitar Vacío' : 'Simular Vacío' }}
+                </BaseButton>
+              </div>
+            </div>
+
+            <BaseChart
+              :option="groupedBarChartOption"
+              aria-label="Gráfico de barras agrupadas comparando ventas y compras por mes"
+              ariaLabel="Gráfico de barras agrupadas comparando ventas y compras por mes"
+              :loading="chartDemoLoading"
+              :empty="chartDemoEmpty"
+              height="280px"
+            >
+              <template #table>
+                <table>
+                  <caption>
+                    Ventas y Compras por Mes
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th>Mes</th>
+                      <th>Ventas (CUP)</th>
+                      <th>Compras (CUP)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="d in barDataRows" :key="d.month">
+                      <td>{{ d.month }}</td>
+                      <td>{{ d.sales }}</td>
+                      <td>{{ d.purchases }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </template>
+            </BaseChart>
+          </div>
+
+          <!-- Ejemplo 2: Líneas de Tendencia -->
+          <div class="border-border-default space-y-3 rounded-xl border bg-surface-card p-4">
+            <div>
+              <h3 class="text-sm font-semibold text-content-primary">
+                Evolución de Margen Comercial (Línea)
+              </h3>
+              <p class="text-xs text-content-muted">Histórico de rentabilidad mensual (%)</p>
+            </div>
+
+            <BaseChart
+              :option="lineChartOption"
+              aria-label="Gráfico de línea con la evolución del porcentaje de margen comercial"
+              ariaLabel="Gráfico de línea con la evolución del porcentaje de margen comercial"
+              height="280px"
+            >
+              <template #table>
+                <table>
+                  <caption>
+                    Margen Comercial por Mes
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th>Mes</th>
+                      <th>Margen (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="d in lineDataRows" :key="d.month">
+                      <td>{{ d.month }}</td>
+                      <td>{{ d.margin }}%</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </template>
+            </BaseChart>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 </template>
@@ -767,6 +881,7 @@ import BaseFormField from '../../shared/ui/BaseFormField.vue'
 import BaseButton from '../../shared/ui/BaseButton.vue'
 import BaseInput from '../../shared/ui/BaseInput.vue'
 import ThemeToggle from '../../shared/ui/ThemeToggle.vue'
+import BaseChart from '../../shared/ui/BaseChart/BaseChart.vue'
 import {
   DataTable,
   FilterBar,
@@ -1263,4 +1378,76 @@ const getProductRowActions = (row: MockProduct): DropdownMenuItemConfig[] => [
 const handlePrimaryProductAction = (row: MockProduct) => {
   toast.info(`Acción primaria disparada por tecla Enter: ${row.name}`)
 }
+
+// Demos para BaseChart
+const chartDemoLoading = ref(false)
+const chartDemoEmpty = ref(false)
+
+const barDataRows = [
+  { month: 'Junio', sales: '115400.00', purchases: '72300.00' },
+  { month: 'Julio', sales: '132100.00', purchases: '81500.00' },
+  { month: 'Agosto', sales: '124000.00', purchases: '69000.00' },
+  { month: 'Septiembre', sales: '141800.00', purchases: '89400.00' },
+  { month: 'Octubre', sales: '145850.00', purchases: '84200.00' },
+]
+
+const groupedBarChartOption = computed(() => ({
+  legend: { data: ['Ventas', 'Compras'] },
+  tooltip: {
+    trigger: 'axis',
+    valueFormatter: (value: any) => `${value} CUP`,
+  },
+  xAxis: {
+    type: 'category',
+    data: barDataRows.map((d) => d.month),
+  },
+  yAxis: {
+    type: 'value',
+  },
+  series: [
+    {
+      name: 'Ventas',
+      type: 'bar',
+      data: barDataRows.map((d) => Number(d.sales)),
+    },
+    {
+      name: 'Compras',
+      type: 'bar',
+      data: barDataRows.map((d) => Number(d.purchases)),
+    },
+  ],
+}))
+
+const lineDataRows = [
+  { month: 'Junio', margin: '37.35' },
+  { month: 'Julio', margin: '38.30' },
+  { month: 'Agosto', margin: '44.35' },
+  { month: 'Septiembre', margin: '36.95' },
+  { month: 'Octubre', margin: '42.27' },
+]
+
+const lineChartOption = computed(() => ({
+  tooltip: {
+    trigger: 'axis',
+    valueFormatter: (value: any) => `${value}%`,
+  },
+  xAxis: {
+    type: 'category',
+    data: lineDataRows.map((d) => d.month),
+  },
+  yAxis: {
+    type: 'value',
+    axisLabel: {
+      formatter: '{value}%',
+    },
+  },
+  series: [
+    {
+      name: 'Margen Comercial',
+      type: 'line',
+      smooth: true,
+      data: lineDataRows.map((d) => Number(d.margin)),
+    },
+  ],
+}))
 </script>

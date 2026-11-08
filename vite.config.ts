@@ -19,6 +19,16 @@ export default defineConfig(({ mode }) => {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
       },
     },
+    build: {
+      rollupOptions: {
+        input: {
+          main: fileURLToPath(new URL('./index.html', import.meta.url)),
+          echarts: fileURLToPath(
+            new URL('./src/shared/ui/BaseChart/echartsCore.ts', import.meta.url)
+          ),
+        },
+      },
+    },
     server: {
       port: 5173,
       proxy: {
