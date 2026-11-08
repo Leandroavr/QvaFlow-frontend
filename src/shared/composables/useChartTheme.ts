@@ -83,10 +83,13 @@ export function useChartTheme() {
     chartTheme.value = readTokensFromDOM()
   }
 
-  watch(theme, () => {
-    // Si la clase dark tarda un microtask en sincronizarse en documentElement, se asegura lectura limpia
-    updateTokens()
-  })
+  watch(
+    theme,
+    () => {
+      updateTokens()
+    },
+    { flush: 'sync' }
+  )
 
   if (getCurrentInstance()) {
     onMounted(() => {
