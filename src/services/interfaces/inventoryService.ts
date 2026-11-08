@@ -1,4 +1,4 @@
-import type { PaginatedResponse } from '@/shared/types/api'
+import type { Id, PaginatedResponse } from '@/shared/types/api'
 import type {
   Warehouse,
   Location,
@@ -9,6 +9,12 @@ import type {
   UpdateWarehouseDto,
   CreateLocationDto,
   UpdateLocationDto,
+  StockTransfer,
+  CreateStockTransferDto,
+  StockTransferQueryParams,
+  InventoryAdjustment,
+  CreateInventoryAdjustmentDto,
+  InventoryAdjustmentQueryParams,
 } from '@/features/inventory/types'
 
 export interface InventoryService {
@@ -29,4 +35,16 @@ export interface InventoryService {
   // Existencias / Stock
   getStock(params?: StockQueryParams): Promise<PaginatedResponse<StockItem>>
   getStockSummary(): Promise<StockSummary>
+
+  // Traslados de Inventario
+  listTransfers(query?: StockTransferQueryParams): Promise<PaginatedResponse<StockTransfer>>
+  getTransfer(id: Id): Promise<StockTransfer>
+  createTransfer(dto: CreateStockTransferDto): Promise<StockTransfer>
+
+  // Ajustes de Inventario
+  listAdjustments(
+    query?: InventoryAdjustmentQueryParams
+  ): Promise<PaginatedResponse<InventoryAdjustment>>
+  getAdjustment(id: Id): Promise<InventoryAdjustment>
+  createAdjustment(dto: CreateInventoryAdjustmentDto): Promise<InventoryAdjustment>
 }

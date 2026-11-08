@@ -129,7 +129,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'inventory/transfers',
         name: 'inventory-transfers',
-        component: () => import('../views/ModulePlaceholderView.vue'),
+        component: () => import('../views/inventory/InventoryTransfersView.vue'),
         meta: {
           permission: 'inventory.transfer',
           title: 'Movimientos y Traslados - QvaFlow',
@@ -138,14 +138,36 @@ export const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'inventory/transfers/new',
+        name: 'inventory-transfers-new',
+        component: () => import('../views/inventory/InventoryTransferCreateView.vue'),
+        meta: {
+          permission: 'inventory.transfer',
+          title: 'Nuevo Traslado - QvaFlow',
+          breadcrumb: 'Nuevo traslado',
+          parentBreadcrumb: 'Movimientos y traslados',
+        },
+      },
+      {
         path: 'inventory/adjustments',
         name: 'inventory-adjustments',
-        component: () => import('../views/ModulePlaceholderView.vue'),
+        component: () => import('../views/inventory/InventoryAdjustmentsView.vue'),
         meta: {
           permission: 'inventory.adjust',
           title: 'Ajustes de Inventario - QvaFlow',
           breadcrumb: 'Ajustes de inventario',
           parentBreadcrumb: 'Inventario',
+        },
+      },
+      {
+        path: 'inventory/adjustments/new',
+        name: 'inventory-adjustments-new',
+        component: () => import('../views/inventory/InventoryAdjustmentCreateView.vue'),
+        meta: {
+          permission: 'inventory.adjust',
+          title: 'Nuevo Ajuste - QvaFlow',
+          breadcrumb: 'Nuevo ajuste',
+          parentBreadcrumb: 'Ajustes de inventario',
         },
       },
       // Productos

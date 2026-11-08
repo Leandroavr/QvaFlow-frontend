@@ -1,5 +1,5 @@
 import type { InventoryService } from '../interfaces/inventoryService'
-import type { PaginatedResponse } from '@/shared/types/api'
+import type { Id, PaginatedResponse } from '@/shared/types/api'
 import { ApiError } from '@/shared/types/api'
 import type {
   Warehouse,
@@ -12,7 +12,22 @@ import type {
   CreateLocationDto,
   UpdateLocationDto,
   StockStatus,
+  StockTransfer,
+  CreateStockTransferDto,
+  StockTransferQueryParams,
+  InventoryAdjustment,
+  CreateInventoryAdjustmentDto,
+  InventoryAdjustmentQueryParams,
+  StockTransferItem,
+  InventoryAdjustmentItem,
 } from '@/features/inventory/types'
+import type { DecimalString } from '@/shared/types/currency'
+import {
+  addDecimals,
+  subtractDecimals,
+  compareDecimals,
+  normalizeDecimal,
+} from '@/shared/utils/decimal'
 import { MOCK_USERS } from '@/mocks/users'
 
 /**
@@ -430,36 +445,177 @@ const INITIAL_STOCK: StockItem[] = [
   },
 ]
 
+/**
+ * Traslados iniciales de prueba (3 documentos).
+ */
+const INITIAL_TRANSFERS: StockTransfer[] = [
+  {
+    id: 1,
+    noDocument: 'TRF-2026-0001',
+    date: '2026-10-25T14:30:00Z',
+    status: 'CONFIRMED',
+    reason: 'Reabastecimiento de mostrador por alta demanda',
+    createdBy: 'almacenero',
+    items: [
+      {
+        id: 1,
+        productCode: '78910001',
+        productName: 'Café Serrano Clásico 250g',
+        quantity: '10.00',
+        sourceLocationCode: 'LOC-CEN-P1',
+        sourceWarehouseName: 'Almacén Central',
+        targetLocationCode: 'LOC-TND-E1',
+        targetWarehouseName: 'Tienda Principal',
+      },
+    ],
+  },
+  {
+    id: 2,
+    noDocument: 'TRF-2026-0002',
+    date: '2026-10-26T10:15:00Z',
+    status: 'CONFIRMED',
+    reason: 'Traslado preventivo a nevera por temperatura',
+    createdBy: 'almacenero',
+    items: [
+      {
+        id: 2,
+        productCode: '78910003',
+        productName: 'Refresco Tukola Lata 330ml',
+        quantity: '12.00',
+        sourceLocationCode: 'LOC-CEN-P1',
+        sourceWarehouseName: 'Almacén Central',
+        targetLocationCode: 'LOC-NEV-B1',
+        targetWarehouseName: 'Nevera y Frío',
+      },
+    ],
+  },
+  {
+    id: 3,
+    noDocument: 'TRF-2026-0003',
+    date: '2026-10-27T16:45:00Z',
+    status: 'CONFIRMED',
+    reason: 'Reubicación de aceite por espacio en pasillo',
+    createdBy: 'almacenero',
+    items: [
+      {
+        id: 3,
+        productCode: '78910002',
+        productName: 'Aceite de Girasol Criollo 1L',
+        quantity: '5.00',
+        sourceLocationCode: 'LOC-CEN-P1',
+        sourceWarehouseName: 'Almacén Central',
+        targetLocationCode: 'LOC-CEN-EA',
+        targetWarehouseName: 'Almacén Central',
+      },
+    ],
+  },
+]
+
+/**
+ * Ajustes iniciales de prueba (2 documentos, incluyendo conteo 0).
+ */
+const INITIAL_ADJUSTMENTS: InventoryAdjustment[] = [
+  {
+    id: 1,
+    noDocument: 'AJU-2026-0001',
+    date: '2026-10-25T16:00:00Z',
+    status: 'CONFIRMED',
+    reason: 'Ajuste por rotura de envase en exhibición',
+    createdBy: 'almacenero',
+    items: [
+      {
+        id: 1,
+        productCode: '78910001',
+        productName: 'Café Serrano Clásico 250g',
+        locationCode: 'LOC-TND-E1',
+        locationName: 'Estantería Expositora',
+        warehouseName: 'Tienda Principal',
+        systemQuantity: '26.00',
+        countedQuantity: '24.00',
+        difference: '-2.00',
+      },
+    ],
+  },
+  {
+    id: 2,
+    noDocument: 'AJU-2026-0002',
+    date: '2026-10-26T18:00:00Z',
+    status: 'CONFIRMED',
+    reason: 'Baja definitiva por rotura de frío y descomposición',
+    createdBy: 'almacenero',
+    items: [
+      {
+        id: 2,
+        productCode: '78910006',
+        productName: 'Pollo Entero Congelado 1kg',
+        locationCode: 'LOC-CONG-C1',
+        locationName: 'Congelador de Cárnicos',
+        warehouseName: 'Nevera y Frío',
+        systemQuantity: '4.00',
+        countedQuantity: '0.00',
+        difference: '-4.00',
+      },
+    ],
+  },
+]
+
 export class MockInventoryService implements InventoryService {
   private warehouses: Warehouse[] = JSON.parse(JSON.stringify(INITIAL_WAREHOUSES))
   private locations: Location[] = JSON.parse(JSON.stringify(INITIAL_LOCATIONS))
   private stock: StockItem[] = JSON.parse(JSON.stringify(INITIAL_STOCK))
+  private transfers: StockTransfer[] = JSON.parse(JSON.stringify(INITIAL_TRANSFERS))
+  private adjustments: InventoryAdjustment[] = JSON.parse(JSON.stringify(INITIAL_ADJUSTMENTS))
 
   private delay(ms = 200): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms))
   }
 
   /**
-   * Determina si el usuario autenticado tiene el permiso sensible products.view_cost.
+   * Comprueba si el usuario autenticado tiene un permiso específico.
    */
-  private checkHasCostPermission(): boolean {
+  private checkHasPermission(permission: string): boolean {
     try {
       const token = localStorage.getItem('qvaflow_token')
       if (token) {
         const match = Object.values(MOCK_USERS).find((u) => u.token === token)
         if (match) {
-          return match.user.permissions.includes('products.view_cost')
+          return match.user.permissions.includes(permission)
         }
       }
       const rawUser = localStorage.getItem('qvaflow_user')
       if (rawUser) {
         const user = JSON.parse(rawUser)
-        return Array.isArray(user.permissions) && user.permissions.includes('products.view_cost')
+        return Array.isArray(user.permissions) && user.permissions.includes(permission)
       }
     } catch {
       // Ignorar fallo de lectura local
     }
     return false
+  }
+
+  private getCurrentUsername(): string | undefined {
+    try {
+      const token = localStorage.getItem('qvaflow_token')
+      if (token) {
+        const match = Object.values(MOCK_USERS).find((u) => u.token === token)
+        if (match) return match.user.username
+      }
+      const rawUser = localStorage.getItem('qvaflow_user')
+      if (rawUser) {
+        const user = JSON.parse(rawUser)
+        return user.username
+      }
+    } catch {
+      // Ignorar fallo de lectura local
+    }
+    return undefined
+  }
+
+  /**
+   * Determina si el usuario autenticado tiene el permiso sensible products.view_cost.
+   */
+  private checkHasCostPermission(): boolean {
+    return this.checkHasPermission('products.view_cost')
   }
 
   /**
@@ -875,5 +1031,609 @@ export class MockInventoryService implements InventoryService {
     }
 
     return summary
+  }
+
+  // =========================================================================
+  // Métodos Auxiliares de Numeración
+  // =========================================================================
+
+  private generateTransferNumber(): string {
+    const year = new Date().getFullYear()
+    const prefix = `TRF-${year}-`
+    const currentYearNums = this.transfers
+      .map((t) => t.noDocument)
+      .filter((doc) => doc.startsWith(prefix))
+      .map((doc) => parseInt(doc.replace(prefix, ''), 10))
+      .filter((n) => !isNaN(n))
+    const maxNum = currentYearNums.length > 0 ? Math.max(...currentYearNums) : 0
+    const nextNum = (maxNum + 1).toString().padStart(4, '0')
+    return `${prefix}${nextNum}`
+  }
+
+  private generateAdjustmentNumber(): string {
+    const year = new Date().getFullYear()
+    const prefix = `AJU-${year}-`
+    const currentYearNums = this.adjustments
+      .map((a) => a.noDocument)
+      .filter((doc) => doc.startsWith(prefix))
+      .map((doc) => parseInt(doc.replace(prefix, ''), 10))
+      .filter((n) => !isNaN(n))
+    const maxNum = currentYearNums.length > 0 ? Math.max(...currentYearNums) : 0
+    const nextNum = (maxNum + 1).toString().padStart(4, '0')
+    return `${prefix}${nextNum}`
+  }
+
+  // =========================================================================
+  // Traslados de Inventario (/api/inventory/transfers)
+  // =========================================================================
+
+  async listTransfers(query?: StockTransferQueryParams): Promise<PaginatedResponse<StockTransfer>> {
+    await this.delay()
+
+    if (
+      !this.checkHasPermission('inventory.transfer') &&
+      !this.checkHasPermission('inventory.view')
+    ) {
+      throw new ApiError(
+        {
+          code: 'FORBIDDEN',
+          message: 'No posee permisos para consultar traslados de inventario.',
+        },
+        403
+      )
+    }
+
+    let filtered = [...this.transfers]
+
+    // Búsqueda por número de documento o motivo
+    if (query?.search) {
+      const q = query.search.trim().toLowerCase()
+      filtered = filtered.filter(
+        (t) => t.noDocument.toLowerCase().includes(q) || t.reason.toLowerCase().includes(q)
+      )
+    }
+
+    // Filtro de fechas (desde / hasta)
+    if (query?.desde) {
+      const desdeStr = query.desde.slice(0, 10)
+      filtered = filtered.filter((t) => t.date.slice(0, 10) >= desdeStr)
+    }
+    if (query?.hasta) {
+      const hastaStr = query.hasta.slice(0, 10)
+      filtered = filtered.filter((t) => t.date.slice(0, 10) <= hastaStr)
+    }
+
+    // Filtro por estado
+    if (query?.status) {
+      filtered = filtered.filter((t) => t.status === query.status)
+    }
+
+    // Ordenamiento (por defecto date:desc)
+    const sortField = query?.sort || 'date:desc'
+    const [field, dir] = sortField.split(':')
+    const order = dir === 'asc' ? 1 : -1
+
+    filtered.sort((a, b) => {
+      let valA = (a as unknown as Record<string, unknown>)[field]
+      let valB = (b as unknown as Record<string, unknown>)[field]
+      if (valA === undefined || valA === null) valA = ''
+      if (valB === undefined || valB === null) valB = ''
+
+      if (typeof valA === 'string' && typeof valB === 'string') {
+        return valA.localeCompare(valB) * order
+      }
+      return ((valA as number) - (valB as number)) * order
+    })
+
+    const page = query?.page || 1
+    const perPage = query?.perPage || 10
+    const start = (page - 1) * perPage
+    const items = filtered.slice(start, start + perPage)
+
+    return {
+      items: JSON.parse(JSON.stringify(items)),
+      total: filtered.length,
+      page,
+      perPage,
+    }
+  }
+
+  async getTransfer(id: Id): Promise<StockTransfer> {
+    await this.delay()
+
+    if (
+      !this.checkHasPermission('inventory.transfer') &&
+      !this.checkHasPermission('inventory.view')
+    ) {
+      throw new ApiError(
+        {
+          code: 'FORBIDDEN',
+          message: 'No posee permisos para consultar traslados de inventario.',
+        },
+        403
+      )
+    }
+
+    const found = this.transfers.find(
+      (t) => String(t.id) === String(id) || t.noDocument === String(id)
+    )
+
+    if (!found) {
+      throw new ApiError(
+        {
+          code: 'NOT_FOUND',
+          message: 'El documento de traslado solicitado no existe.',
+        },
+        404
+      )
+    }
+
+    return JSON.parse(JSON.stringify(found))
+  }
+
+  async createTransfer(dto: CreateStockTransferDto): Promise<StockTransfer> {
+    await this.delay()
+
+    if (!this.checkHasPermission('inventory.transfer')) {
+      throw new ApiError(
+        {
+          code: 'FORBIDDEN',
+          message: 'No posee permisos para registrar traslados de inventario.',
+        },
+        403
+      )
+    }
+
+    // 1. Validar items no vacío
+    if (!dto.items || dto.items.length === 0) {
+      throw new ApiError(
+        {
+          code: 'VALIDATION_ERROR',
+          message: 'El traslado debe contener al menos un producto.',
+          details: {
+            items: ['Debe especificar al menos una línea de producto.'],
+          },
+        },
+        400
+      )
+    }
+
+    // 2. Validar cantidad > 0 y origen distinto de destino
+    for (const item of dto.items) {
+      if (compareDecimals(item.quantity, '0.00') <= 0) {
+        throw new ApiError(
+          {
+            code: 'VALIDATION_ERROR',
+            message: 'La cantidad a trasladar debe ser mayor que cero.',
+            details: {
+              quantity: ['La cantidad debe ser un valor positivo mayor que cero.'],
+            },
+          },
+          400
+        )
+      }
+
+      if (item.sourceLocationCode === item.targetLocationCode) {
+        throw new ApiError(
+          {
+            code: 'VALIDATION_ERROR',
+            message: 'La localización de origen no puede ser igual a la de destino.',
+            details: {
+              targetLocationCode: ['El destino debe ser diferente al origen.'],
+            },
+          },
+          400
+        )
+      }
+    }
+
+    // 3. Validar existencia en catálogo (producto y localizaciones)
+    for (const item of dto.items) {
+      const srcLoc = this.locations.find((l) => l.code === item.sourceLocationCode)
+      const tgtLoc = this.locations.find((l) => l.code === item.targetLocationCode)
+      const productExists = this.stock.some((s) => s.productCode === item.productCode)
+
+      if (!srcLoc || !tgtLoc || !productExists) {
+        throw new ApiError(
+          {
+            code: 'NOT_FOUND',
+            message: 'Producto o localización no encontrados en el catálogo.',
+          },
+          404
+        )
+      }
+    }
+
+    // 4. Validar stock suficiente en origen acumulando líneas del mismo producto y localización
+    const requestedTotals = new Map<string, DecimalString>()
+    for (const item of dto.items) {
+      const key = `${item.productCode}::${item.sourceLocationCode}`
+      const current = requestedTotals.get(key) || '0.00'
+      requestedTotals.set(key, addDecimals(current, item.quantity))
+    }
+
+    for (const [key, totalReq] of requestedTotals.entries()) {
+      const [pCode, sLoc] = key.split('::')
+      const sourceStock = this.stock.find((s) => s.productCode === pCode && s.locationCode === sLoc)
+      const available = sourceStock ? sourceStock.quantity : '0.00'
+
+      if (compareDecimals(totalReq, available) > 0) {
+        throw new ApiError(
+          {
+            code: 'STOCK_INSUFFICIENT',
+            message: 'Stock insuficiente en la localización de origen para completar el traslado.',
+            details: {
+              productCode: pCode,
+              requestedQuantity: totalReq,
+              availableQuantity: available,
+              sourceLocationCode: sLoc,
+            },
+          },
+          409
+        )
+      }
+    }
+
+    // 5. Aplicación atómica sobre las existencias
+    const now = new Date().toISOString()
+    const enrichedItems: StockTransferItem[] = []
+
+    for (let idx = 0; idx < dto.items.length; idx++) {
+      const item = dto.items[idx]
+      const sourceLoc = this.locations.find((l) => l.code === item.sourceLocationCode)!
+      const targetLoc = this.locations.find((l) => l.code === item.targetLocationCode)!
+      const sourceWh = this.warehouses.find((w) => w.code === sourceLoc.warehouseCode)
+      const targetWh = this.warehouses.find((w) => w.code === targetLoc.warehouseCode)
+
+      const sourceStock = this.stock.find(
+        (s) => s.productCode === item.productCode && s.locationCode === item.sourceLocationCode
+      )!
+
+      // Descontar del origen
+      sourceStock.quantity = subtractDecimals(sourceStock.quantity, item.quantity)
+      sourceStock.updatedAt = now
+
+      // Aumentar en el destino
+      let targetStock = this.stock.find(
+        (s) => s.productCode === item.productCode && s.locationCode === item.targetLocationCode
+      )
+
+      if (targetStock) {
+        targetStock.quantity = addDecimals(targetStock.quantity, item.quantity)
+        targetStock.updatedAt = now
+      } else {
+        targetStock = {
+          productCode: sourceStock.productCode,
+          productName: sourceStock.productName,
+          category: sourceStock.category,
+          unit: sourceStock.unit,
+          warehouseCode: targetLoc.warehouseCode,
+          warehouseName: targetWh?.name ?? targetLoc.warehouseCode,
+          locationCode: targetLoc.code,
+          locationName: targetLoc.name,
+          quantity: normalizeDecimal(item.quantity),
+          cost: sourceStock.cost,
+          price: sourceStock.price,
+          minStock: sourceStock.minStock,
+          updatedAt: now,
+        }
+        this.stock.push(targetStock)
+      }
+
+      // Recalcular estado de stock para todas las filas del producto
+      const newStatus = this.calculateProductStatus(item.productCode)
+      this.stock
+        .filter((s) => s.productCode === item.productCode)
+        .forEach((s) => {
+          s.status = newStatus
+        })
+
+      enrichedItems.push({
+        id: idx + 1,
+        productCode: item.productCode,
+        productName: sourceStock.productName,
+        quantity: normalizeDecimal(item.quantity),
+        sourceLocationCode: item.sourceLocationCode,
+        sourceWarehouseName: sourceWh?.name ?? item.sourceLocationCode,
+        targetLocationCode: item.targetLocationCode,
+        targetWarehouseName: targetWh?.name ?? item.targetLocationCode,
+      })
+    }
+
+    const newTransfer: StockTransfer = {
+      id:
+        this.transfers.length > 0
+          ? Math.max(...this.transfers.map((t) => Number(t.id) || 0)) + 1
+          : 1,
+      noDocument: this.generateTransferNumber(),
+      date: now,
+      status: 'CONFIRMED',
+      reason: dto.reason,
+      createdBy: this.getCurrentUsername(),
+      items: enrichedItems,
+    }
+
+    this.transfers.unshift(newTransfer)
+    return JSON.parse(JSON.stringify(newTransfer))
+  }
+
+  // =========================================================================
+  // Ajustes de Inventario (/api/inventory/adjustments)
+  // =========================================================================
+
+  async listAdjustments(
+    query?: InventoryAdjustmentQueryParams
+  ): Promise<PaginatedResponse<InventoryAdjustment>> {
+    await this.delay()
+
+    if (
+      !this.checkHasPermission('inventory.adjust') &&
+      !this.checkHasPermission('inventory.view')
+    ) {
+      throw new ApiError(
+        {
+          code: 'FORBIDDEN',
+          message: 'No posee permisos para consultar ajustes de inventario.',
+        },
+        403
+      )
+    }
+
+    let filtered = [...this.adjustments]
+
+    // Búsqueda por número de documento o motivo
+    if (query?.search) {
+      const q = query.search.trim().toLowerCase()
+      filtered = filtered.filter(
+        (a) => a.noDocument.toLowerCase().includes(q) || a.reason.toLowerCase().includes(q)
+      )
+    }
+
+    // Filtro de fechas (desde / hasta)
+    if (query?.desde) {
+      const desdeStr = query.desde.slice(0, 10)
+      filtered = filtered.filter((a) => a.date.slice(0, 10) >= desdeStr)
+    }
+    if (query?.hasta) {
+      const hastaStr = query.hasta.slice(0, 10)
+      filtered = filtered.filter((a) => a.date.slice(0, 10) <= hastaStr)
+    }
+
+    // Filtro por estado
+    if (query?.status) {
+      filtered = filtered.filter((a) => a.status === query.status)
+    }
+
+    // Ordenamiento (por defecto date:desc)
+    const sortField = query?.sort || 'date:desc'
+    const [field, dir] = sortField.split(':')
+    const order = dir === 'asc' ? 1 : -1
+
+    filtered.sort((a, b) => {
+      let valA = (a as unknown as Record<string, unknown>)[field]
+      let valB = (b as unknown as Record<string, unknown>)[field]
+      if (valA === undefined || valA === null) valA = ''
+      if (valB === undefined || valB === null) valB = ''
+
+      if (typeof valA === 'string' && typeof valB === 'string') {
+        return valA.localeCompare(valB) * order
+      }
+      return ((valA as number) - (valB as number)) * order
+    })
+
+    const page = query?.page || 1
+    const perPage = query?.perPage || 10
+    const start = (page - 1) * perPage
+    const items = filtered.slice(start, start + perPage)
+
+    return {
+      items: JSON.parse(JSON.stringify(items)),
+      total: filtered.length,
+      page,
+      perPage,
+    }
+  }
+
+  async getAdjustment(id: Id): Promise<InventoryAdjustment> {
+    await this.delay()
+
+    if (
+      !this.checkHasPermission('inventory.adjust') &&
+      !this.checkHasPermission('inventory.view')
+    ) {
+      throw new ApiError(
+        {
+          code: 'FORBIDDEN',
+          message: 'No posee permisos para consultar ajustes de inventario.',
+        },
+        403
+      )
+    }
+
+    const found = this.adjustments.find(
+      (a) => String(a.id) === String(id) || a.noDocument === String(id)
+    )
+
+    if (!found) {
+      throw new ApiError(
+        {
+          code: 'NOT_FOUND',
+          message: 'El documento de ajuste solicitado no existe.',
+        },
+        404
+      )
+    }
+
+    return JSON.parse(JSON.stringify(found))
+  }
+
+  async createAdjustment(dto: CreateInventoryAdjustmentDto): Promise<InventoryAdjustment> {
+    await this.delay()
+
+    if (!this.checkHasPermission('inventory.adjust')) {
+      throw new ApiError(
+        {
+          code: 'FORBIDDEN',
+          message: 'No posee permisos para registrar ajustes de inventario.',
+        },
+        403
+      )
+    }
+
+    // 1. Validar items no vacío
+    if (!dto.items || dto.items.length === 0) {
+      throw new ApiError(
+        {
+          code: 'VALIDATION_ERROR',
+          message: 'El ajuste debe contener al menos un producto.',
+          details: {
+            items: ['Debe especificar al menos una línea de producto.'],
+          },
+        },
+        400
+      )
+    }
+
+    // 2. Validar localización obligatoria y countedQuantity >= 0 (0 es válido)
+    for (const item of dto.items) {
+      if (!item.locationCode) {
+        throw new ApiError(
+          {
+            code: 'VALIDATION_ERROR',
+            message: 'La localización es obligatoria para cada producto.',
+            details: {
+              locationCode: ['Localización no válida o requerida.'],
+            },
+          },
+          400
+        )
+      }
+
+      if (compareDecimals(item.countedQuantity, '0.00') < 0) {
+        throw new ApiError(
+          {
+            code: 'VALIDATION_ERROR',
+            message: 'La cantidad física contada no puede ser negativa.',
+            details: {
+              countedQuantity: ['La cantidad física contada no puede ser menor que 0.'],
+            },
+          },
+          400
+        )
+      }
+    }
+
+    // 3. Validar existencia en catálogo (producto y localización)
+    for (const item of dto.items) {
+      const loc = this.locations.find((l) => l.code === item.locationCode)
+      const productExists = this.stock.some((s) => s.productCode === item.productCode)
+
+      if (!loc || !productExists) {
+        throw new ApiError(
+          {
+            code: 'NOT_FOUND',
+            message: 'Producto o localización no encontrados en el catálogo.',
+          },
+          404
+        )
+      }
+    }
+
+    // 4. Validar combinación duplicada producto+localización en el documento
+    const seen = new Set<string>()
+    for (const item of dto.items) {
+      const key = `${item.productCode}::${item.locationCode}`
+      if (seen.has(key)) {
+        throw new ApiError(
+          {
+            code: 'VALIDATION_ERROR',
+            message:
+              'No se puede incluir la misma combinación de producto y localización más de una vez en el ajuste.',
+            details: {
+              items: ['Combinación producto y localización duplicada en el documento.'],
+            },
+          },
+          400
+        )
+      }
+      seen.add(key)
+    }
+
+    // 5. Aplicación atómica y cálculo de systemQuantity y difference
+    const now = new Date().toISOString()
+    const enrichedItems: InventoryAdjustmentItem[] = []
+
+    for (let idx = 0; idx < dto.items.length; idx++) {
+      const item = dto.items[idx]
+      const loc = this.locations.find((l) => l.code === item.locationCode)!
+      const wh = this.warehouses.find((w) => w.code === loc.warehouseCode)
+
+      let stockRow = this.stock.find(
+        (s) => s.productCode === item.productCode && s.locationCode === item.locationCode
+      )
+      const template = this.stock.find((s) => s.productCode === item.productCode)!
+
+      const systemQuantity = stockRow ? stockRow.quantity : '0.00'
+      const countedQuantity = normalizeDecimal(item.countedQuantity)
+      const difference = subtractDecimals(countedQuantity, systemQuantity)
+
+      if (stockRow) {
+        stockRow.quantity = countedQuantity
+        stockRow.updatedAt = now
+      } else {
+        stockRow = {
+          productCode: template.productCode,
+          productName: template.productName,
+          category: template.category,
+          unit: template.unit,
+          warehouseCode: loc.warehouseCode,
+          warehouseName: wh?.name ?? loc.warehouseCode,
+          locationCode: loc.code,
+          locationName: loc.name,
+          quantity: countedQuantity,
+          cost: template.cost,
+          price: template.price,
+          minStock: template.minStock,
+          updatedAt: now,
+        }
+        this.stock.push(stockRow)
+      }
+
+      // Recalcular estado de stock
+      const newStatus = this.calculateProductStatus(item.productCode)
+      this.stock
+        .filter((s) => s.productCode === item.productCode)
+        .forEach((s) => {
+          s.status = newStatus
+        })
+
+      enrichedItems.push({
+        id: idx + 1,
+        productCode: item.productCode,
+        productName: template.productName,
+        locationCode: loc.code,
+        locationName: loc.name,
+        warehouseName: wh?.name ?? loc.warehouseCode,
+        systemQuantity,
+        countedQuantity,
+        difference,
+      })
+    }
+
+    const newAdjustment: InventoryAdjustment = {
+      id:
+        this.adjustments.length > 0
+          ? Math.max(...this.adjustments.map((a) => Number(a.id) || 0)) + 1
+          : 1,
+      noDocument: this.generateAdjustmentNumber(),
+      date: now,
+      status: 'CONFIRMED',
+      reason: dto.reason,
+      createdBy: this.getCurrentUsername(),
+      items: enrichedItems,
+    }
+
+    this.adjustments.unshift(newAdjustment)
+    return JSON.parse(JSON.stringify(newAdjustment))
   }
 }
