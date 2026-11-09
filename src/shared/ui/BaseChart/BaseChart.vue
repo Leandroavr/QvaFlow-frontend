@@ -102,23 +102,53 @@ function applyTooltipTheme(tooltip: any, theme: ChartThemeTokens): any {
 }
 
 function applyLegendTheme(legend: any, theme: ChartThemeTokens): any {
-  if (!legend) return legend
-  return {
+  if (legend === false || legend === null || legend === undefined) return legend
+  const defaultLegendConfig = {
+    top: 8,
+    left: 'center',
     textStyle: {
       color: theme.textSecondary,
       fontFamily: 'Inter, sans-serif',
+      fontSize: 12,
     },
+  }
+  if (Array.isArray(legend)) {
+    return legend.map((item) => ({
+      ...defaultLegendConfig,
+      ...(item || {}),
+      textStyle: {
+        ...defaultLegendConfig.textStyle,
+        ...(item?.textStyle || {}),
+      },
+    }))
+  }
+  return {
+    ...defaultLegendConfig,
     ...(legend || {}),
+    textStyle: {
+      ...defaultLegendConfig.textStyle,
+      ...(legend?.textStyle || {}),
+    },
   }
 }
 
-function applyGridTheme(grid: any, theme: ChartThemeTokens): any {
-  return {
-    top: 40,
+function applyGridTheme(grid: any, theme: ChartThemeTokens, hasLegend: boolean): any {
+  const defaultGridConfig = {
+    top: hasLegend ? 48 : 24,
     right: 20,
-    bottom: 30,
-    left: 50,
+    bottom: 24,
+    left: 20,
+    containLabel: true,
     borderColor: theme.borderSubtle,
+  }
+  if (Array.isArray(grid)) {
+    return grid.map((item) => ({
+      ...defaultGridConfig,
+      ...(item || {}),
+    }))
+  }
+  return {
+    ...defaultGridConfig,
     ...(grid || {}),
   }
 }
@@ -132,11 +162,19 @@ function buildThemedOption(
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
+  const hasLegend = Boolean(
+    option.legend &&
+    option.legend !== false &&
+    (!Array.isArray(option.legend) || option.legend.length > 0)
+  )
+
   return {
+    ...option,
     color: option.color || theme.palette,
     textStyle: {
       fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       color: theme.textSecondary,
+      ...(option.textStyle || {}),
     },
     animation: !prefersReduced,
     animationDuration: prefersReduced ? 0 : 300,
@@ -145,8 +183,7 @@ function buildThemedOption(
       enabled: true,
       decal: { show: false },
     },
-    ...option,
-    grid: applyGridTheme(option.grid, theme),
+    grid: applyGridTheme(option.grid, theme, hasLegend),
     tooltip: applyTooltipTheme(option.tooltip, theme),
     legend: applyLegendTheme(option.legend, theme),
     xAxis: applyAxisTheme(option.xAxis, theme),
