@@ -235,7 +235,7 @@ const disposeChart = () => {
 }
 
 watch(
-  [() => props.option, chartTheme],
+  [() => props.option, () => chartTheme.value],
   () => {
     if (chartInstance && !props.loading && !props.empty) {
       renderChart()

@@ -1,4 +1,4 @@
-import { ref, watch, onMounted, getCurrentInstance } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue'
 import { useTheme } from '@/shared/composables/useTheme'
 
 export interface ChartThemeTokens {
@@ -124,17 +124,53 @@ export function useChartTheme() {
     chartTheme.value = readTokensFromDOM()
   }
 
+  const syncThemeAndTokens = () => {
+    if (typeof document !== 'undefined') {
+      const targetDark = theme.value === 'dark'
+      const hasDarkClass = document.documentElement.classList.contains('dark')
+      if (targetDark !== hasDarkClass) {
+        if (targetDark) {
+          document.documentElement.classList.add('dark')
+        } else {
+          document.documentElement.classList.remove('dark')
+        }
+      }
+    }
+    updateTokens()
+  }
+
   watch(
     theme,
     () => {
-      updateTokens()
+      syncThemeAndTokens()
     },
     { flush: 'sync' }
   )
 
+  // Observer para cambios directos de clase en <html> (p. ej. scripts o transiciones externas)
+  if (
+    typeof window !== 'undefined' &&
+    typeof MutationObserver !== 'undefined' &&
+    typeof document !== 'undefined' &&
+    document.documentElement
+  ) {
+    const observer = new MutationObserver(() => {
+      updateTokens()
+    })
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    })
+    if (getCurrentInstance()) {
+      onBeforeUnmount(() => {
+        observer.disconnect()
+      })
+    }
+  }
+
   if (getCurrentInstance()) {
     onMounted(() => {
-      updateTokens()
+      syncThemeAndTokens()
     })
   }
 
