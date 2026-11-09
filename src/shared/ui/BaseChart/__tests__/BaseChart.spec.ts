@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import BaseChart from '../BaseChart.vue'
 import BaseSkeleton from '@/shared/ui/BaseSkeleton.vue'
 import EmptyState from '@/shared/ui/EmptyState.vue'
+import { useTheme } from '@/shared/composables/useTheme'
 
 const mockSetOption = vi.fn()
 const mockResize = vi.fn()
@@ -110,5 +111,62 @@ describe('BaseChart.vue', () => {
     const srOnlyContainer = wrapper.find('.sr-only')
     expect(srOnlyContainer.exists()).toBe(true)
     expect(srOnlyContainer.find('[data-test="accessible-table"]').exists()).toBe(true)
+  })
+
+  it('incluye leyenda arriba (top: 8), grid con containLabel y la paleta del tema', async () => {
+    const wrapper = mount(BaseChart, {
+      props: {
+        option: {
+          legend: { data: ['Ventas', 'Compras'] },
+          series: [{ type: 'bar', data: [10, 20] }],
+        },
+        ariaLabel: 'Gráfico con leyenda y grid',
+      },
+    })
+
+    await wrapper.vm.$nextTick()
+    await new Promise((r) => setTimeout(r, 30))
+
+    expect(mockSetOption).toHaveBeenCalled()
+    const lastCallOption = mockSetOption.mock.calls.at(-1)?.[0]
+    expect(lastCallOption).toBeDefined()
+    expect(lastCallOption.legend.top).toBe(8)
+    expect(lastCallOption.grid.containLabel).toBe(true)
+    expect(lastCallOption.grid.top).toBe(48)
+    expect(Array.isArray(lastCallOption.color)).toBe(true)
+    expect(lastCallOption.color.length).toBe(8)
+  })
+
+  it('al alternar el tema se vuelve a llamar a setOption con la paleta nueva', async () => {
+    const { toggleTheme } = useTheme()
+
+    const wrapper = mount(BaseChart, {
+      props: {
+        option: {
+          series: [{ type: 'bar', data: [10, 20] }],
+        },
+        ariaLabel: 'Gráfico reactivo al tema',
+      },
+    })
+
+    await wrapper.vm.$nextTick()
+    await new Promise((r) => setTimeout(r, 30))
+
+    const initialCallsCount = mockSetOption.mock.calls.length
+    expect(initialCallsCount).toBeGreaterThan(0)
+
+    // Simular nuevo valor de token en documentElement y alternar tema
+    document.documentElement.style.setProperty('--chart-1', '#60a5fa')
+    toggleTheme()
+
+    await wrapper.vm.$nextTick()
+    await new Promise((r) => setTimeout(r, 30))
+
+    expect(mockSetOption.mock.calls.length).toBeGreaterThan(initialCallsCount)
+    const lastCall = mockSetOption.mock.calls.at(-1)
+    expect(lastCall).toBeDefined()
+    const updatedOption = lastCall?.[0]
+    expect(updatedOption).toBeDefined()
+    expect(updatedOption.color[0]).toBe('#60a5fa')
   })
 })
