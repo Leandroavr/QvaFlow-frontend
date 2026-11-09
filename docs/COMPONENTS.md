@@ -502,6 +502,7 @@ Componente gráfico universal basado en Apache ECharts con tree-shaking estricto
   - **Redimensionamiento Reactivo**: Controlado con `ResizeObserver` para responder inmediatamente a cambios de ventana o colapso del sidebar de navegación.
   - **Movimiento Reducido**: Detecta `prefers-reduced-motion` para anular o limitar animaciones a menos de 300 ms.
   - **Valores y Formateo**: El componente no manipula ni convierte los importes monetarios o cantidades; el consumidor proporciona el formateo deseado (por ejemplo, mediante callbacks `valueFormatter` o `formatter`).
+  - **Paleta Categórica (`--chart-1` a `--chart-8`)**: El composable `useChartTheme` expone una paleta categórica de 8 colores derivada de los tokens CSS `--chart-1` a `--chart-8` (configurados en modo claro y oscuro garantizando contraste WCAG AA >= 4.5:1), utilizada automáticamente para series y categorías cuando no se especifiquen colores personalizados.
 - **Ejemplo**:
 
 ```vue
