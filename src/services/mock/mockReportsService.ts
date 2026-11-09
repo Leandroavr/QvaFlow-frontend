@@ -327,9 +327,11 @@ export class MockReportsService implements ReportsService {
   private ensureViewPermission(): void {
     if (!this.checkHasPermission('reports.view')) {
       throw new ApiError(
-        403,
-        'FORBIDDEN',
-        'No tiene permisos suficientes para acceder a reportes (requiere reports.view)'
+        {
+          code: 'FORBIDDEN',
+          message: 'No tiene permisos suficientes para acceder a reportes (requiere reports.view)',
+        },
+        403
       )
     }
   }
@@ -358,18 +360,22 @@ export class MockReportsService implements ReportsService {
 
     if (desde && !dateRegex.test(desde)) {
       throw new ApiError(
-        400,
-        'INVALID_DATE_FORMAT',
-        'Formato de fecha inicial inválido. Se requiere YYYY-MM-DD',
-        { desde: ['Formato debe ser YYYY-MM-DD'] }
+        {
+          code: 'INVALID_DATE_FORMAT',
+          message: 'Formato de fecha inicial inválido. Se requiere YYYY-MM-DD',
+          details: { desde: ['Formato debe ser YYYY-MM-DD'] },
+        },
+        400
       )
     }
     if (hasta && !dateRegex.test(hasta)) {
       throw new ApiError(
-        400,
-        'INVALID_DATE_FORMAT',
-        'Formato de fecha final inválido. Se requiere YYYY-MM-DD',
-        { hasta: ['Formato debe ser YYYY-MM-DD'] }
+        {
+          code: 'INVALID_DATE_FORMAT',
+          message: 'Formato de fecha final inválido. Se requiere YYYY-MM-DD',
+          details: { hasta: ['Formato debe ser YYYY-MM-DD'] },
+        },
+        400
       )
     }
 
@@ -380,10 +386,12 @@ export class MockReportsService implements ReportsService {
 
     if (finalHasta < finalDesde) {
       throw new ApiError(
-        400,
-        'INVALID_DATE_RANGE',
-        'La fecha final (hasta) no puede ser anterior a la fecha inicial (desde)',
-        { hasta: ['La fecha final debe ser posterior o igual a la inicial'] }
+        {
+          code: 'INVALID_DATE_RANGE',
+          message: 'La fecha final (hasta) no puede ser anterior a la fecha inicial (desde)',
+          details: { hasta: ['La fecha final debe ser posterior o igual a la inicial'] },
+        },
+        400
       )
     }
 
@@ -392,10 +400,12 @@ export class MockReportsService implements ReportsService {
     const diffDays = Math.round((dEnd - dStart) / (1000 * 60 * 60 * 24))
     if (diffDays > 366) {
       throw new ApiError(
-        400,
-        'DATE_RANGE_EXCEEDED',
-        'El rango de consulta no puede superar 366 días (un año calendario)',
-        { rango: ['Rango temporal excede 366 días'] }
+        {
+          code: 'DATE_RANGE_EXCEEDED',
+          message: 'El rango de consulta no puede superar 366 días (un año calendario)',
+          details: { rango: ['Rango temporal excede 366 días'] },
+        },
+        400
       )
     }
 
@@ -815,7 +825,7 @@ export class MockReportsService implements ReportsService {
     results.sort((a, b) => {
       let cmp = 0
       if (field === 'amount') {
-        cmp = compareDecimals(a.amountUSD, b.amountUSD)
+        cmp = compareDecimals(a.amount, b.amount)
       } else if (field === 'reference') {
         cmp = a.reference.localeCompare(b.reference)
       } else {
@@ -829,12 +839,11 @@ export class MockReportsService implements ReportsService {
     const page = Math.max(1, query?.page || 1)
     const perPage = Math.max(1, query?.perPage || 10)
     const total = results.length
-    const totalPages = Math.max(1, Math.ceil(total / perPage))
     const start = (page - 1) * perPage
     const paginatedItems = results.slice(start, start + perPage)
 
     // Mapear a ReportMovement público
-    const data: ReportMovement[] = paginatedItems.map((m) => ({
+    const items: ReportMovement[] = paginatedItems.map((m) => ({
       id: m.id,
       date: m.date,
       type: m.type,
@@ -848,13 +857,10 @@ export class MockReportsService implements ReportsService {
     }))
 
     return {
-      data,
-      meta: {
-        total,
-        page,
-        perPage,
-        totalPages,
-      },
+      items,
+      total,
+      page,
+      perPage,
     }
   }
 }
