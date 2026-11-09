@@ -762,6 +762,7 @@
                 <BaseButton
                   variant="secondary"
                   density="compact"
+                  class="border-[var(--border-default)]"
                   @click="chartDemoLoading = !chartDemoLoading"
                 >
                   {{ chartDemoLoading ? 'Quitar Loading' : 'Simular Loading' }}
@@ -769,6 +770,7 @@
                 <BaseButton
                   variant="secondary"
                   density="compact"
+                  class="border-[var(--border-default)]"
                   @click="chartDemoEmpty = !chartDemoEmpty"
                 >
                   {{ chartDemoEmpty ? 'Quitar Vacío' : 'Simular Vacío' }}
