@@ -951,3 +951,417 @@ _(Nota: El estado del documento es asignado automáticamente por el servidor com
    - Todos los importes y cantidades de inventario deben viajar como `DecimalString` (`"24.00"`, `"1250.50"`), mapeados en Symfony a columnas `DECIMAL(12,2)`.
 7. **Catálogo de Monedas y Tasas de Cambio:**
    - Monedas admitidas: `USD`, `CUP`, `CUP_TRANSFER` y `MLC`.
+
+---
+
+## 9. Módulo de Reportes y Analíticas (PROPUESTA)
+
+> **PROPUESTA, pendiente de confirmar con backend.**  
+> Esta sección define el contrato de API para la migración del módulo de Reportes. Las decisiones de arquitectura subyacentes se encuentran detalladas en la [sección 13 de REPORTS_RULES.md](REPORTS_RULES.md#13-decisiones-de-diseño-propuestas-pendientes-de-confirmar-con-el-backend).
+>
+> **Permiso de exportación reservado:** El permiso `reports.export` queda reservado en la matriz de roles y permisos de la aplicación. En esta fase inicial de migración **no se expone ningún endpoint de exportación** (la generación de archivos CSV, Excel o PDF no se implementa en esta etapa).
+
+### 9.1 Consideraciones Generales y Seguridad RBAC
+
+- **Permiso base:** Todos los endpoints del módulo de reportes requieren autenticación y el permiso `reports.view`.
+- **Control de datos sensibles (`products.view_cost`):**
+  - Si el usuario **posee** `products.view_cost`, el backend entrega métricas de compras a proveedores (`purchasesTotal`, `purchasesCount`), costo de mercancía vendida (`cogsTotal`), ganancia bruta (`grossProfit`), margen sobre ventas (`marginPercent`, `marginHealth`), balance de caja (`cashBalance`), capital retenido (`tiedUpCapital`) y movimientos de tipo `PURCHASE`.
+  - Si el usuario **carece** de `products.view_cost`, el backend **omite por completo estos campos** del objeto JSON (ausentes, no enviados en `0.00` ni `null`). Los movimientos devueltos en `/api/reports/movements` se restringen automáticamente a solo `SALE`.
+- **Rango de fechas:** Parámetros `desde` y `hasta` en formato ISO 8601 (`YYYY-MM-DD`). Si no se envían, el backend asume por defecto el mes en curso (`current_month`).
+- **Valores monetarios y cantidades:** Transmitidos estrictamente como `DecimalString` (ej. `"145850.00"`). Moneda contable base: `USD`.
+
+---
+
+### 9.2 GET /api/reports/finance-summary
+
+Entrega los totales agregados e indicadores financieros clave del período.
+
+- **Permiso requerido:** `reports.view` (los campos sensibles se omiten si falta `products.view_cost`).
+- **Parámetros de consulta (Query Params):**
+  - `desde` _(string, opcional)_: Fecha de inicio (`YYYY-MM-DD`).
+  - `hasta` _(string, opcional)_: Fecha de fin (`YYYY-MM-DD`).
+  - `warehouseCode` _(string, opcional)_: Código de almacén para consolidar un centro específico.
+
+#### Ejemplo de Petición HTTP
+```http
+GET /api/reports/finance-summary?desde=2026-10-01&hasta=2026-10-31 HTTP/1.1
+Host: localhost:8000
+Authorization: Bearer <accessToken>
+Accept: application/json
+```
+
+#### Ejemplo de Respuesta CON permiso `products.view_cost` (200 OK)
+```json
+{
+  "currency": "USD",
+  "salesTotal": "145850.00",
+  "salesCount": 384,
+  "salesByCurrency": [
+    { "currency": "CUP", "amount": "98200.00" },
+    { "currency": "CUP_TRANSFER", "amount": "32150.00" },
+    { "currency": "USD", "amount": "15500.00" }
+  ],
+  "purchasesTotal": "84200.00",
+  "purchasesCount": 42,
+  "cogsTotal": "92100.00",
+  "grossProfit": "53750.00",
+  "marginPercent": "36.85",
+  "cashBalance": "61650.00",
+  "marginHealth": "HEALTHY"
+}
+```
+
+#### Ejemplo de Respuesta SIN permiso `products.view_cost` (200 OK - campos sensibles ausentes)
+```json
+{
+  "currency": "USD",
+  "salesTotal": "145850.00",
+  "salesCount": 384,
+  "salesByCurrency": [
+    { "currency": "CUP", "amount": "98200.00" },
+    { "currency": "CUP_TRANSFER", "amount": "32150.00" },
+    { "currency": "USD", "amount": "15500.00" }
+  ]
+}
+```
+
+#### Errores Posibles
+- `400 Bad Request` (Rango inválido o parámetros incorrectos):
+  ```json
+  {
+    "code": "INVALID_DATE_RANGE",
+    "message": "La fecha final 'hasta' no puede ser anterior a la fecha inicial 'desde'.",
+    "details": {
+      "hasta": ["Debe ser igual o posterior a la fecha inicial."]
+    }
+  }
+  ```
+- `400 Bad Request` (Rango excede el límite máximo permitido de 365 días):
+  ```json
+  {
+    "code": "DATE_RANGE_EXCEEDED",
+    "message": "El intervalo de consulta no puede superar los 365 días."
+  }
+  ```
+- `403 Forbidden`:
+  ```json
+  {
+    "code": "FORBIDDEN",
+    "message": "No posee permisos para visualizar reportes financieros."
+  }
+  ```
+- `500 Internal Server Error`:
+  ```json
+  {
+    "code": "SERVER_ERROR",
+    "message": "Error interno al consolidar el balance financiero."
+  }
+  ```
+
+---
+
+### 9.3 GET /api/reports/finance-timeseries
+
+Serie histórica cronológica de ventas y compras para visualización en gráficos temporales de línea o barras.
+
+- **Permiso requerido:** `reports.view` (`purchasesTotal` y `grossProfit` ausentes sin `products.view_cost`).
+- **Parámetros de consulta (Query Params):**
+  - `granularity` _(string, opcional)_: Granularidad temporal del agrupamiento (`'day'` | `'week'` | `'month'`). Por defecto: `'day'`.
+  - `desde` _(string, opcional)_: Fecha de inicio (`YYYY-MM-DD`).
+  - `hasta` _(string, opcional)_: Fecha de fin (`YYYY-MM-DD`).
+  - `warehouseCode` _(string, opcional)_: Filtro opcional por almacén.
+
+#### Ejemplo de Petición HTTP
+```http
+GET /api/reports/finance-timeseries?granularity=month&desde=2026-06-01&hasta=2026-10-31 HTTP/1.1
+Host: localhost:8000
+Authorization: Bearer <accessToken>
+Accept: application/json
+```
+
+#### Ejemplo de Respuesta (200 OK)
+```json
+{
+  "granularity": "month",
+  "points": [
+    {
+      "date": "2026-06",
+      "salesTotal": "115400.00",
+      "purchasesTotal": "72300.00",
+      "grossProfit": "43100.00"
+    },
+    {
+      "date": "2026-07",
+      "salesTotal": "132100.00",
+      "purchasesTotal": "81500.00",
+      "grossProfit": "50600.00"
+    },
+    {
+      "date": "2026-08",
+      "salesTotal": "124000.00",
+      "purchasesTotal": "69000.00",
+      "grossProfit": "55000.00"
+    },
+    {
+      "date": "2026-09",
+      "salesTotal": "141800.00",
+      "purchasesTotal": "89400.00",
+      "grossProfit": "52400.00"
+    },
+    {
+      "date": "2026-10",
+      "salesTotal": "145850.00",
+      "purchasesTotal": "84200.00",
+      "grossProfit": "61650.00"
+    }
+  ]
+}
+```
+
+#### Errores Posibles
+- `400 Bad Request` (Granularidad inválida o fechas incoherentes):
+  ```json
+  {
+    "code": "INVALID_PARAM",
+    "message": "Parámetro 'granularity' no válido. Valores admitidos: 'day', 'week', 'month'."
+  }
+  ```
+- `403 Forbidden` (`FORBIDDEN`).
+- `500 Internal Server Error` (`SERVER_ERROR`).
+
+---
+
+### 9.4 GET /api/reports/sales-by-category
+
+Agregado de recaudación y unidades comercializadas por categoría de catálogo.
+
+- **Permiso requerido:** `reports.view`.
+- **Parámetros de consulta (Query Params):**
+  - `desde` _(string, opcional)_: Fecha de inicio (`YYYY-MM-DD`).
+  - `hasta` _(string, opcional)_: Fecha de fin (`YYYY-MM-DD`).
+  - `warehouseCode` _(string, opcional)_: Filtro opcional por almacén.
+
+#### Ejemplo de Petición HTTP
+```http
+GET /api/reports/sales-by-category?desde=2026-10-01&hasta=2026-10-31 HTTP/1.1
+Host: localhost:8000
+Authorization: Bearer <accessToken>
+Accept: application/json
+```
+
+#### Ejemplo de Respuesta (200 OK)
+```json
+[
+  {
+    "categoryId": 1,
+    "categoryName": "Bebidas",
+    "salesTotal": "86450.00",
+    "unitsSold": "480.00"
+  },
+  {
+    "categoryId": 2,
+    "categoryName": "Alimentos",
+    "salesTotal": "41200.00",
+    "unitsSold": "260.00"
+  },
+  {
+    "categoryId": 3,
+    "categoryName": "Aseo y Hogar",
+    "salesTotal": "18200.00",
+    "unitsSold": "95.00"
+  }
+]
+```
+
+#### Errores Posibles
+- `400 Bad Request` (`INVALID_DATE_RANGE`).
+- `403 Forbidden` (`FORBIDDEN`).
+- `500 Internal Server Error` (`SERVER_ERROR`).
+
+---
+
+### 9.5 GET /api/reports/top-products
+
+Ranking de productos con mayor rotación comercial en unidades o recaudación.
+
+- **Permiso requerido:** `reports.view`.
+- **Parámetros de consulta (Query Params):**
+  - `limit` _(integer, opcional)_: Límite de registros a retornar (por defecto `5`, máximo `50`).
+  - `desde` _(string, opcional)_: Fecha de inicio (`YYYY-MM-DD`).
+  - `hasta` _(string, opcional)_: Fecha de fin (`YYYY-MM-DD`).
+  - `categoryId` _(string|number, opcional)_: Filtro por categoría.
+  - `warehouseCode` _(string, opcional)_: Filtro por almacén.
+
+#### Ejemplo de Petición HTTP
+```http
+GET /api/reports/top-products?limit=5&desde=2026-10-01&hasta=2026-10-31 HTTP/1.1
+Host: localhost:8000
+Authorization: Bearer <accessToken>
+Accept: application/json
+```
+
+#### Ejemplo de Respuesta (200 OK)
+```json
+[
+  {
+    "productCode": "PRD-001",
+    "productName": "Refresco Ciego Montero 330ml",
+    "categoryName": "Bebidas",
+    "unitsSold": "145.00",
+    "revenue": "12325.00"
+  },
+  {
+    "productCode": "PRD-002",
+    "productName": "Cerveza Cristal 355ml",
+    "categoryName": "Bebidas",
+    "unitsSold": "120.00",
+    "revenue": "26400.00"
+  },
+  {
+    "productCode": "PRD-005",
+    "productName": "Arroz Criollo Especial 1kg",
+    "categoryName": "Alimentos",
+    "unitsSold": "85.00",
+    "revenue": "17850.00"
+  },
+  {
+    "productCode": "PRD-007",
+    "productName": "Aceite Vegetal Cocinero 1L",
+    "categoryName": "Alimentos",
+    "unitsSold": "48.00",
+    "revenue": "31200.00"
+  },
+  {
+    "productCode": "PRD-014",
+    "productName": "Ron Havana Club 7 Años 700ml",
+    "categoryName": "Bebidas",
+    "unitsSold": "32.00",
+    "revenue": "46400.00"
+  }
+]
+```
+
+#### Errores Posibles
+- `400 Bad Request` (`INVALID_LIMIT`, `INVALID_DATE_RANGE`).
+- `403 Forbidden` (`FORBIDDEN`).
+- `500 Internal Server Error` (`SERVER_ERROR`).
+
+---
+
+### 9.6 GET /api/reports/idle-products
+
+Productos con existencias en inventario que no han registrado ventas en un período superior a un umbral de días.
+
+- **Permiso requerido:** `reports.view` (`tiedUpCapital` ausente sin `products.view_cost`).
+- **Parámetros de consulta (Query Params):**
+  - `days` _(integer, opcional)_: Umbral mínimo de días de inactividad (por defecto `30`).
+  - `warehouseCode` _(string, opcional)_: Filtrar por almacén.
+  - `categoryId` _(string|number, opcional)_: Filtrar por categoría.
+
+#### Ejemplo de Petición HTTP
+```http
+GET /api/reports/idle-products?days=30&warehouseCode=wh-central HTTP/1.1
+Host: localhost:8000
+Authorization: Bearer <accessToken>
+Accept: application/json
+```
+
+#### Ejemplo de Respuesta CON `products.view_cost` (200 OK)
+```json
+[
+  {
+    "productCode": "PRD-089",
+    "productName": "Vino Tinto Dulce Reserva 750ml",
+    "warehouseName": "Almacén Central",
+    "stock": "35.00",
+    "daysWithoutSale": 48,
+    "tiedUpCapital": "18200.00"
+  },
+  {
+    "productCode": "PRD-102",
+    "productName": "Galletas Integrales Dietéticas 250g",
+    "warehouseName": "Almacén Central",
+    "stock": "60.00",
+    "daysWithoutSale": 34,
+    "tiedUpCapital": "5400.00"
+  }
+]
+```
+
+#### Errores Posibles
+- `400 Bad Request` (Días no positivos):
+  ```json
+  {
+    "code": "INVALID_DAYS_PARAM",
+    "message": "El parámetro 'days' debe ser un entero positivo mayor que cero."
+  }
+  ```
+- `403 Forbidden` (`FORBIDDEN`).
+- `500 Internal Server Error` (`SERVER_ERROR`).
+
+---
+
+### 9.7 GET /api/reports/movements
+
+Auditoría detallada de transacciones financieras individuales (ventas netas y compras de proveedores) con paginación de servidor.
+
+- **Permiso requerido:** `reports.view` (las filas de tipo `PURCHASE` solo se retornan si el usuario posee `products.view_cost`).
+- **Parámetros de consulta (Query Params):**
+  - `page` _(integer, opcional)_: Número de página (por defecto `1`).
+  - `perPage` _(integer, opcional)_: Elementos por página (por defecto `10`).
+  - `sort` _(string, opcional)_: Ordenación (`date:desc`, `amount:asc`, etc.).
+  - `search` _(string, opcional)_: Término de búsqueda textual por referencia o descripción.
+  - `desde` _(string, opcional)_: Fecha inicial (`YYYY-MM-DD`).
+  - `hasta` _(string, opcional)_: Fecha final (`YYYY-MM-DD`).
+  - `type` _(string, opcional)_: Filtrar por tipo (`'ALL'` | `'SALE'` | `'PURCHASE'`).
+  - `categoryId` _(string|number, opcional)_: Filtrar por categoría.
+  - `warehouseCode` _(string, opcional)_: Filtrar por almacén.
+
+#### Ejemplo de Petición HTTP
+```http
+GET /api/reports/movements?page=1&perPage=10&sort=date:desc&desde=2026-10-01&hasta=2026-10-31&type=ALL HTTP/1.1
+Host: localhost:8000
+Authorization: Bearer <accessToken>
+Accept: application/json
+```
+
+#### Ejemplo de Respuesta (200 OK)
+```json
+{
+  "items": [
+    {
+      "id": 1045,
+      "date": "2026-10-31T18:42:10Z",
+      "type": "SALE",
+      "reference": "TICK-908123",
+      "description": "Venta mostrador ticket #908123",
+      "categoryName": "Bebidas",
+      "warehouseName": "Punto de Venta Playa",
+      "amount": "1450.00",
+      "currency": "CUP",
+      "paymentMethod": "CUP Efectivo"
+    },
+    {
+      "id": 1044,
+      "date": "2026-10-31T14:15:00Z",
+      "type": "PURCHASE",
+      "reference": "FAC-2026-089",
+      "description": "Compra cerveza proveedor Ciego Montero",
+      "categoryName": "Bebidas",
+      "warehouseName": "Almacén Central",
+      "amount": "28400.00",
+      "currency": "CUP",
+      "paymentMethod": "Transferencia Bancaria"
+    }
+  ],
+  "total": 384,
+  "page": 1,
+  "perPage": 10
+}
+```
+
+#### Errores Posibles
+- `400 Bad Request` (`INVALID_DATE_RANGE`, `PAGINATION_OUT_OF_BOUNDS`).
+- `403 Forbidden` (`FORBIDDEN`).
+- `500 Internal Server Error` (`SERVER_ERROR`).
+
