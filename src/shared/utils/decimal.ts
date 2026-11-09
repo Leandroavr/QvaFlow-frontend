@@ -73,3 +73,68 @@ export function compareDecimals(a: DecimalString | string, b: DecimalString | st
 export function normalizeDecimal(val: DecimalString | number | string): DecimalString {
   return formatFromHundredths(parseToHundredths(val))
 }
+
+/**
+ * Multiplica dos cantidades decimales exactas: a * b
+ * Redondeo matemático a 2 decimales (half-up).
+ */
+export function multiplyDecimals(
+  a: DecimalString | number | string,
+  b: DecimalString | number | string
+): DecimalString {
+  const hA = parseToHundredths(a)
+  const hB = parseToHundredths(b)
+  const isNegative = hA < 0n !== hB < 0n
+  const absA = hA < 0n ? -hA : hA
+  const absB = hB < 0n ? -hB : hB
+
+  // (absA * absB) está en 10^4 (diezmilésimas). Para volver a 10^2 (centésimas),
+  // dividimos entre 100n aplicando redondeo half-up (+50n).
+  const product = absA * absB
+  const hundredths = (product + 50n) / 100n
+  return formatFromHundredths(isNegative ? -hundredths : hundredths)
+}
+
+/**
+ * Divide dos cantidades decimales exactas: a / b
+ * Redondeo matemático a 2 decimales (half-up).
+ * Retorna '0.00' si el divisor b es 0.
+ */
+export function divideDecimals(
+  a: DecimalString | number | string,
+  b: DecimalString | number | string
+): DecimalString {
+  const hA = parseToHundredths(a)
+  const hB = parseToHundredths(b)
+  if (hB === 0n) return '0.00'
+
+  const isNegative = hA < 0n !== hB < 0n
+  const absA = hA < 0n ? -hA : hA
+  const absB = hB < 0n ? -hB : hB
+
+  // absA y absB están en centésimas. Multiplicamos por 100n para obtener centésimas
+  // tras la división entera, aplicando redondeo half-up (+ absB / 2n).
+  const hundredths = (absA * 100n + absB / 2n) / absB
+  return formatFromHundredths(isNegative ? -hundredths : hundredths)
+}
+
+/**
+ * Calcula el porcentaje relativo: (part / total) * 100
+ * Redondeo matemático a 2 decimales (half-up).
+ * Retorna '0.00' si total <= 0 o part es 0.
+ */
+export function calculatePercentage(
+  part: DecimalString | number | string,
+  total: DecimalString | number | string
+): DecimalString {
+  const hPart = parseToHundredths(part)
+  const hTotal = parseToHundredths(total)
+  if (hTotal <= 0n || hPart === 0n) return '0.00'
+
+  const isNegative = hPart < 0n
+  const absPart = isNegative ? -hPart : hPart
+
+  // (absPart * 10000n + hTotal / 2n) / hTotal calcula el porcentaje en centésimas
+  const hundredths = (absPart * 10000n + hTotal / 2n) / hTotal
+  return formatFromHundredths(isNegative ? -hundredths : hundredths)
+}

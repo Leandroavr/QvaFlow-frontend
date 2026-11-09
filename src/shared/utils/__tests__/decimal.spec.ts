@@ -6,6 +6,9 @@ import {
   subtractDecimals,
   compareDecimals,
   normalizeDecimal,
+  multiplyDecimals,
+  divideDecimals,
+  calculatePercentage,
 } from '../decimal'
 
 describe('Utilidades de aritmética decimal exacta (decimal.ts)', () => {
@@ -48,5 +51,33 @@ describe('Utilidades de aritmética decimal exacta (decimal.ts)', () => {
     expect(normalizeDecimal('5.4')).toBe('5.40')
     expect(normalizeDecimal('5.40')).toBe('5.40')
     expect(normalizeDecimal(0)).toBe('0.00')
+  })
+
+  it('multiplica correctamente con redondeo half-up a 2 decimales', () => {
+    expect(multiplyDecimals('10.00', '2.50')).toBe('25.00')
+    expect(multiplyDecimals('24.00', '450.00')).toBe('10800.00')
+    expect(multiplyDecimals('3.33', '3.00')).toBe('9.99')
+    expect(multiplyDecimals('1.25', '1.25')).toBe('1.56')
+    expect(multiplyDecimals('2.50', '1.50')).toBe('3.75')
+    expect(multiplyDecimals('-5.00', '2.00')).toBe('-10.00')
+    expect(multiplyDecimals('0.00', '150.00')).toBe('0.00')
+  })
+
+  it('divide correctamente con redondeo half-up a 2 decimales y evita división por cero', () => {
+    expect(divideDecimals('10.00', '2.00')).toBe('5.00')
+    expect(divideDecimals('1.00', '3.00')).toBe('0.33')
+    expect(divideDecimals('2.00', '3.00')).toBe('0.67')
+    expect(divideDecimals('100.00', '0.00')).toBe('0.00')
+    expect(divideDecimals('0.00', '50.00')).toBe('0.00')
+    expect(divideDecimals('-10.00', '2.00')).toBe('-5.00')
+  })
+
+  it('calcula porcentaje exacto relativo sin divisiones por cero ni errores de coma flotante', () => {
+    expect(calculatePercentage('25.00', '100.00')).toBe('25.00')
+    expect(calculatePercentage('1.00', '3.00')).toBe('33.33')
+    expect(calculatePercentage('2.00', '3.00')).toBe('66.67')
+    expect(calculatePercentage('0.00', '100.00')).toBe('0.00')
+    expect(calculatePercentage('50.00', '0.00')).toBe('0.00')
+    expect(calculatePercentage('-15.00', '100.00')).toBe('-15.00')
   })
 })
