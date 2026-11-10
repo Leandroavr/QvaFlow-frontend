@@ -8,6 +8,7 @@ export interface DataTableQueryOptions<TFilters extends Record<string, any> = Re
   initialSearch?: string
   initialFilters?: TFilters
   syncUrl?: boolean
+  prefix?: string
 }
 
 export function useDataTableQuery<TFilters extends Record<string, any> = Record<string, any>>(
@@ -20,7 +21,16 @@ export function useDataTableQuery<TFilters extends Record<string, any> = Record<
     initialSearch = '',
     initialFilters = {} as TFilters,
     syncUrl = true,
+    prefix = '',
   } = options
+
+  // Nombres de parámetros para sincronización con URL (con prefijo opcional)
+  const pageKey = prefix ? `${prefix}Page` : 'page'
+  const perPageKey = prefix ? `${prefix}PerPage` : 'perPage'
+  const sortKey = prefix ? `${prefix}Sort` : 'sort'
+  const searchKey = prefix ? `${prefix}Search` : 'search'
+  const getFilterKey = (key: string) =>
+    prefix ? `${prefix}${key.charAt(0).toUpperCase() + key.slice(1)}` : key
 
   // Detección segura de vue-router (compatible con entornos de prueba unitaria sin router)
   let router: ReturnType<typeof useRouter> | undefined
@@ -39,13 +49,17 @@ export function useDataTableQuery<TFilters extends Record<string, any> = Record<
   const query = route?.query || {}
 
   const parsedInitialPage =
-    query.page && !isNaN(Number(query.page)) ? Math.max(1, Number(query.page)) : initialPage
+    query[pageKey] && !isNaN(Number(query[pageKey]))
+      ? Math.max(1, Number(query[pageKey]))
+      : initialPage
   const parsedInitialPerPage =
-    query.perPage && !isNaN(Number(query.perPage))
-      ? Math.max(1, Number(query.perPage))
+    query[perPageKey] && !isNaN(Number(query[perPageKey]))
+      ? Math.max(1, Number(query[perPageKey]))
       : initialPerPage
-  const parsedInitialSort = typeof query.sort === 'string' ? query.sort : initialSort
-  const parsedInitialSearch = typeof query.search === 'string' ? query.search : initialSearch
+  const parsedInitialSort =
+    typeof query[sortKey] === 'string' ? (query[sortKey] as string) : initialSort
+  const parsedInitialSearch =
+    typeof query[searchKey] === 'string' ? (query[searchKey] as string) : initialSearch
 
   // Estado reactivo principal
   const page = ref<number>(parsedInitialPage)
@@ -57,8 +71,9 @@ export function useDataTableQuery<TFilters extends Record<string, any> = Record<
   const filtersState: Record<string, any> = { ...initialFilters }
   if (syncUrl && query) {
     Object.keys(initialFilters).forEach((key) => {
-      if (query[key] !== undefined) {
-        filtersState[key] = query[key]
+      const fKey = getFilterKey(key)
+      if (query[fKey] !== undefined) {
+        filtersState[key] = query[fKey]
       }
     })
   }
@@ -117,24 +132,32 @@ export function useDataTableQuery<TFilters extends Record<string, any> = Record<
   const syncToUrl = () => {
     if (!syncUrl || !router || !route) return
 
-    const nextQuery: LocationQueryRaw = {}
+    // Preservar los parámetros de otras pantallas, pestañas o filtros del reporte
+    const nextQuery: LocationQueryRaw = { ...route.query }
+
+    delete nextQuery[pageKey]
+    delete nextQuery[perPageKey]
+    delete nextQuery[sortKey]
+    delete nextQuery[searchKey]
 
     if (page.value > 1) {
-      nextQuery.page = String(page.value)
+      nextQuery[pageKey] = String(page.value)
     }
     if (perPage.value !== initialPerPage) {
-      nextQuery.perPage = String(perPage.value)
+      nextQuery[perPageKey] = String(perPage.value)
     }
     if (sort.value) {
-      nextQuery.sort = sort.value
+      nextQuery[sortKey] = sort.value
     }
     if (search.value.trim()) {
-      nextQuery.search = search.value.trim()
+      nextQuery[searchKey] = search.value.trim()
     }
 
     Object.entries(filters.value).forEach(([k, v]) => {
+      const fKey = getFilterKey(k)
+      delete nextQuery[fKey]
       if (v !== undefined && v !== null && v !== '') {
-        nextQuery[k] = String(v)
+        nextQuery[fKey] = String(v)
       }
     })
 

@@ -329,6 +329,7 @@
       :page="currentPage"
       :per-page="currentPerPage"
       :total="totalRowsCount"
+      :page-size-options="pageSizeOptions"
       :disabled="loading"
       @update:page="handlePageChange"
       @update:per-page="handlePerPageChange"
@@ -386,6 +387,7 @@ interface Props<T = any> {
   showPagination?: boolean
   selectedId?: string | number | null
   fixedLayout?: boolean
+  pageSizeOptions?: number[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -409,6 +411,7 @@ const props = withDefaults(defineProps<Props>(), {
   showPagination: true,
   selectedId: null,
   fixedLayout: false,
+  pageSizeOptions: () => [10, 20, 50, 100],
 })
 
 const emit = defineEmits<{

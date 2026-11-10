@@ -370,7 +370,14 @@ export function useReports(options: UseReportsOptions = {}) {
   const syncToUrl = () => {
     if (!syncUrl || !router || !route) return
 
-    const nextQuery: LocationQueryRaw = {}
+    // Preservar parámetros de la tabla, pestañas o de otras capas
+    const nextQuery: LocationQueryRaw = { ...route.query }
+
+    delete nextQuery.preset
+    delete nextQuery.desde
+    delete nextQuery.hasta
+    delete nextQuery.type
+    delete nextQuery.categoryId
 
     if (preset.value !== 'current_month') {
       nextQuery.preset = preset.value

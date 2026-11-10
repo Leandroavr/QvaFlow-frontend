@@ -405,17 +405,46 @@
       </div>
     </section>
 
-    <!-- Contenedor reservado SOLO para desarrollo: Detalle de movimientos -->
-    <div
-      v-if="isDev"
-      class="bg-surface-sunken/40 rounded-xl border border-dashed border-border p-6"
-      data-test="dev-movements-placeholder"
+    <!-- Sección de Detalle en Pestañas -->
+    <section
+      aria-label="Detalle de transacciones y auditoría"
+      class="mt-6"
+      data-test="reports-tabs-section"
     >
-      <EmptyState
-        title="Detalle de movimientos: próximo paso"
-        description="Las pestañas con tablas detalladas de transacciones, productos ociosos y auditoría se integrarán en la siguiente fase."
-      />
-    </div>
+      <BaseTabs
+        :model-value="activeTab"
+        :items="tabItems"
+        data-test="reports-tabs"
+        @update:model-value="handleTabChange"
+      >
+        <!-- Pestaña 1: Movimientos -->
+        <template #movements>
+          <div data-test="tab-movements-content">
+            <!-- Contenido de Movimientos -->
+          </div>
+        </template>
+
+        <!-- Pestaña 2: Más vendidos (SOLO en DEV) -->
+        <template v-if="isDev" #top-selling>
+          <div class="p-6" data-test="tab-top-selling-content">
+            <EmptyState
+              title="Próximo paso"
+              description="El ranking de productos más vendidos por unidades e ingresos se integrará en la siguiente fase."
+            />
+          </div>
+        </template>
+
+        <!-- Pestaña 3: Ociosos (SOLO en DEV) -->
+        <template v-if="isDev" #idle>
+          <div class="p-6" data-test="tab-idle-content">
+            <EmptyState
+              title="Próximo paso"
+              description="El reporte de productos ociosos y sin rotación se integrará en la siguiente fase."
+            />
+          </div>
+        </template>
+      </BaseTabs>
+    </section>
   </div>
 </template>
 
@@ -500,7 +529,8 @@ export function formatTooltipDate(dateStr: string): string {
 </script>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRouter, useRoute, type LocationQueryRaw } from 'vue-router'
 import {
   TrendingUp,
   ShoppingBag,
@@ -517,14 +547,19 @@ import BaseInput from '@/shared/ui/BaseInput.vue'
 import StatCard from '@/shared/ui/StatCard.vue'
 import BaseBadge, { type BadgeVariant } from '@/shared/ui/BaseBadge.vue'
 import BaseChart from '@/shared/ui/BaseChart/BaseChart.vue'
+import BaseTabs, { type TabItem } from '@/shared/ui/BaseTabs.vue'
 import EmptyState from '@/shared/ui/EmptyState.vue'
 import BaseButton from '@/shared/ui/BaseButton.vue'
 import { useReports } from '../composables/useReports'
+import { useReportMovements } from '../composables/useReportMovements'
 import { formatMoney } from '@/shared/utils/formatMoney'
 import { isPositiveDecimal } from '@/shared/utils/decimal'
 import type { ReportPeriodPreset } from '../types'
 
 const isDev = import.meta.env.DEV
+
+const route = useRoute()
+const router = useRouter()
 
 const {
   preset,
@@ -559,6 +594,81 @@ const {
 
 onMounted(() => {
   loadAll()
+})
+
+// Pestañas de Detalle
+const tabItems = computed<TabItem[]>(() => {
+  const items: TabItem[] = [{ id: 'movements', label: 'Movimientos' }]
+  if (isDev) {
+    items.push({ id: 'top-selling', label: 'Más vendidos' }, { id: 'idle', label: 'Ociosos' })
+  }
+  return items
+})
+
+const initialTab = typeof route?.query?.tab === 'string' ? route.query.tab : 'movements'
+const activeTab = ref<string>(
+  initialTab === 'top-selling' && isDev
+    ? 'top-selling'
+    : initialTab === 'idle' && isDev
+      ? 'idle'
+      : 'movements'
+)
+
+watch(
+  () => route?.query?.tab,
+  (newTab) => {
+    if (newTab === 'top-selling' && isDev) {
+      activeTab.value = 'top-selling'
+    } else if (newTab === 'idle' && isDev) {
+      activeTab.value = 'idle'
+    } else {
+      activeTab.value = 'movements'
+    }
+  }
+)
+
+const handleTabChange = (val: string) => {
+  activeTab.value = val
+  if (router && route) {
+    const nextQuery: LocationQueryRaw = { ...route.query }
+    if (val === 'movements') {
+      delete nextQuery.tab
+    } else {
+      nextQuery.tab = val
+    }
+    const currentQuery = route.query
+    const isDifferent =
+      Object.keys(nextQuery).length !== Object.keys(currentQuery).length ||
+      Object.entries(nextQuery).some(([k, v]) => currentQuery[k] !== v)
+    if (isDifferent) {
+      router.replace({ query: nextQuery })
+    }
+  }
+}
+
+// Composable de Movimientos
+const {
+  movements,
+  total: movementsTotal,
+  loading: movementsLoading,
+  error: movementsError,
+  page: movementsPage,
+  perPage: movementsPerPage,
+  sort: movementsSort,
+  search: movementsSearch,
+  setPage: setMovementsPage,
+  setPerPage: setMovementsPerPage,
+  setSort: setMovementsSort,
+  setSearch: setMovementsSearch,
+  handleQueryChange: handleMovementsQueryChange,
+  loadMovements,
+  retry: retryMovements,
+} = useReportMovements({
+  desde,
+  hasta,
+  type,
+  categoryId,
+  activeTab,
 })
 
 // Opciones de Preset
