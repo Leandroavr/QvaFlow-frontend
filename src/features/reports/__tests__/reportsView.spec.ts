@@ -1,0 +1,427 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
+import {
+  createRouter,
+  createMemoryHistory,
+  type Router,
+  type RouteLocationNormalized,
+} from 'vue-router'
+
+import { useAuthStore } from '@/features/auth/stores/authStore'
+import ReportsDashboardView from '../views/ReportsDashboardView.vue'
+import {
+  useReports,
+  calculatePresetRange,
+  computeGranularity,
+  calculateDaysBetween,
+  formatLocalDate,
+} from '../composables/useReports'
+import { reportsService } from '@/services'
+import type { FinanceSummary } from '../types'
+import { setupNavigationGuard } from '@/app/router'
+
+// Mock de ECharts y ResizeObserver
+vi.mock('@/shared/ui/BaseChart/echartsCore', () => ({
+  init: vi.fn(() => ({
+    setOption: vi.fn(),
+    resize: vi.fn(),
+    dispose: vi.fn(),
+  })),
+}))
+
+globalThis.ResizeObserver = class {
+  observe = vi.fn()
+  unobserve = vi.fn()
+  disconnect = vi.fn()
+} as any
+
+describe('Pantalla de Reportes (/reports)', () => {
+  let pinia: ReturnType<typeof createPinia>
+  let router: Router
+
+  beforeEach(async () => {
+    pinia = createPinia()
+    setActivePinia(pinia)
+    localStorage.clear()
+
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: { template: '<div>Home</div>' } },
+        { path: '/forbidden', name: 'forbidden', component: { template: '<div>Forbidden</div>' } },
+        {
+          path: '/reports',
+          name: 'reports-dashboard',
+          component: ReportsDashboardView,
+          meta: { permission: 'reports.view' },
+        },
+      ],
+    })
+
+    await router.push('/')
+    await router.isReady()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  const waitDelay = (ms = 260) => new Promise((resolve) => setTimeout(resolve, ms))
+
+  it('(1) monta para superadmin y muestra 5 KPIs', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    await router.push('/reports')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    expect(wrapper.exists()).toBe(true)
+    expect(wrapper.text()).toContain('Reportes Financieros')
+
+    // Verifica la presencia de los 5 StatCards para superadmin
+    expect(wrapper.find('[data-test="kpi-sales"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="kpi-purchases"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="kpi-gross-profit"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="kpi-margin"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="kpi-cash-balance"]').exists()).toBe(true)
+  })
+
+  it('(2) para un usuario con reports.view pero SIN products.view_cost no hay tarjetas ni series sensibles ni opción Compras en el filtro', async () => {
+    const authStore = useAuthStore()
+    const user = {
+      id: 'usr_analyst_01',
+      username: 'analyst',
+      fullName: 'Analista de Ventas',
+      role: 'Analista',
+      permissions: ['reports.view', 'products.view'],
+      lastLoginAt: '2026-10-30T10:00:00Z',
+    }
+    localStorage.setItem('qvaflow_user', JSON.stringify(user))
+    localStorage.setItem('qvaflow_token', 'custom-token')
+    authStore.user = user
+    authStore.token = 'custom-token'
+
+    await router.push('/reports')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    // Solo tarjeta de ventas visible
+    expect(wrapper.find('[data-test="kpi-sales"]').exists()).toBe(true)
+
+    // Tarjetas sensibles ausentes
+    expect(wrapper.find('[data-test="kpi-purchases"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="kpi-gross-profit"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="kpi-margin"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="kpi-cash-balance"]').exists()).toBe(false)
+
+    // Gráfico de ganancia por período ausente
+    expect(wrapper.find('[data-test="profit-chart-container"]').exists()).toBe(false)
+
+    // Selector de tipo no debe incluir 'Compras'
+    const typeSelect = wrapper.find('#reports-type')
+    expect(typeSelect.exists()).toBe(true)
+    expect(typeSelect.html()).not.toContain('Compras')
+  })
+
+  it('(3) sin reports.view da 403', async () => {
+    const authStore = useAuthStore()
+    // El usuario vendedor no tiene reports.view
+    await authStore.login({ username: 'vendedor', password: 'password123' })
+
+    const to = {
+      name: 'reports-dashboard',
+      fullPath: '/reports',
+      meta: { permission: 'reports.view' },
+    } as unknown as RouteLocationNormalized
+
+    const from = {} as RouteLocationNormalized
+
+    const guardResult = await setupNavigationGuard(to, from)
+    expect(guardResult).toEqual({
+      name: 'forbidden',
+      query: { permission: 'reports.view' },
+    })
+  })
+
+  it('(4) cambiar el preset cambia los totales mostrados', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    await router.push('/reports')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    const initialSalesText = wrapper.find('[data-test="kpi-sales"]').text()
+
+    // Cambiar a preset 'today'
+    const presetSelect = wrapper.findComponent({ name: 'BaseSelect' })
+    presetSelect.vm.$emit('update:modelValue', 'today')
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    const updatedSalesText = wrapper.find('[data-test="kpi-sales"]').text()
+    expect(updatedSalesText).not.toEqual(initialSalesText)
+  })
+
+  it('(5) rango libre invertido muestra el error y no llama al servicio', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    const getSummarySpy = vi.spyOn(reportsService, 'getFinanceSummary')
+
+    const composable = useReports({ syncUrl: false })
+    await composable.loadAll()
+    getSummarySpy.mockClear()
+
+    // Rango invertido
+    composable.setRange('2026-05-20', '2026-05-10')
+
+    expect(composable.validationError.value).toBe(
+      'La fecha final no puede ser anterior a la fecha inicial'
+    )
+    expect(composable.isValidRange.value).toBe(false)
+    expect(getSummarySpy).not.toHaveBeenCalled()
+  })
+
+  it('(6) el preset current_month calcula desde y hasta sin desfase (probar con fecha simulada a fin de mes y a las 23:30)', () => {
+    // 31 de mayo de 2026 a las 23:30 (fin de mes con hora tardía)
+    const endOfMonth = new Date(2026, 4, 31, 23, 30, 0)
+    const rangeMay = calculatePresetRange('current_month', endOfMonth)
+
+    expect(rangeMay).toEqual({
+      desde: '2026-05-01',
+      hasta: '2026-05-31',
+    })
+
+    // 31 de diciembre a las 23:59:59
+    const endOfYear = new Date(2026, 11, 31, 23, 59, 59)
+    const rangeDec = calculatePresetRange('current_month', endOfYear)
+
+    expect(rangeDec).toEqual({
+      desde: '2026-12-01',
+      hasta: '2026-12-31',
+    })
+
+    // Verificación de formatLocalDate en hora temprana
+    const earlyMorning = new Date(2026, 0, 1, 0, 15, 0)
+    expect(formatLocalDate(earlyMorning)).toBe('2026-01-01')
+  })
+
+  it('(7) la respuesta obsoleta no pisa a la nueva', async () => {
+    let resolveFirst: (val: any) => void
+    const firstPromise = new Promise((resolve) => {
+      resolveFirst = resolve
+    })
+
+    let resolveSecond: (val: any) => void
+    const secondPromise = new Promise((resolve) => {
+      resolveSecond = resolve
+    })
+
+    const customService: any = {
+      getFinanceSummary: vi
+        .fn()
+        .mockImplementationOnce(() => firstPromise)
+        .mockImplementationOnce(() => secondPromise),
+      getFinanceTimeSeries: vi.fn().mockResolvedValue({ granularity: 'day', points: [] }),
+      getSalesByCategory: vi.fn().mockResolvedValue([]),
+    }
+
+    const { summary, setPreset } = useReports({
+      service: customService,
+      syncUrl: false,
+    })
+
+    // Primera petición (current_month)
+    setPreset('current_month')
+
+    // Segunda petición rápida antes de que termine la primera (today)
+    setPreset('today')
+
+    // La segunda resuelve primero con datos más recientes
+    resolveSecond!({ salesTotal: '200.00', salesCount: 5, currency: 'USD' })
+    await flushPromises()
+
+    expect(summary.value?.salesTotal).toBe('200.00')
+
+    // La primera resuelve tardíamente (obsoleta)
+    resolveFirst!({ salesTotal: '100.00', salesCount: 2, currency: 'USD' })
+    await flushPromises()
+
+    // No debe pisar la respuesta de la segunda
+    expect(summary.value?.salesTotal).toBe('200.00')
+  })
+
+  it('(8) un fallo en un bloque deja los otros visibles y el reintento funciona', async () => {
+    let failSummary = true
+    const customService: any = {
+      getFinanceSummary: vi.fn().mockImplementation(() => {
+        if (failSummary) {
+          return Promise.reject(new Error('Fallo de conexión al resumen'))
+        }
+        return Promise.resolve({
+          salesTotal: '150.00',
+          salesCount: 3,
+          currency: 'USD',
+        } as FinanceSummary)
+      }),
+      getFinanceTimeSeries: vi.fn().mockResolvedValue({
+        granularity: 'day',
+        points: [{ date: '2026-05-01', salesTotal: '150.00' }],
+      }),
+      getSalesByCategory: vi.fn().mockResolvedValue([
+        {
+          categoryId: 1,
+          categoryName: 'Alimentos',
+          salesTotal: '150.00',
+          unitsSold: '10.00',
+        },
+      ]),
+    }
+
+    const { summary, summaryError, timeSeries, categories, loadAll, reloadSummary } = useReports({
+      service: customService,
+      syncUrl: false,
+    })
+
+    await loadAll()
+
+    // Resumen falló
+    expect(summaryError.value).toBe('Fallo de conexión al resumen')
+    expect(summary.value).toBeNull()
+
+    // Los otros dos bloques están intactos con sus datos cargados
+    expect(timeSeries.value?.points.length).toBe(1)
+    expect(categories.value?.length).toBe(1)
+
+    // Reintento exitoso
+    failSummary = false
+    await reloadSummary()
+
+    expect(summaryError.value).toBeNull()
+    expect(summary.value?.salesTotal).toBe('150.00')
+  })
+
+  it('(9) la URL se sincroniza con los filtros', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    await router.push('/reports')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    // Cambiar preset a 'today'
+    const selects = wrapper.findAllComponents({ name: 'BaseSelect' })
+    const presetSelect = selects[0]
+    presetSelect.vm.$emit('update:modelValue', 'today')
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    expect(router.currentRoute.value.query.preset).toBe('today')
+
+    // Cambiar tipo a 'SALE'
+    const typeSelect = selects[1]
+    typeSelect.vm.$emit('update:modelValue', 'SALE')
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    expect(router.currentRoute.value.query.type).toBe('SALE')
+  })
+
+  it('(10) la granularidad automática cambia con el rango', () => {
+    // <= 31 días: day
+    expect(calculateDaysBetween('2026-05-01', '2026-05-20')).toBe(20)
+    expect(computeGranularity('2026-05-01', '2026-05-20')).toBe('day')
+
+    expect(calculateDaysBetween('2026-05-01', '2026-05-31')).toBe(31)
+    expect(computeGranularity('2026-05-01', '2026-05-31')).toBe('day')
+
+    // <= 120 días: week
+    expect(calculateDaysBetween('2026-05-01', '2026-06-30')).toBe(61)
+    expect(computeGranularity('2026-05-01', '2026-06-30')).toBe('week')
+
+    expect(calculateDaysBetween('2026-01-01', '2026-04-30')).toBe(120)
+    expect(computeGranularity('2026-01-01', '2026-04-30')).toBe('week')
+
+    // > 120 días: month
+    expect(calculateDaysBetween('2026-01-01', '2026-06-30')).toBe(181)
+    expect(computeGranularity('2026-01-01', '2026-06-30')).toBe('month')
+  })
+
+  it('(11) el badge de salud refleja el valor del servidor para HEALTHY, WARNING y CRITICAL', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    const testHealth = async (
+      health: 'HEALTHY' | 'WARNING' | 'CRITICAL',
+      expectedLabel: string
+    ) => {
+      vi.spyOn(reportsService, 'getFinanceSummary').mockResolvedValueOnce({
+        salesTotal: '1000.00',
+        salesCount: 10,
+        purchasesTotal: '600.00',
+        purchasesCount: 5,
+        grossProfit: '400.00',
+        marginPercent: '40.00',
+        cashBalance: '400.00',
+        marginHealth: health,
+        currency: 'USD',
+      })
+
+      await router.push('/reports')
+      const wrapper = mount(ReportsDashboardView, {
+        global: {
+          plugins: [pinia, router],
+        },
+      })
+
+      await flushPromises()
+      await waitDelay()
+      await flushPromises()
+
+      const badge = wrapper.find('[data-test="margin-health-badge"]')
+      expect(badge.exists()).toBe(true)
+      expect(badge.text()).toBe(expectedLabel)
+    }
+
+    await testHealth('HEALTHY', 'Saludable')
+    await testHealth('WARNING', 'Atención')
+    await testHealth('CRITICAL', 'Crítico')
+  })
+})

@@ -165,8 +165,8 @@ export function useReports(options: UseReportsOptions = {}) {
     initialType = query.type as 'ALL' | 'SALE' | 'PURCHASE'
   }
 
-  let initialCategoryId = options.initialCategoryId || ''
-  if (syncUrl && query.categoryId !== undefined) {
+  let initialCategoryId = options.initialCategoryId || 'ALL'
+  if (syncUrl && query.categoryId !== undefined && query.categoryId !== '') {
     initialCategoryId = String(query.categoryId)
   }
 
@@ -274,7 +274,7 @@ export function useReports(options: UseReportsOptions = {}) {
     if (type.value && type.value !== 'ALL') {
       q.type = type.value
     }
-    if (categoryId.value !== '' && categoryId.value !== undefined) {
+    if (categoryId.value && categoryId.value !== 'ALL') {
       q.categoryId = categoryId.value
     }
     return q
@@ -385,7 +385,7 @@ export function useReports(options: UseReportsOptions = {}) {
       nextQuery.type = type.value
     }
 
-    if (categoryId.value) {
+    if (categoryId.value && categoryId.value !== 'ALL') {
       nextQuery.categoryId = categoryId.value
     }
 
@@ -438,7 +438,7 @@ export function useReports(options: UseReportsOptions = {}) {
     desde.value = range.desde
     hasta.value = range.hasta
     type.value = 'ALL'
-    categoryId.value = ''
+    categoryId.value = 'ALL'
     loadAll()
   }
 

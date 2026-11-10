@@ -489,7 +489,7 @@ const typeOptions = computed(() => {
 
 // Opciones de Categoría (dinámicas a partir de los datos o fijas)
 const categoryOptions = computed(() => {
-  const base = [{ value: '', label: 'Todas las categorías' }]
+  const base = [{ value: 'ALL', label: 'Todas las categorías' }]
   if (categories.value && categories.value.length > 0) {
     categories.value.forEach((c) => {
       base.push({ value: String(c.categoryId), label: c.categoryName })
@@ -497,7 +497,7 @@ const categoryOptions = computed(() => {
     return base
   }
   return [
-    { value: '', label: 'Todas las categorías' },
+    { value: 'ALL', label: 'Todas las categorías' },
     { value: '1', label: 'Alimentos' },
     { value: '2', label: 'Bebidas' },
     { value: '3', label: 'Limpieza' },
@@ -507,7 +507,11 @@ const categoryOptions = computed(() => {
 })
 
 const hasActiveFilters = computed(() => {
-  return preset.value !== 'current_month' || type.value !== 'ALL' || Boolean(categoryId.value)
+  return (
+    preset.value !== 'current_month' ||
+    type.value !== 'ALL' ||
+    (Boolean(categoryId.value) && categoryId.value !== 'ALL')
+  )
 })
 
 const handlePresetChange = (val: string | number | null) => {
@@ -523,7 +527,7 @@ const handleTypeChange = (val: string | number | null) => {
 }
 
 const handleCategoryChange = (val: string | number | null) => {
-  setCategoryId(val ? String(val) : '')
+  setCategoryId(val ? String(val) : 'ALL')
 }
 
 // Formateadores
