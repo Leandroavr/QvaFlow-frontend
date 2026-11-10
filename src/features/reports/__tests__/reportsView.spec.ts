@@ -9,10 +9,14 @@ import {
 } from 'vue-router'
 
 import { useAuthStore } from '@/features/auth/stores/authStore'
+import { ref } from 'vue'
 import ReportsDashboardView, {
   formatAxisDate,
   getDrawablePoints,
+  formatMovementDateTime,
+  formatDecimalAmount,
 } from '../views/ReportsDashboardView.vue'
+import { useReportMovements } from '../composables/useReportMovements'
 import {
   useReports,
   calculatePresetRange,
@@ -20,6 +24,7 @@ import {
   calculateDaysBetween,
   formatLocalDate,
 } from '../composables/useReports'
+import { setEffectiveRouteQuery } from '@/shared/composables/useDataTableQuery'
 import { reportsService } from '@/services'
 import type { FinanceSummary } from '../types'
 import { setupNavigationGuard } from '@/app/router'
@@ -44,6 +49,7 @@ describe('Pantalla de Reportes (/reports)', () => {
   let router: Router
 
   beforeEach(async () => {
+    setEffectiveRouteQuery(null)
     pinia = createPinia()
     setActivePinia(pinia)
     localStorage.clear()
@@ -662,5 +668,300 @@ describe('Pantalla de Reportes (/reports)', () => {
     const drawable = getDrawablePoints(pastPoints, 'day', mockRefDate)
     expect(drawable.length).toBe(3)
     expect(drawable).toEqual(pastPoints)
+  })
+
+  it('(18) la pestaña Movimientos carga y muestra las filas del mock y el contador', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    await router.push('/reports')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    const movementsTable = wrapper.find('[data-test="movements-table"]')
+    expect(movementsTable.exists()).toBe(true)
+
+    const rows = wrapper.findAll('[data-test="movements-table"] tbody tr')
+    expect(rows.length).toBeGreaterThan(0)
+
+    const countLabel = wrapper.find('[data-test="movements-count"]')
+    expect(countLabel.exists()).toBe(true)
+    expect(countLabel.text()).toMatch(/\d+ movimientos?/)
+  })
+
+  it('(19) sin costos no hay filas de compra ni opción Compras en el filtro', async () => {
+    const authStore = useAuthStore()
+    const analystUser = {
+      id: 'usr_analyst_02',
+      username: 'analyst2',
+      fullName: 'Analista 2',
+      role: 'Analista',
+      permissions: ['reports.view'],
+      lastLoginAt: '2026-10-30T10:00:00Z',
+    }
+    localStorage.setItem('qvaflow_user', JSON.stringify(analystUser))
+    localStorage.setItem('qvaflow_token', 'custom-token-2')
+    authStore.user = analystUser
+    authStore.token = 'custom-token-2'
+
+    await router.push('/reports')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    // 1. En el filtro de tipo de operación, no aparece Compras
+    const selects = wrapper.findAllComponents({ name: 'BaseSelect' })
+    const typeSelect = selects.find((s) =>
+      (s.props('options') || []).some((o: any) => o.value === 'SALE')
+    )
+    expect(typeSelect).toBeDefined()
+    const options = (typeSelect?.props('options') || []) as any[]
+    expect(options.some((o) => o.value === 'PURCHASE')).toBe(false)
+
+    // 2. En la tabla de movimientos, no hay ninguna fila con Tipo "Compra"
+    const badges = wrapper.findAllComponents({ name: 'BaseBadge' })
+    const purchaseBadges = badges.filter((b) => b.text().includes('Compra'))
+    expect(purchaseBadges.length).toBe(0)
+  })
+
+  it('(20) búsqueda, orden y página se reflejan en la URL sin borrar los filtros del reporte, y viceversa', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    await router.push('/reports?preset=last_7_days&type=SALE')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    // Comprobar que los filtros del reporte se cargaron
+    expect(router.currentRoute.value.query.preset).toBe('last_7_days')
+    expect(router.currentRoute.value.query.type).toBe('SALE')
+
+    // Escribir búsqueda en la barra de movimientos
+    const searchInput = wrapper.find('[data-test="movements-filter-bar"] input')
+    await searchInput.setValue('TR-001')
+    await flushPromises()
+    await waitDelay(350)
+    await flushPromises()
+
+    // Se refleja mSearch en la URL sin borrar preset ni type
+    expect(router.currentRoute.value.query.mSearch).toBe('TR-001')
+    expect(router.currentRoute.value.query.preset).toBe('last_7_days')
+    expect(router.currentRoute.value.query.type).toBe('SALE')
+
+    // Ahora simular que la URL ya traía parámetros de tabla y reporte
+    await router.push(
+      '/reports?preset=previous_month&type=ALL&mPage=2&mSort=amount:asc&mSearch=cerveza'
+    )
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    expect(router.currentRoute.value.query.preset).toBe('previous_month')
+    expect(router.currentRoute.value.query.mPage).toBe('2')
+    expect(router.currentRoute.value.query.mSort).toBe('amount:asc')
+    expect(router.currentRoute.value.query.mSearch).toBe('cerveza')
+  })
+
+  it('(21) cambiar el preset vuelve a la página 1 en los movimientos', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    await router.push('/reports?preset=current_month&mPage=2')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    expect(router.currentRoute.value.query.mPage).toBe('2')
+
+    // Cambiar preset a 'last_7_days'
+    const selects = wrapper.findAllComponents({ name: 'BaseSelect' })
+    const presetSelect = selects[0]
+    presetSelect.vm.$emit('update:modelValue', 'last_7_days')
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    // La página de movimientos vuelve a 1 (se elimina mPage o se resetea a 1)
+    expect(router.currentRoute.value.query.mPage).toBeUndefined()
+    expect(router.currentRoute.value.query.preset).toBe('last_7_days')
+  })
+
+  it('(22) una respuesta obsoleta no pisa a la nueva en useReportMovements', async () => {
+    const desde = ref('2026-05-01')
+    const hasta = ref('2026-05-31')
+    const type = ref<'ALL' | 'SALE' | 'PURCHASE'>('ALL')
+    const categoryId = ref('ALL')
+    const activeTab = ref('movements')
+
+    let resolveSlow: any
+    let resolveFast: any
+
+    const mockService = {
+      listMovements: vi
+        .fn()
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              resolveSlow = resolve
+            })
+        )
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              resolveFast = resolve
+            })
+        ),
+    } as any
+
+    // Al montar con activeTab = 'movements', el watch immediate dispara la primera llamada (lenta)
+    const composable = useReportMovements({
+      desde,
+      hasta,
+      type,
+      categoryId,
+      activeTab,
+      service: mockService,
+    })
+
+    // Segunda llamada (rápida, manual)
+    const p2 = composable.loadMovements()
+
+    // Resuelve la segunda primero
+    resolveFast({
+      items: [{ id: 'fast', reference: 'FAST-001', amount: '99.00', type: 'SALE' }],
+      total: 1,
+    })
+    await p2
+
+    expect(composable.movements.value[0]?.id).toBe('fast')
+
+    // Resuelve la primera después
+    resolveSlow({
+      items: [{ id: 'slow', reference: 'SLOW-001', amount: '1.00', type: 'SALE' }],
+      total: 100,
+    })
+    await flushPromises()
+
+    // No debe pisar la respuesta más reciente
+    expect(composable.movements.value[0]?.id).toBe('fast')
+  })
+
+  it('(23) error con reintento en el detalle de movimientos', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    vi.spyOn(reportsService, 'listMovements')
+      .mockRejectedValueOnce(new Error('Fallo de red en movimientos'))
+      .mockResolvedValueOnce({
+        items: [
+          {
+            id: 'm1',
+            date: '2026-05-15T10:00:00Z',
+            type: 'SALE',
+            reference: 'T-OK',
+            description: 'Test OK',
+            categoryName: 'General',
+            warehouseName: 'Central',
+            amount: '50.00',
+            currency: 'USD',
+            paymentMethod: 'Efectivo',
+          },
+        ],
+        total: 1,
+        page: 1,
+        perPage: 10,
+      })
+
+    await router.push('/reports')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    // Comprobar que DataTable recibe el error
+    const dataTable = wrapper.findComponent({ name: 'DataTable' })
+    expect(dataTable.props('error')).toBeTruthy()
+
+    // Ejecutar reintento
+    dataTable.vm.$emit('retry')
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    expect(dataTable.props('error')).toBeNull()
+    expect(wrapper.text()).toContain('T-OK')
+  })
+
+  it('(24) importes con signo y 2 decimales (formatMovementDateTime y formatDecimalAmount)', () => {
+    // Helper de fecha y hora
+    expect(formatMovementDateTime('2026-05-15T14:30:00Z')).toBe('15/05/2026 14:30')
+    expect(formatMovementDateTime('2026-01-02T09:05:22')).toBe('02/01/2026 09:05')
+    expect(formatMovementDateTime('')).toBe('')
+
+    // Helper de importe decimal
+    expect(formatDecimalAmount('10')).toBe('10.00')
+    expect(formatDecimalAmount('25.5')).toBe('25.50')
+    expect(formatDecimalAmount('120.99')).toBe('120.99')
+    expect(formatDecimalAmount('0')).toBe('0.00')
+    expect(formatDecimalAmount('')).toBe('0.00')
+    expect(formatDecimalAmount(null)).toBe('0.00')
+  })
+
+  it('(25) las pestañas "Más vendidos" y "Ociosos" solo están presentes en entorno DEV', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    await router.push('/reports')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    const baseTabs = wrapper.findComponent({ name: 'BaseTabs' })
+    expect(baseTabs.exists()).toBe(true)
+    const items = baseTabs.props('items') as any[]
+
+    if (import.meta.env.DEV) {
+      expect(items.map((i: any) => i.id)).toEqual(['movements', 'top-selling', 'idle'])
+    } else {
+      expect(items.map((i: any) => i.id)).toEqual(['movements'])
+    }
   })
 })

@@ -422,12 +422,12 @@
           <div class="space-y-4 pt-2" data-test="tab-movements-content">
             <!-- Barra con búsqueda y contador -->
             <FilterBar
-              :search-value="movementsSearch"
+              :search="movementsSearch"
               search-placeholder="Buscar por referencia o descripción..."
               :has-active-filters="Boolean(movementsSearch.trim())"
               data-test="movements-filter-bar"
-              @update:search-value="setMovementsSearch"
-              @reset="setMovementsSearch('')"
+              @update:search="setMovementsSearch"
+              @clear="setMovementsSearch('')"
             >
               <template #actions>
                 <span class="text-xs font-medium text-content-muted" data-test="movements-count">
@@ -683,7 +683,8 @@ import StatCard from '@/shared/ui/StatCard.vue'
 import BaseBadge, { type BadgeVariant } from '@/shared/ui/BaseBadge.vue'
 import BaseChart from '@/shared/ui/BaseChart/BaseChart.vue'
 import BaseTabs, { type TabItem } from '@/shared/ui/BaseTabs.vue'
-import DataTable, { type DataTableColumn } from '@/shared/ui/DataTable/DataTable.vue'
+import DataTable from '@/shared/ui/DataTable/DataTable.vue'
+import type { DataTableColumn } from '@/shared/ui/DataTable/types'
 import EmptyState from '@/shared/ui/EmptyState.vue'
 import BaseButton from '@/shared/ui/BaseButton.vue'
 import { useReports } from '../composables/useReports'
@@ -797,7 +798,6 @@ const {
   setSort: setMovementsSort,
   setSearch: setMovementsSearch,
   handleQueryChange: handleMovementsQueryChange,
-  loadMovements,
   retry: retryMovements,
 } = useReportMovements({
   desde,

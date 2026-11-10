@@ -11,6 +11,10 @@ import type {
   TimeSeriesGranularity,
 } from '@/features/reports/types'
 import { ApiError } from '@/shared/types/api'
+import {
+  getEffectiveRouteQuery,
+  setEffectiveRouteQuery,
+} from '@/shared/composables/useDataTableQuery'
 
 /**
  * Formatea una fecha local a 'YYYY-MM-DD' sin usar conversiones UTC (evita desfases de zona horaria).
@@ -371,7 +375,8 @@ export function useReports(options: UseReportsOptions = {}) {
     if (!syncUrl || !router || !route) return
 
     // Preservar parámetros de la tabla, pestañas o de otras capas
-    const nextQuery: LocationQueryRaw = { ...route.query }
+    const baseQuery = getEffectiveRouteQuery(route.query)
+    const nextQuery: LocationQueryRaw = { ...baseQuery }
 
     delete nextQuery.preset
     delete nextQuery.desde
@@ -403,8 +408,10 @@ export function useReports(options: UseReportsOptions = {}) {
 
     if (isDifferent) {
       isUpdatingUrl.value = true
+      setEffectiveRouteQuery(nextQuery)
       router.replace({ query: nextQuery }).finally(() => {
         isUpdatingUrl.value = false
+        setEffectiveRouteQuery(null)
       })
     }
   }

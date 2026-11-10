@@ -11,6 +11,16 @@ export interface DataTableQueryOptions<TFilters extends Record<string, any> = Re
   prefix?: string
 }
 
+let sharedPendingQuery: LocationQueryRaw | null = null
+
+export function getEffectiveRouteQuery(currentRouteQuery: LocationQueryRaw): LocationQueryRaw {
+  return sharedPendingQuery ? { ...sharedPendingQuery } : { ...currentRouteQuery }
+}
+
+export function setEffectiveRouteQuery(query: LocationQueryRaw | null): void {
+  sharedPendingQuery = query
+}
+
 export function useDataTableQuery<TFilters extends Record<string, any> = Record<string, any>>(
   options: DataTableQueryOptions<TFilters> = {}
 ) {
@@ -133,7 +143,8 @@ export function useDataTableQuery<TFilters extends Record<string, any> = Record<
     if (!syncUrl || !router || !route) return
 
     // Preservar los parámetros de otras pantallas, pestañas o filtros del reporte
-    const nextQuery: LocationQueryRaw = { ...route.query }
+    const baseQuery = getEffectiveRouteQuery(route.query)
+    const nextQuery: LocationQueryRaw = { ...baseQuery }
 
     delete nextQuery[pageKey]
     delete nextQuery[perPageKey]
@@ -169,8 +180,10 @@ export function useDataTableQuery<TFilters extends Record<string, any> = Record<
 
     if (isDifferent) {
       isUpdatingUrl.value = true
+      setEffectiveRouteQuery(nextQuery)
       router.replace({ query: nextQuery }).finally(() => {
         isUpdatingUrl.value = false
+        setEffectiveRouteQuery(null)
       })
     }
   }
