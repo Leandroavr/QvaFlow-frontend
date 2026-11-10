@@ -87,12 +87,24 @@ describe('Pantalla de Reportes (/reports)', () => {
     expect(wrapper.exists()).toBe(true)
     expect(wrapper.text()).toContain('Reportes Financieros')
 
-    // Verifica la presencia de los 5 StatCards para superadmin
+    // Verifica la presencia y etiquetas sin paréntesis de los 5 StatCards para superadmin
     expect(wrapper.find('[data-test="kpi-sales"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="kpi-purchases"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="kpi-gross-profit"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="kpi-margin"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="kpi-cash-balance"]').exists()).toBe(true)
+
+    const cardLabels = [
+      (wrapper.findComponent('[data-test="kpi-sales"]') as any).props('label'),
+      (wrapper.findComponent('[data-test="kpi-purchases"]') as any).props('label'),
+      (wrapper.findComponent('[data-test="kpi-gross-profit"]') as any).props('label'),
+      (wrapper.findComponent('[data-test="kpi-margin"]') as any).props('label'),
+      (wrapper.findComponent('[data-test="kpi-cash-balance"]') as any).props('label'),
+    ]
+    expect(cardLabels).toEqual(['Ventas', 'Compras', 'Ganancia bruta', 'Margen', 'Balance de caja'])
+    cardLabels.forEach((label) => {
+      expect(label).not.toMatch(/[()]/)
+    })
   })
 
   it('(2) para un usuario con reports.view pero SIN products.view_cost no hay tarjetas ni series sensibles ni opción Compras en el filtro', async () => {
@@ -423,5 +435,74 @@ describe('Pantalla de Reportes (/reports)', () => {
     await testHealth('HEALTHY', 'Saludable')
     await testHealth('WARNING', 'Atención')
     await testHealth('CRITICAL', 'Crítico')
+  })
+
+  it('(12) el desglose por moneda aparece en franja propia bajo los KPIs y omite monedas en 0.00', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    vi.spyOn(reportsService, 'getFinanceSummary').mockResolvedValueOnce({
+      salesTotal: '1500.00',
+      salesCount: 12,
+      purchasesTotal: '800.00',
+      purchasesCount: 4,
+      grossProfit: '700.00',
+      marginPercent: '46.67',
+      cashBalance: '700.00',
+      marginHealth: 'HEALTHY',
+      currency: 'USD',
+      salesByCurrency: [
+        { currency: 'USD', amount: '1000.00' },
+        { currency: 'CUP', amount: '50000.00' },
+        { currency: 'MLC', amount: '0.00' },
+        { currency: 'CUP_TRANSFER', amount: '0' },
+      ],
+    })
+
+    await router.push('/reports')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    const currencyStrip = wrapper.find('[data-test="sales-by-currency"]')
+    expect(currencyStrip.exists()).toBe(true)
+    expect(currencyStrip.text()).toContain('Cobros por moneda (importe en cada moneda de cobro)')
+    expect(currencyStrip.text()).toContain('USD')
+    expect(currencyStrip.text()).toContain('CUP')
+    expect(currencyStrip.text()).not.toContain('MLC')
+    expect(currencyStrip.text()).not.toContain('CUP_TRANSFER')
+  })
+
+  it('(13) la opción enviada a BaseChart para la línea de ganancia tiene smooth en false', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    await router.push('/reports')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    const profitContainer = wrapper.find('[data-test="profit-chart-container"]')
+    expect(profitContainer.exists()).toBe(true)
+
+    const baseChart = profitContainer.findComponent({ name: 'BaseChart' })
+    expect(baseChart.exists()).toBe(true)
+
+    const chartOption = baseChart.props('option')
+    expect(chartOption.series).toBeDefined()
+    expect(chartOption.series[0].type).toBe('line')
+    expect(chartOption.series[0].smooth).toBe(false)
   })
 })
