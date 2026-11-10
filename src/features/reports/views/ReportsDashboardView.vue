@@ -611,6 +611,81 @@ const isCategoriesEmpty = computed(() => {
   return !categories.value || categories.value.length === 0
 })
 
+/**
+ * Formatea una fecha ISO ('YYYY-MM-DD' o 'YYYY-MM') para las etiquetas del eje X según la granularidad:
+ * - day: 'dd/mm'
+ * - week: 'sem dd/mm'
+ * - month: 'mm/aaaa'
+ * Sin conversión de zona horaria (procesamiento estricto de strings).
+ */
+export function formatAxisDate(
+  dateStr: string,
+  granularity: 'day' | 'week' | 'month' = 'day'
+): string {
+  if (!dateStr) return ''
+  const parts = dateStr.split('-')
+  if (granularity === 'month') {
+    if (parts.length >= 2) {
+      return `${parts[1]}/${parts[0]}`
+    }
+    return dateStr
+  }
+  if (granularity === 'week') {
+    if (parts.length >= 3) {
+      return `sem ${parts[2]}/${parts[1]}`
+    }
+    if (parts.length === 2) {
+      return `sem ${parts[1]}`
+    }
+    return dateStr
+  }
+  // Default: 'day'
+  if (parts.length >= 3) {
+    return `${parts[2]}/${parts[1]}`
+  }
+  return dateStr
+}
+
+/**
+ * Formatea una fecha ISO para el tooltip en formato completo 'dd/mm/aaaa' (o 'mm/aaaa' en month).
+ * Sin desfase por zona horaria.
+ */
+export function formatTooltipDate(dateStr: string): string {
+  if (!dateStr) return ''
+  const parts = dateStr.split('-')
+  if (parts.length >= 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`
+  }
+  if (parts.length === 2) {
+    return `${parts[1]}/${parts[0]}`
+  }
+  return dateStr
+}
+
+/**
+ * Genera la configuración de tooltip para gráficos temporales (barras y línea).
+ * Muestra la fecha completa 'dd/mm/aaaa' e importes con 2 decimales.
+ */
+function createTimeSeriesTooltip() {
+  return {
+    trigger: 'axis',
+    formatter: (params: any) => {
+      const list = Array.isArray(params) ? params : [params]
+      if (list.length === 0) return ''
+      const rawDate = list[0].axisValue || list[0].name || ''
+      const dateFormatted = formatTooltipDate(String(rawDate))
+      let html = `<div style="font-weight:600;margin-bottom:4px;">${dateFormatted}</div>`
+      for (const item of list) {
+        const marker = item.marker || ''
+        const name = item.seriesName || ''
+        const val = formatAmount(item.value)
+        html += `<div style="display:flex;align-items:center;justify-content:space-between;gap:16px;"><span>${marker} ${name}</span><span style="font-weight:600;">${val} USD</span></div>`
+      }
+      return html
+    },
+  }
+}
+
 // Gráfico 1: Ventas vs Compras (Barras Agrupadas)
 const barChartOption = computed(() => {
   const points = timeSeries.value?.points || []
@@ -644,13 +719,14 @@ const barChartOption = computed(() => {
       data: legendData,
       top: 0,
     },
-    tooltip: {
-      trigger: 'axis',
-      valueFormatter: (value: any) => `${formatAmount(value)} USD`,
-    },
+    tooltip: createTimeSeriesTooltip(),
     xAxis: {
       type: 'category',
       data: dates,
+      axisLabel: {
+        hideOverlap: true,
+        formatter: (val: string) => formatAxisDate(val, timeSeries.value?.granularity),
+      },
     },
     yAxis: {
       type: 'value',
@@ -666,13 +742,14 @@ const lineChartOption = computed(() => {
   const profitData = points.map((p) => Number(p.grossProfit || 0))
 
   return {
-    tooltip: {
-      trigger: 'axis',
-      valueFormatter: (value: any) => `${formatAmount(value)} USD`,
-    },
+    tooltip: createTimeSeriesTooltip(),
     xAxis: {
       type: 'category',
       data: dates,
+      axisLabel: {
+        hideOverlap: true,
+        formatter: (val: string) => formatAxisDate(val, timeSeries.value?.granularity),
+      },
     },
     yAxis: {
       type: 'value',
