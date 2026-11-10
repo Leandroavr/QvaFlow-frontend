@@ -8,7 +8,7 @@
       <DropdownMenuContent
         :align="align"
         :side-offset="sideOffset"
-        class="border-border-default animate-in fade-in-80 zoom-in-95 z-50 min-w-48 overflow-hidden rounded-xl border bg-surface-card p-1 text-content-primary shadow-lg ring-1 ring-black/5 duration-100"
+        class="animate-in fade-in-80 zoom-in-95 z-50 min-w-48 overflow-hidden rounded-xl border border-border bg-surface-card p-1 text-content-primary shadow-lg ring-1 ring-black/5 duration-100"
       >
         <template v-for="(item, index) in items" :key="item.id || index">
           <!-- Separador opcional previo al item -->

@@ -3,7 +3,7 @@
     class="flex min-h-screen select-none flex-col items-center justify-center bg-surface-app p-6 text-center"
   >
     <div
-      class="border-border-default w-full max-w-md space-y-5 rounded-2xl border bg-surface-card p-8 shadow-card"
+      class="w-full max-w-md space-y-5 rounded-2xl border border-border bg-surface-card p-8 shadow-card"
     >
       <div
         class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-state-error-border bg-state-error-bg text-state-error"

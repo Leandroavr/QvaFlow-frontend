@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-surface-page text-content-primary transition-colors">
     <!-- Barra superior de la página de demostración -->
     <header
-      class="border-border-default shadow-xs sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-surface-card px-4 sm:px-8"
+      class="shadow-xs sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-surface-card px-4 sm:px-8"
     >
       <div class="flex items-center gap-3">
         <router-link
@@ -14,7 +14,7 @@
           <span>Volver al sistema</span>
         </router-link>
 
-        <span class="text-border-default">|</span>
+        <span class="text-border">|</span>
 
         <h1 class="text-sm font-bold text-content-primary">Catálogo de Componentes UI</h1>
         <BaseBadge variant="warning" size="sm">DEV ONLY</BaseBadge>
@@ -488,7 +488,7 @@
             <div class="flex flex-wrap items-center gap-2">
               <!-- Alternar modo cliente / servidor -->
               <div
-                class="border-border-default flex items-center rounded-lg border bg-surface-card p-0.5 text-xs"
+                class="flex items-center rounded-lg border border-border bg-surface-card p-0.5 text-xs"
               >
                 <button
                   type="button"
@@ -748,7 +748,7 @@
 
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <!-- Ejemplo 1: Barras Agrupadas -->
-          <div class="border-border-default space-y-3 rounded-xl border bg-surface-card p-4">
+          <div class="space-y-3 rounded-xl border border-border bg-surface-card p-4">
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="text-sm font-semibold text-content-primary">
@@ -809,7 +809,7 @@
           </div>
 
           <!-- Ejemplo 2: Líneas de Tendencia -->
-          <div class="border-border-default space-y-3 rounded-xl border bg-surface-card p-4">
+          <div class="space-y-3 rounded-xl border border-border bg-surface-card p-4">
             <div>
               <h3 class="text-sm font-semibold text-content-primary">
                 Evolución de Margen Comercial (Línea)

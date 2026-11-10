@@ -9,7 +9,7 @@
       <!-- Panel Lateral Deslizante desde la derecha -->
       <DialogContent
         :class="[
-          'border-border-default fixed inset-y-0 right-0 z-50 flex h-dvh flex-col border-l bg-surface-card text-content-primary shadow-2xl duration-200',
+          'fixed inset-y-0 right-0 z-50 flex h-dvh flex-col border-l border-border bg-surface-card text-content-primary shadow-2xl duration-200',
           'animate-in slide-in-from-right',
           sizeClasses[size],
         ]"

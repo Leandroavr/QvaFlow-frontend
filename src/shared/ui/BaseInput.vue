@@ -57,7 +57,7 @@
           uppercase && 'uppercase',
           error
             ? 'border-state-error ring-1 ring-state-error focus:border-state-error focus:ring-state-error'
-            : 'border-border-default hover:border-border-hover',
+            : 'border-border hover:border-border-hover',
         ]"
         @input="onInput"
         @blur="$emit('blur', $event)"

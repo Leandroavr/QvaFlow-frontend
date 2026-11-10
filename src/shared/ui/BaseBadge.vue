@@ -37,7 +37,7 @@ const sizeClasses: Record<BadgeSize, string> = {
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
-  neutral: 'bg-surface-sunken text-content-secondary border border-border-default',
+  neutral: 'bg-surface-sunken text-content-secondary border border-border',
   success: 'bg-state-success-bg text-state-success border border-state-success-border',
   warning: 'bg-state-warning-bg text-state-warning border border-state-warning-border',
   danger: 'bg-state-error-bg text-state-error border border-state-error-border',

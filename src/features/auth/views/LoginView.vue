@@ -37,7 +37,7 @@
     <div
       ref="cardRef"
       :class="[
-        'border-border-default z-10 w-full max-w-md overflow-hidden rounded-2xl border bg-surface-card shadow-card transition-transform duration-200',
+        'z-10 w-full max-w-md overflow-hidden rounded-2xl border border-border bg-surface-card shadow-card transition-transform duration-200',
         hasShakeError ? 'animate-card-shake' : '',
       ]"
     >

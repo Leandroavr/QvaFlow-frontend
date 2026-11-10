@@ -61,7 +61,7 @@
                 :checked="isAllSelected"
                 :indeterminate="isIndeterminate"
                 :disabled="loading || displayedRows.length === 0"
-                class="border-border-default h-4 w-4 rounded text-primary accent-primary focus:ring-primary focus-visible:outline-none"
+                class="h-4 w-4 rounded border-border text-primary accent-primary focus:ring-primary focus-visible:outline-none"
                 aria-label="Seleccionar todas las filas"
                 @change="toggleSelectAll"
               />
@@ -246,7 +246,7 @@
                 <input
                   type="checkbox"
                   :checked="isRowSelected(row, rIdx)"
-                  class="border-border-default h-4 w-4 rounded text-primary accent-primary focus:ring-primary focus-visible:outline-none"
+                  class="h-4 w-4 rounded border-border text-primary accent-primary focus:ring-primary focus-visible:outline-none"
                   :aria-label="`Seleccionar fila ${rIdx + 1}`"
                   @change="toggleRowSelection(row, rIdx)"
                 />
@@ -308,7 +308,7 @@
                     <template #trigger>
                       <button
                         type="button"
-                        class="hover:border-border-default flex h-7 w-7 items-center justify-center rounded-lg border border-transparent text-content-muted transition-colors hover:bg-surface-sunken hover:text-content-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        class="flex h-7 w-7 items-center justify-center rounded-lg border border-transparent text-content-muted transition-colors hover:border-border hover:bg-surface-sunken hover:text-content-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         aria-label="Acciones de fila"
                       >
                         <MoreHorizontal class="h-4 w-4" aria-hidden="true" />

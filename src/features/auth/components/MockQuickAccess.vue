@@ -23,7 +23,7 @@
     <div
       v-show="isExpanded"
       id="mock-quick-access-panel"
-      class="border-border-default mt-2 rounded-xl border bg-surface-card p-4 shadow-xl transition-all"
+      class="mt-2 rounded-xl border border-border bg-surface-card p-4 shadow-xl transition-all"
     >
       <div class="mb-2.5 flex items-center justify-between">
         <span
@@ -42,7 +42,7 @@
         <!-- 1. Superadmin -->
         <button
           type="button"
-          class="border-border-default hover:border-primary/60 group cursor-pointer rounded-lg border bg-surface-subtle p-2.5 text-left transition-all hover:bg-surface-muted"
+          class="hover:border-primary/60 group cursor-pointer rounded-lg border border-border bg-surface-subtle p-2.5 text-left transition-all hover:bg-surface-muted"
           @click="selectMockUser('superadmin')"
         >
           <div
@@ -58,7 +58,7 @@
         <!-- 2. Vendedor / Cajero -->
         <button
           type="button"
-          class="border-border-default hover:border-primary/60 group cursor-pointer rounded-lg border bg-surface-subtle p-2.5 text-left transition-all hover:bg-surface-muted"
+          class="hover:border-primary/60 group cursor-pointer rounded-lg border border-border bg-surface-subtle p-2.5 text-left transition-all hover:bg-surface-muted"
           @click="selectMockUser('vendedor')"
         >
           <div
@@ -74,7 +74,7 @@
         <!-- 3. Almacenero -->
         <button
           type="button"
-          class="border-border-default hover:border-primary/60 group cursor-pointer rounded-lg border bg-surface-subtle p-2.5 text-left transition-all hover:bg-surface-muted"
+          class="hover:border-primary/60 group cursor-pointer rounded-lg border border-border bg-surface-subtle p-2.5 text-left transition-all hover:bg-surface-muted"
           @click="selectMockUser('almacenero')"
         >
           <div

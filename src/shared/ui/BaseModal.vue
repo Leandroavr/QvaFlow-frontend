@@ -9,7 +9,7 @@
       <!-- Contenedor del Modal Centrado -->
       <DialogContent
         :class="[
-          'border-border-default fixed left-1/2 top-1/2 z-50 flex w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border bg-surface-card text-content-primary shadow-2xl duration-150',
+          'fixed left-1/2 top-1/2 z-50 flex w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-surface-card text-content-primary shadow-2xl duration-150',
           'animate-in fade-in zoom-in-95 max-h-[85vh]',
           sizeClasses[size],
         ]"

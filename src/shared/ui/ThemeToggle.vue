@@ -8,7 +8,7 @@
       'focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
       onDark
         ? 'border-white/30 bg-white/5 text-white hover:bg-white/10 focus-visible:ring-white/60 focus-visible:ring-offset-[#162e56]'
-        : 'border-border-default bg-surface-card/90 shadow-xs backdrop-blur-xs text-content-primary hover:bg-surface-subtle focus-visible:ring-primary',
+        : 'bg-surface-card/90 shadow-xs backdrop-blur-xs border-border text-content-primary hover:bg-surface-subtle focus-visible:ring-primary',
     ]"
     @click="toggleTheme"
   >
