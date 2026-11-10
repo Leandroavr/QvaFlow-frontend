@@ -95,7 +95,7 @@
       </div>
 
       <!-- Cabecera del documento: Motivo -->
-      <div class="shadow-xs rounded-xl border border-border bg-surface-card p-5">
+      <div class="rounded-xl border border-border bg-surface-card p-5 shadow-sm">
         <h2 class="text-sm font-semibold text-content-primary">Datos del Documento</h2>
         <p class="mt-0.5 text-xs text-content-muted">
           Indique la justificación del ajuste (ej. 'Conteo físico mensual', 'Rotura de envase').
@@ -123,7 +123,7 @@
       </div>
 
       <!-- Editor de Líneas: Fila de captura -->
-      <div class="shadow-xs rounded-xl border border-border bg-surface-card p-5">
+      <div class="rounded-xl border border-border bg-surface-card p-5 shadow-sm">
         <div class="flex items-center justify-between">
           <div>
             <h2 class="text-sm font-semibold text-content-primary">Líneas de Ajuste</h2>
@@ -218,7 +218,7 @@
           <!-- Cuadro informativo: Sistema, Contado y Diferencia Prevista -->
           <div
             v-if="draftProductCode && draftLocationCode"
-            class="shadow-2xs mt-3 flex flex-wrap items-center gap-4 rounded-md border border-border bg-surface-card px-3.5 py-2.5 text-xs text-content-primary"
+            class="mt-3 flex flex-wrap items-center gap-4 rounded-md border border-border bg-surface-card px-3.5 py-2.5 text-xs text-content-primary shadow-sm"
           >
             <div class="flex items-center gap-1.5" data-test="preview-system">
               <span class="text-content-muted">Sistema:</span>

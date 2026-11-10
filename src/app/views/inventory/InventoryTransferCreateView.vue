@@ -96,7 +96,7 @@
       </div>
 
       <!-- Cabecera del documento: Motivo -->
-      <div class="shadow-xs rounded-xl border border-border bg-surface-card p-5">
+      <div class="rounded-xl border border-border bg-surface-card p-5 shadow-sm">
         <h2 class="text-sm font-semibold text-content-primary">Datos del Documento</h2>
         <p class="mt-0.5 text-xs text-content-muted">
           Indique la justificación u orden operativa de este traslado.
@@ -124,7 +124,7 @@
       </div>
 
       <!-- Editor de Líneas: Fila de captura -->
-      <div class="shadow-xs rounded-xl border border-border bg-surface-card p-5">
+      <div class="rounded-xl border border-border bg-surface-card p-5 shadow-sm">
         <div class="flex items-center justify-between">
           <div>
             <h2 class="text-sm font-semibold text-content-primary">Líneas de Mercancía</h2>

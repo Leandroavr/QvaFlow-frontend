@@ -12,7 +12,7 @@
     >
       <!-- Logo y Nombre del Sistema -->
       <div
-        class="shadow-xs flex h-16 shrink-0 items-center justify-center overflow-hidden border-b border-slate-200 bg-white px-3"
+        class="shadow-sm flex h-16 shrink-0 items-center justify-center overflow-hidden border-b border-slate-200 bg-white px-3"
       >
         <div v-if="!isCollapsed" class="flex w-full items-center justify-center">
           <img

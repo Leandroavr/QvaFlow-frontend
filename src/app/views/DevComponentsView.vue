@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-surface-page text-content-primary transition-colors">
     <!-- Barra superior de la página de demostración -->
     <header
-      class="shadow-xs sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-surface-card px-4 sm:px-8"
+      class="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-surface-card px-4 shadow-sm sm:px-8"
     >
       <div class="flex items-center gap-3">
         <router-link
@@ -495,7 +495,7 @@
                   :class="[
                     'rounded-md px-2.5 py-1 font-medium transition-colors',
                     tableDemoMode === 'client'
-                      ? 'shadow-xs bg-primary text-white'
+                      ? 'bg-primary text-white shadow-sm'
                       : 'text-content-secondary hover:text-content-primary',
                   ]"
                   @click="tableDemoMode = 'client'"
@@ -507,7 +507,7 @@
                   :class="[
                     'rounded-md px-2.5 py-1 font-medium transition-colors',
                     tableDemoMode === 'server'
-                      ? 'shadow-xs bg-primary text-white'
+                      ? 'bg-primary text-white shadow-sm'
                       : 'text-content-secondary hover:text-content-primary',
                   ]"
                   @click="tableDemoMode = 'server'"

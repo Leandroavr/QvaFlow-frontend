@@ -11,7 +11,7 @@
       <div
         v-for="card in skeletonCards"
         :key="card.id"
-        class="shadow-xs rounded-xl border border-border-subtle bg-surface-card p-5"
+        class="rounded-xl border border-border-subtle bg-surface-card p-5 shadow-sm"
       >
         <div class="flex items-center justify-between">
           <span class="text-xs font-medium text-content-muted">{{ card.label }}</span>
@@ -33,7 +33,7 @@
     <!-- Panel colapsable de información de sesión (solo DEV + MOCKS) -->
     <div
       v-if="isDevWithMocks"
-      class="shadow-xs overflow-hidden rounded-xl border border-border-subtle bg-surface-card"
+      class="overflow-hidden rounded-xl border border-border-subtle bg-surface-card shadow-sm"
     >
       <button
         type="button"

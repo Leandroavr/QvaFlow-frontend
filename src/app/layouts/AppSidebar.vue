@@ -5,7 +5,7 @@
     <!-- Backdrop móvil (pantallas < 1024px) -->
     <div
       v-if="mobileOpen"
-      class="backdrop-blur-xs fixed inset-0 z-[var(--z-sidebar)] bg-black/60 transition-opacity lg:hidden"
+      class="fixed inset-0 z-[var(--z-sidebar)] bg-black/60 backdrop-blur-sm transition-opacity lg:hidden"
       aria-hidden="true"
       @click="$emit('close-mobile')"
     />
@@ -41,7 +41,7 @@
         <router-link
           v-else
           to="/"
-          class="shadow-xs flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white p-1 ring-1 ring-white/20 transition-all hover:bg-slate-100 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar-bg"
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white p-1 shadow-sm ring-1 ring-white/20 transition-all hover:bg-slate-100 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar-bg"
           title="QvaFlow - Inicio"
         >
           <img :src="logoIcon" alt="QvaFlow" class="h-8 w-8 object-contain" />
@@ -71,7 +71,7 @@
                   'group relative flex items-center gap-3 rounded-lg px-2.5 py-2 text-xs font-medium transition-colors',
                   'focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
                   isActiveRoute(item.to)
-                    ? 'shadow-xs bg-sidebar-active font-semibold text-white'
+                    ? 'bg-sidebar-active font-semibold text-white shadow-sm'
                     : 'text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white',
                   collapsed && !mobileOpen ? 'justify-center' : '',
                 ]"
@@ -184,7 +184,7 @@
                           'group relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs transition-colors',
                           'focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
                           isActiveRoute(subItem.to)
-                            ? 'shadow-xs bg-sidebar-active font-medium text-white'
+                            ? 'bg-sidebar-active font-medium text-white shadow-sm'
                             : 'text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white',
                         ]"
                         :aria-current="isActiveRoute(subItem.to) ? 'page' : undefined"
@@ -251,7 +251,7 @@
                             'group relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs transition-colors',
                             'focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400',
                             isActiveRoute(subItem.to)
-                              ? 'shadow-xs bg-sidebar-active font-medium text-white'
+                              ? 'bg-sidebar-active font-medium text-white shadow-sm'
                               : 'text-sidebar-text-muted hover:bg-sidebar-hover hover:text-white',
                           ]"
                           :aria-current="isActiveRoute(subItem.to) ? 'page' : undefined"

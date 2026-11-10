@@ -3,7 +3,7 @@
     <DialogPortal>
       <!-- Fondo oscuro con desenfoque accesible -->
       <DialogOverlay
-        class="backdrop-blur-xs animate-in fade-in fixed inset-0 z-50 bg-black/60 duration-200"
+        class="animate-in fade-in fixed inset-0 z-50 bg-black/60 backdrop-blur-sm duration-200"
       />
 
       <!-- Panel Lateral Deslizante desde la derecha -->

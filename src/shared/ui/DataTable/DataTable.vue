@@ -234,7 +234,7 @@
                 'group h-10 transition-colors',
                 isRowSelected(row, rIdx) ? 'bg-primary-subtle/40' : 'hover:bg-surface-sunken/40',
                 isRowActive(row, rIdx) &&
-                  'shadow-xs border-l-4 !border-l-primary !bg-surface-sunken font-medium',
+                  'border-l-4 !border-l-primary !bg-surface-sunken font-medium shadow-sm',
                 activeKeyboardRowIndex === rIdx &&
                   'ring-primary/60 bg-surface-sunken/60 ring-1 ring-inset',
               ]"

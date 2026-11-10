@@ -1,6 +1,6 @@
 <template>
   <header
-    class="shadow-xs sticky top-0 z-30 flex h-14 min-h-[56px] w-full shrink-0 items-center justify-between border-b border-topbar-border bg-topbar-bg px-4 text-topbar-text transition-colors"
+    class="sticky top-0 z-30 flex h-14 min-h-[56px] w-full shrink-0 items-center justify-between border-b border-topbar-border bg-topbar-bg px-4 text-topbar-text shadow-sm transition-colors"
     role="banner"
   >
     <!-- Zona Izquierda: Botón de menú móvil + Breadcrumbs -->
