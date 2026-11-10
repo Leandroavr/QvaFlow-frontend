@@ -178,17 +178,27 @@ const authStore = useAuthStore()
 // Breadcrumbs reactivos calculados desde meta
 const breadcrumbs = computed(() => {
   const crumbs: { label: string }[] = []
-  if (route.path === '/') {
+  if (route.path === '/' || route.meta.breadcrumb === 'Inicio' || route.name === 'home') {
     return crumbs
   }
 
-  if (route.meta.parentBreadcrumb) {
-    crumbs.push({ label: String(route.meta.parentBreadcrumb) })
+  const parent = route.meta.parentBreadcrumb ? String(route.meta.parentBreadcrumb).trim() : null
+  const current = route.meta.breadcrumb
+    ? String(route.meta.breadcrumb).trim()
+    : route.meta.title
+      ? String(route.meta.title).split('-')[0].trim()
+      : null
+
+  if (
+    parent &&
+    parent.toLowerCase() !== 'inicio' &&
+    (!current || parent.toLowerCase() !== current.toLowerCase())
+  ) {
+    crumbs.push({ label: parent })
   }
-  if (route.meta.breadcrumb) {
-    crumbs.push({ label: String(route.meta.breadcrumb) })
-  } else if (route.meta.title) {
-    crumbs.push({ label: String(route.meta.title).split('-')[0].trim() })
+
+  if (current && current.toLowerCase() !== 'inicio') {
+    crumbs.push({ label: current })
   }
 
   return crumbs
