@@ -158,23 +158,7 @@
           :loading="summaryLoading"
           :icon="TrendingUp"
           data-test="kpi-sales"
-        >
-          <!-- Desglose por moneda real de cobro si está disponible -->
-          <template v-if="summary?.salesByCurrency && summary.salesByCurrency.length > 0" #footer>
-            <div
-              class="mt-1.5 flex flex-wrap gap-1 text-[11px] text-content-muted"
-              data-test="sales-by-currency"
-            >
-              <span
-                v-for="item in summary.salesByCurrency"
-                :key="item.currency"
-                class="rounded bg-surface-sunken px-1.5 py-0.5"
-              >
-                {{ item.currency }}: {{ formatAmount(item.amount) }}
-              </span>
-            </div>
-          </template>
-        </StatCard>
+        />
 
         <!-- 2. Compras a Proveedores (Sensible: solo con permiso de costos) -->
         <StatCard
@@ -232,6 +216,26 @@
           :value-class="isNegativeCashBalance ? 'text-state-error' : 'text-content-primary'"
           data-test="kpi-cash-balance"
         />
+      </div>
+
+      <!-- Franja delgada de cobros por moneda -->
+      <div
+        v-if="activeSalesByCurrency.length > 0"
+        class="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-border-subtle bg-surface-card px-3.5 py-2 text-xs text-content-secondary"
+        data-test="sales-by-currency"
+      >
+        <span class="font-medium text-content-muted">
+          Cobros por moneda (importe en cada moneda de cobro):
+        </span>
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span
+            v-for="item in activeSalesByCurrency"
+            :key="item.currency"
+            class="whitespace-nowrap rounded-md border border-border-subtle bg-surface-sunken px-2 py-0.5 text-xs font-semibold text-content-primary"
+          >
+            {{ item.currency }}: {{ formatAmount(item.amount) }}
+          </span>
+        </div>
       </div>
     </section>
 
@@ -535,6 +539,15 @@ const handleTypeChange = (val: string | number | null) => {
 const handleCategoryChange = (val: string | number | null) => {
   setCategoryId(val ? String(val) : 'ALL')
 }
+
+const activeSalesByCurrency = computed(() => {
+  const items = summary.value?.salesByCurrency || []
+  return items.filter((item) => {
+    const cleaned = String(item.amount || '0').trim()
+    const num = Number(cleaned)
+    return !isNaN(num) && num > 0
+  })
+})
 
 // Formateadores
 const formatAmount = (val: string | null | undefined): string => {
