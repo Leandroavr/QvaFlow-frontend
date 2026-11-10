@@ -147,7 +147,8 @@
       <!-- Fila de Tarjetas de Resumen -->
       <div
         v-else
-        class="grid grid-cols-[repeat(auto-fit,minmax(13rem,1fr))] gap-4"
+        class="grid gap-4"
+        :class="canSeeCosts ? 'grid-cols-2 md:grid-cols-3 xl:grid-cols-5' : 'max-w-md grid-cols-1'"
         data-test="kpis-grid"
       >
         <!-- 1. Ventas Totales -->
