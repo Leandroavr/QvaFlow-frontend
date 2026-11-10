@@ -311,7 +311,7 @@
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-sm font-semibold text-content-primary">Ganancia Bruta por Período</h3>
-              <p class="text-xs text-content-muted">Evolución de margen comercial en USD</p>
+              <p class="text-xs text-content-muted">Ganancia bruta por período, en USD</p>
             </div>
           </div>
 
@@ -621,6 +621,7 @@ const barChartOption = computed(() => {
     {
       name: 'Ventas',
       type: 'bar',
+      barMaxWidth: 28,
       data: salesData,
     },
   ]
@@ -631,6 +632,7 @@ const barChartOption = computed(() => {
     series.push({
       name: 'Compras',
       type: 'bar',
+      barMaxWidth: 28,
       data: purchasesData,
     })
     legendData.push('Compras')
@@ -673,12 +675,15 @@ const lineChartOption = computed(() => {
     },
     yAxis: {
       type: 'value',
+      min: (val: { min: number; max: number }) =>
+        val.min != null && val.min < 0 ? Math.floor(val.min) : 0,
+      max: (val: { min: number; max: number }) => (val.max != null && val.max < 0 ? 0 : undefined),
     },
     series: [
       {
         name: 'Ganancia Bruta',
         type: 'line',
-        smooth: true,
+        smooth: false,
         data: profitData,
       },
     ],
@@ -710,11 +715,15 @@ const categoryChartOption = computed(() => {
       type: 'category',
       inverse: true,
       data: names,
+      axisLabel: {
+        interval: 0,
+      },
     },
     series: [
       {
         name: 'Ventas',
         type: 'bar',
+        barMaxWidth: 28,
         data: sales,
       },
     ],
