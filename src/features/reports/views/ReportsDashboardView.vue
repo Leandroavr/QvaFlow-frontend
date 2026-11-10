@@ -110,6 +110,12 @@
             </div>
           </div>
         </template>
+
+        <template #actions>
+          <span class="text-xs font-medium text-content-muted">
+            Importes en USD (moneda base)
+          </span>
+        </template>
       </FilterBar>
 
       <!-- Mensaje de error de validación de rango -->
@@ -141,12 +147,12 @@
       <!-- Fila de Tarjetas de Resumen -->
       <div
         v-else
-        class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+        class="grid grid-cols-[repeat(auto-fit,minmax(13rem,1fr))] gap-4"
         data-test="kpis-grid"
       >
         <!-- 1. Ventas Totales -->
         <StatCard
-          label="Ventas (USD)"
+          label="Ventas"
           :value="formatAmount(summary?.salesTotal)"
           :description="salesCountDescription"
           :loading="summaryLoading"
@@ -173,7 +179,7 @@
         <!-- 2. Compras a Proveedores (Sensible: solo con permiso de costos) -->
         <StatCard
           v-if="canSeeCosts && summary?.purchasesTotal !== undefined"
-          label="Compras (USD)"
+          label="Compras"
           :value="formatAmount(summary.purchasesTotal)"
           :description="purchasesCountDescription"
           :loading="summaryLoading"
@@ -184,9 +190,9 @@
         <!-- 3. Ganancia Bruta (Sensible: solo con permiso de costos) -->
         <StatCard
           v-if="canSeeCosts && summary?.grossProfit !== undefined"
-          label="Ganancia Bruta (USD)"
+          label="Ganancia bruta"
           :value="formatGrossProfit(summary.grossProfit)"
-          description="Margen comercial (Ventas - Costos)"
+          description="Ventas menos costo de lo vendido"
           :loading="summaryLoading"
           :icon="DollarSign"
           :value-class="isNegativeGrossProfit ? 'text-state-error' : 'text-content-primary'"
@@ -196,14 +202,14 @@
         <!-- 4. Margen Comercial % (Sensible: solo con permiso de costos) -->
         <StatCard
           v-if="canSeeCosts && summary?.marginPercent !== undefined"
-          label="Margen Comercial"
+          label="Margen"
           :value="`${summary.marginPercent}%`"
-          description="Rentabilidad porcentual sobre ventas"
+          description="Sobre ventas"
           :loading="summaryLoading"
           :icon="Percent"
           data-test="kpi-margin"
         >
-          <template #badge>
+          <template #value-extra>
             <BaseBadge
               v-if="summary.marginHealth"
               :variant="marginBadgeVariant"
@@ -218,9 +224,9 @@
         <!-- 5. Balance de Caja (Sensible: solo con permiso de costos) -->
         <StatCard
           v-if="canSeeCosts && summary?.cashBalance !== undefined"
-          label="Balance de Caja (USD)"
+          label="Balance de caja"
           :value="formatAmount(summary.cashBalance)"
-          description="Flujo directo (Ventas - Compras)"
+          description="Ventas menos compras"
           :loading="summaryLoading"
           :icon="Wallet"
           :value-class="isNegativeCashBalance ? 'text-state-error' : 'text-content-primary'"

@@ -27,9 +27,13 @@
     <template v-else>
       <!-- Valor destacado -->
       <div
-        :class="['mt-2 text-2xl font-bold tracking-tight', valueClass || 'text-content-primary']"
+        :class="[
+          'mt-2 flex flex-wrap items-baseline gap-2 text-2xl font-bold tracking-tight',
+          valueClass || 'text-content-primary',
+        ]"
       >
         <slot name="value">{{ value }}</slot>
+        <slot name="value-extra" />
       </div>
 
       <!-- Texto secundario y/o tendencia -->
@@ -63,7 +67,7 @@
         </div>
 
         <!-- Descripción secundaria -->
-        <span v-if="description" class="truncate">
+        <span v-if="description" class="line-clamp-2" :title="description">
           {{ description }}
         </span>
 
