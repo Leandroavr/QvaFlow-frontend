@@ -419,8 +419,114 @@
       >
         <!-- Pestaña 1: Movimientos -->
         <template #movements>
-          <div data-test="tab-movements-content">
-            <!-- Contenido de Movimientos -->
+          <div class="space-y-4 pt-2" data-test="tab-movements-content">
+            <!-- Barra con búsqueda y contador -->
+            <FilterBar
+              :search-value="movementsSearch"
+              search-placeholder="Buscar por referencia o descripción..."
+              :has-active-filters="Boolean(movementsSearch.trim())"
+              data-test="movements-filter-bar"
+              @update:search-value="setMovementsSearch"
+              @reset="setMovementsSearch('')"
+            >
+              <template #actions>
+                <span class="text-xs font-medium text-content-muted" data-test="movements-count">
+                  {{ movementsCountText }}
+                </span>
+              </template>
+            </FilterBar>
+
+            <!-- Tabla de movimientos en modo servidor -->
+            <DataTable
+              mode="server"
+              :data="movements"
+              :columns="movementColumns"
+              :total="movementsTotal"
+              :page="movementsPage"
+              :per-page="movementsPerPage"
+              :sort="movementsSort"
+              :loading="movementsLoading"
+              :error="movementsError"
+              empty-title="Sin movimientos"
+              empty-description="Sin movimientos con estos filtros"
+              row-key="id"
+              :fixed-layout="true"
+              :page-size-options="[10, 20, 50]"
+              data-test="movements-table"
+              @update:page="setMovementsPage"
+              @update:per-page="setMovementsPerPage"
+              @update:sort="setMovementsSort"
+              @query-change="handleMovementsQueryChange"
+              @retry="retryMovements"
+            >
+              <!-- 1. Fecha: dd/mm/aaaa hh:mm -->
+              <template #cell-date="{ value }">
+                <span class="whitespace-nowrap font-mono text-xs text-content-secondary">
+                  {{ formatMovementDateTime(value) }}
+                </span>
+              </template>
+
+              <!-- 2. Tipo: BaseBadge (Venta correcto, Compra info; etiquetas en español) -->
+              <template #cell-type="{ value }">
+                <BaseBadge
+                  :variant="value === 'SALE' ? 'success' : 'info'"
+                  size="sm"
+                  class="font-medium"
+                >
+                  {{ value === 'SALE' ? 'Venta' : 'Compra' }}
+                </BaseBadge>
+              </template>
+
+              <!-- 3. Referencia (mono) -->
+              <template #cell-reference="{ value }">
+                <span class="font-mono text-xs font-semibold text-content-primary">
+                  {{ value }}
+                </span>
+              </template>
+
+              <!-- 4. Concepto (descripción y debajo categoría y almacén, truncados con title) -->
+              <template #cell-description="{ row }">
+                <div class="min-w-0 max-w-full">
+                  <div
+                    class="truncate text-xs font-medium text-content-primary"
+                    :title="row.description"
+                  >
+                    {{ row.description }}
+                  </div>
+                  <div
+                    class="truncate text-[11px] text-content-muted"
+                    :title="`${row.categoryName} • ${row.warehouseName}`"
+                  >
+                    <span>{{ row.categoryName }}</span>
+                    <span class="mx-1">•</span>
+                    <span>{{ row.warehouseName }}</span>
+                  </div>
+                </div>
+              </template>
+
+              <!-- 5. Forma de pago -->
+              <template #cell-paymentMethod="{ value }">
+                <span class="truncate text-xs text-content-secondary" :title="value">
+                  {{ value || '—' }}
+                </span>
+              </template>
+
+              <!-- 6. Moneda (código) -->
+              <template #cell-currency="{ value }">
+                <span class="font-mono text-xs font-semibold text-content-primary">
+                  {{ value }}
+                </span>
+              </template>
+
+              <!-- 7. Importe alineado a la derecha como string decimal con 2 decimales y signo (+ / -) y color -->
+              <template #cell-amount="{ row }">
+                <div class="text-right font-mono text-xs font-semibold">
+                  <span :class="row.type === 'SALE' ? 'text-state-success' : 'text-state-error'">
+                    {{ row.type === 'SALE' ? '+' : '-' }}{{ formatDecimalAmount(row.amount) }}
+                  </span>
+                </div>
+              </template>
+            </DataTable>
           </div>
         </template>
 
@@ -526,6 +632,35 @@ export function formatTooltipDate(dateStr: string): string {
   }
   return dateStr
 }
+
+/**
+ * Formatea una fecha y hora ISO para la tabla de movimientos: 'dd/mm/aaaa hh:mm'.
+ * Procesamiento estricto de strings sin desviaciones por zona horaria.
+ */
+export function formatMovementDateTime(isoStr: string): string {
+  if (!isoStr) return ''
+  const [datePart, rawTime] = isoStr.includes('T') ? isoStr.split('T') : isoStr.split(' ')
+  if (!datePart) return isoStr
+  const [y, m, d] = datePart.split('-')
+  if (!y || !m || !d) return isoStr
+  const timePart = rawTime ? rawTime.slice(0, 5) : '00:00'
+  return `${d}/${m}/${y} ${timePart}`
+}
+
+/**
+ * Normaliza cualquier importe decimal a string estándar de 2 decimales sin redondeo float.
+ */
+export function formatDecimalAmount(val: string | null | undefined): string {
+  if (!val) return '0.00'
+  const trimmed = String(val).trim()
+  if (!trimmed) return '0.00'
+  const isNegative = trimmed.startsWith('-')
+  const abs = isNegative ? trimmed.slice(1) : trimmed
+  const parts = abs.split('.')
+  const whole = parts[0] || '0'
+  const decimals = (parts[1] || '').padEnd(2, '0').slice(0, 2)
+  return `${whole}.${decimals}`
+}
 </script>
 
 <script setup lang="ts">
@@ -548,13 +683,14 @@ import StatCard from '@/shared/ui/StatCard.vue'
 import BaseBadge, { type BadgeVariant } from '@/shared/ui/BaseBadge.vue'
 import BaseChart from '@/shared/ui/BaseChart/BaseChart.vue'
 import BaseTabs, { type TabItem } from '@/shared/ui/BaseTabs.vue'
+import DataTable, { type DataTableColumn } from '@/shared/ui/DataTable/DataTable.vue'
 import EmptyState from '@/shared/ui/EmptyState.vue'
 import BaseButton from '@/shared/ui/BaseButton.vue'
 import { useReports } from '../composables/useReports'
 import { useReportMovements } from '../composables/useReportMovements'
 import { formatMoney } from '@/shared/utils/formatMoney'
 import { isPositiveDecimal } from '@/shared/utils/decimal'
-import type { ReportPeriodPreset } from '../types'
+import type { ReportPeriodPreset, ReportMovement } from '../types'
 
 const isDev = import.meta.env.DEV
 
@@ -669,6 +805,22 @@ const {
   type,
   categoryId,
   activeTab,
+})
+
+// Configuración de la Tabla de Movimientos
+const movementColumns: DataTableColumn<ReportMovement>[] = [
+  { key: 'date', title: 'Fecha', width: '150px', sortable: true },
+  { key: 'type', title: 'Tipo', width: '90px' },
+  { key: 'reference', title: 'Referencia', width: '140px', sortable: true },
+  { key: 'description', title: 'Concepto' },
+  { key: 'paymentMethod', title: 'Forma de pago', width: '130px' },
+  { key: 'currency', title: 'Moneda', width: '80px' },
+  { key: 'amount', title: 'Importe', width: '130px', align: 'right', sortable: true },
+]
+
+const movementsCountText = computed(() => {
+  const count = movementsTotal.value
+  return `${count} ${count === 1 ? 'movimiento' : 'movimientos'}`
 })
 
 // Opciones de Preset
