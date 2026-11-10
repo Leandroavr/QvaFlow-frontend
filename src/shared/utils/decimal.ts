@@ -138,3 +138,17 @@ export function calculatePercentage(
   const hundredths = (absPart * 10000n + hTotal / 2n) / hTotal
   return formatFromHundredths(isNegative ? -hundredths : hundredths)
 }
+
+/**
+ * Determina si una cantidad decimal es estrictamente positiva (> 0.00).
+ * Maneja valores nulos, indefinidos o vacíos retornando false.
+ * Utiliza comparación entera exacta (BigInt en centésimas) sin aritmética float.
+ */
+export function isPositiveDecimal(
+  val: DecimalString | number | string | null | undefined
+): boolean {
+  if (val === null || val === undefined) return false
+  const str = String(val).trim()
+  if (!str) return false
+  return parseToHundredths(str) > 0n
+}

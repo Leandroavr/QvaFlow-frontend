@@ -9,7 +9,10 @@ import {
 } from 'vue-router'
 
 import { useAuthStore } from '@/features/auth/stores/authStore'
-import ReportsDashboardView from '../views/ReportsDashboardView.vue'
+import ReportsDashboardView, {
+  formatAxisDate,
+  getDrawablePoints,
+} from '../views/ReportsDashboardView.vue'
 import {
   useReports,
   calculatePresetRange,
@@ -504,5 +507,160 @@ describe('Pantalla de Reportes (/reports)', () => {
     expect(chartOption.series).toBeDefined()
     expect(chartOption.series[0].type).toBe('line')
     expect(chartOption.series[0].smooth).toBe(false)
+  })
+
+  it('(14) con 5 tarjetas la rejilla usa xl:grid-cols-5 y con 1 tarjeta usa max-w-md grid-cols-1', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    await router.push('/reports')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    const kpiGrid = wrapper.find('[data-test="kpis-grid"]')
+    expect(kpiGrid.exists()).toBe(true)
+    expect(kpiGrid.classes()).toContain('xl:grid-cols-5')
+    expect(kpiGrid.classes()).toContain('grid-cols-2')
+    expect(kpiGrid.classes()).toContain('md:grid-cols-3')
+
+    // Con usuario sin permiso de costos (vendedor/analista)
+    const analystUser = {
+      id: 'usr_analyst_01',
+      username: 'analyst',
+      fullName: 'Analista de Ventas',
+      role: 'Analista',
+      permissions: ['reports.view'],
+      lastLoginAt: '2026-10-30T10:00:00Z',
+    }
+    localStorage.setItem('qvaflow_user', JSON.stringify(analystUser))
+    localStorage.setItem('qvaflow_token', 'custom-token')
+    authStore.user = analystUser
+    authStore.token = 'custom-token'
+
+    const wrapperAnalyst = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    const kpiGridAnalyst = wrapperAnalyst.find('[data-test="kpis-grid"]')
+    expect(kpiGridAnalyst.classes()).toContain('max-w-md')
+    expect(kpiGridAnalyst.classes()).toContain('grid-cols-1')
+  })
+
+  it('(15) formateador de eje X da dd/mm, "sem dd/mm", mm/aaaa y no desplaza el primer y último día del mes', () => {
+    // Día: 'dd/mm' sin desplazamiento horario en primer y último día del mes
+    expect(formatAxisDate('2026-05-01', 'day')).toBe('01/05')
+    expect(formatAxisDate('2026-05-15', 'day')).toBe('15/05')
+    expect(formatAxisDate('2026-05-31', 'day')).toBe('31/05')
+
+    // Semana: 'sem dd/mm'
+    expect(formatAxisDate('2026-05-18', 'week')).toBe('sem 18/05')
+    expect(formatAxisDate('2026-01-01', 'week')).toBe('sem 01/01')
+
+    // Mes: 'mm/aaaa'
+    expect(formatAxisDate('2026-05-01', 'month')).toBe('05/2026')
+    expect(formatAxisDate('2026-05', 'month')).toBe('05/2026')
+    expect(formatAxisDate('2025-12-31', 'month')).toBe('12/2025')
+  })
+
+  it('(16) con rango del mes actual, la serie enviada a BaseChart no contiene fechas posteriores a hoy', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    const today = new Date()
+    const todayStr = formatLocalDate(today)
+
+    vi.spyOn(reportsService, 'getFinanceTimeSeries').mockResolvedValueOnce({
+      granularity: 'day',
+      points: [
+        { date: '2026-05-01', salesTotal: '100.00', purchasesTotal: '50.00', grossProfit: '50.00' },
+        { date: todayStr, salesTotal: '200.00', purchasesTotal: '80.00', grossProfit: '120.00' },
+        { date: '2099-12-31', salesTotal: '0.00', purchasesTotal: '0.00', grossProfit: '0.00' },
+      ],
+    })
+
+    await router.push('/reports')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    const barChart = wrapper
+      .find('[data-test="sales-vs-purchases-chart-container"]')
+      .findComponent({ name: 'BaseChart' })
+    expect(barChart.exists()).toBe(true)
+
+    const barOption = barChart.props('option')
+    const xLabels: string[] = barOption.xAxis?.data || []
+    // Ninguna fecha en el eje X corresponde a la fecha futura '2099-12-31'
+    expect(xLabels).not.toContain('2099-12-31')
+
+    // Test directo sobre getDrawablePoints con fecha simulada a mitad de mes
+    const mockRefDate = new Date(2026, 4, 15) // 15 de mayo de 2026
+    const samplePoints = [
+      { date: '2026-05-14', salesTotal: '100.00', purchasesTotal: '40.00', grossProfit: '60.00' },
+      { date: '2026-05-15', salesTotal: '150.00', purchasesTotal: '60.00', grossProfit: '90.00' },
+      { date: '2026-05-16', salesTotal: '0.00', purchasesTotal: '0.00', grossProfit: '0.00' },
+      { date: '2026-05-31', salesTotal: '0.00', purchasesTotal: '0.00', grossProfit: '0.00' },
+    ]
+    const drawable = getDrawablePoints(samplePoints, 'day', mockRefDate)
+    expect(drawable.map((p) => p.date)).toEqual(['2026-05-14', '2026-05-15'])
+    expect(drawable.some((p) => p.date > '2026-05-15')).toBe(false)
+  })
+
+  it('(17) con rango pasado, la serie enviada a BaseChart va completa', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    const pastPoints = [
+      { date: '2025-01-01', salesTotal: '100.00', purchasesTotal: '50.00', grossProfit: '50.00' },
+      { date: '2025-01-02', salesTotal: '0.00', purchasesTotal: '0.00', grossProfit: '0.00' },
+      { date: '2025-01-31', salesTotal: '300.00', purchasesTotal: '120.00', grossProfit: '180.00' },
+    ]
+
+    vi.spyOn(reportsService, 'getFinanceTimeSeries').mockResolvedValueOnce({
+      granularity: 'day',
+      points: pastPoints,
+    })
+
+    await router.push('/reports')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    const barChart = wrapper
+      .find('[data-test="sales-vs-purchases-chart-container"]')
+      .findComponent({ name: 'BaseChart' })
+    const barOption = barChart.props('option')
+    expect(barOption.xAxis?.data).toEqual(['2025-01-01', '2025-01-02', '2025-01-31'])
+
+    // Verificación de getDrawablePoints en rango pasado con fecha de referencia futura
+    const mockRefDate = new Date(2026, 4, 15)
+    const drawable = getDrawablePoints(pastPoints, 'day', mockRefDate)
+    expect(drawable.length).toBe(3)
+    expect(drawable).toEqual(pastPoints)
   })
 })

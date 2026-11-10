@@ -9,6 +9,7 @@ import {
   multiplyDecimals,
   divideDecimals,
   calculatePercentage,
+  isPositiveDecimal,
 } from '../decimal'
 
 describe('Utilidades de aritmética decimal exacta (decimal.ts)', () => {
@@ -79,5 +80,21 @@ describe('Utilidades de aritmética decimal exacta (decimal.ts)', () => {
     expect(calculatePercentage('0.00', '100.00')).toBe('0.00')
     expect(calculatePercentage('50.00', '0.00')).toBe('0.00')
     expect(calculatePercentage('-15.00', '100.00')).toBe('-15.00')
+  })
+
+  it('isPositiveDecimal identifica estrictamente positivos sin floats ni falsos positivos', () => {
+    expect(isPositiveDecimal('0')).toBe(false)
+    expect(isPositiveDecimal('0.00')).toBe(false)
+    expect(isPositiveDecimal('-5.00')).toBe(false)
+    expect(isPositiveDecimal('-0.01')).toBe(false)
+    expect(isPositiveDecimal(null)).toBe(false)
+    expect(isPositiveDecimal(undefined)).toBe(false)
+    expect(isPositiveDecimal('')).toBe(false)
+    expect(isPositiveDecimal('   ')).toBe(false)
+
+    expect(isPositiveDecimal('0.01')).toBe(true)
+    expect(isPositiveDecimal('10.50')).toBe(true)
+    expect(isPositiveDecimal('100')).toBe(true)
+    expect(isPositiveDecimal('50000.00')).toBe(true)
   })
 })

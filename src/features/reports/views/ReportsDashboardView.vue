@@ -262,7 +262,10 @@
         :class="canSeeCosts ? 'lg:grid-cols-2' : 'grid-cols-1'"
       >
         <!-- Gráfico 1: Ventas vs Compras por período (Barras agrupadas) -->
-        <div class="space-y-3 rounded-xl border border-border bg-surface-card p-4 shadow-sm sm:p-5">
+        <div
+          class="space-y-3 rounded-xl border border-border bg-surface-card p-4 shadow-sm sm:p-5"
+          data-test="sales-vs-purchases-chart-container"
+        >
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-sm font-semibold text-content-primary">
@@ -416,6 +419,86 @@
   </div>
 </template>
 
+<script lang="ts">
+import type { TimeSeriesPoint } from '../types'
+import { formatLocalDate } from '../composables/useReports'
+
+/**
+ * Trunca los puntos de la serie temporal para no graficar días posteriores a hoy (fecha local).
+ * Si el rango incluye días futuros (por ejemplo, el mes en curso), se trunca al último día <= hoy.
+ * Si el rango es pasado, se conserva completo. En días pasados sin movimientos se mantiene 0.
+ */
+export function getDrawablePoints(
+  points: TimeSeriesPoint[],
+  granularity: 'day' | 'week' | 'month' = 'day',
+  referenceDate: Date = new Date()
+): TimeSeriesPoint[] {
+  if (!points || points.length === 0) return []
+  const todayStr = formatLocalDate(referenceDate)
+  const todayMonth = todayStr.slice(0, 7)
+
+  return points.filter((p) => {
+    if (granularity === 'month') {
+      const pMonth = p.date.slice(0, 7)
+      return pMonth <= todayMonth
+    }
+    // Para 'day' y 'week', p.date es 'YYYY-MM-DD'
+    return p.date <= todayStr
+  })
+}
+
+/**
+ * Formatea una fecha ISO ('YYYY-MM-DD' o 'YYYY-MM') para las etiquetas del eje X según la granularidad:
+ * - day: 'dd/mm'
+ * - week: 'sem dd/mm'
+ * - month: 'mm/aaaa'
+ * Sin conversión de zona horaria (procesamiento estricto de strings).
+ */
+export function formatAxisDate(
+  dateStr: string,
+  granularity: 'day' | 'week' | 'month' = 'day'
+): string {
+  if (!dateStr) return ''
+  const parts = dateStr.split('-')
+  if (granularity === 'month') {
+    if (parts.length >= 2) {
+      return `${parts[1]}/${parts[0]}`
+    }
+    return dateStr
+  }
+  if (granularity === 'week') {
+    if (parts.length >= 3) {
+      return `sem ${parts[2]}/${parts[1]}`
+    }
+    if (parts.length === 2) {
+      return `sem ${parts[1]}`
+    }
+    return dateStr
+  }
+  // Default: 'day'
+  if (parts.length >= 3) {
+    return `${parts[2]}/${parts[1]}`
+  }
+  return dateStr
+}
+
+/**
+ * Formatea una fecha ISO para el tooltip en formato completo 'dd/mm/aaaa' (o 'mm/aaaa' en month).
+ * Sin desfase por zona horaria.
+ */
+export function formatTooltipDate(dateStr: string): string {
+  if (!dateStr) return ''
+  const parts = dateStr.split('-')
+  if (parts.length >= 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`
+  }
+  if (parts.length === 2) {
+    return `${parts[1]}/${parts[0]}`
+  }
+  return dateStr
+}
+</script>
+
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import {
@@ -436,9 +519,10 @@ import BaseBadge, { type BadgeVariant } from '@/shared/ui/BaseBadge.vue'
 import BaseChart from '@/shared/ui/BaseChart/BaseChart.vue'
 import EmptyState from '@/shared/ui/EmptyState.vue'
 import BaseButton from '@/shared/ui/BaseButton.vue'
-import { useReports, formatLocalDate } from '../composables/useReports'
+import { useReports } from '../composables/useReports'
 import { formatMoney } from '@/shared/utils/formatMoney'
-import type { ReportPeriodPreset, TimeSeriesPoint } from '../types'
+import { isPositiveDecimal } from '@/shared/utils/decimal'
+import type { ReportPeriodPreset } from '../types'
 
 const isDev = import.meta.env.DEV
 
@@ -543,11 +627,7 @@ const handleCategoryChange = (val: string | number | null) => {
 
 const activeSalesByCurrency = computed(() => {
   const items = summary.value?.salesByCurrency || []
-  return items.filter((item) => {
-    const cleaned = String(item.amount || '0').trim()
-    const num = Number(cleaned)
-    return !isNaN(num) && num > 0
-  })
+  return items.filter((item) => isPositiveDecimal(item.amount))
 })
 
 // Formateadores
@@ -603,30 +683,6 @@ const marginBadgeLabel = computed<string>(() => {
 })
 
 // Gráficos
-/**
- * Trunca los puntos de la serie temporal para no graficar días posteriores a hoy (fecha local).
- * Si el rango incluye días futuros (por ejemplo, el mes en curso), se trunca al último día <= hoy.
- * Si el rango es pasado, se conserva completo. En días pasados sin movimientos se mantiene 0.
- */
-export function getDrawablePoints(
-  points: TimeSeriesPoint[],
-  granularity: 'day' | 'week' | 'month' = 'day',
-  referenceDate: Date = new Date()
-): TimeSeriesPoint[] {
-  if (!points || points.length === 0) return []
-  const todayStr = formatLocalDate(referenceDate)
-  const todayMonth = todayStr.slice(0, 7)
-
-  return points.filter((p) => {
-    if (granularity === 'month') {
-      const pMonth = p.date.slice(0, 7)
-      return pMonth <= todayMonth
-    }
-    // Para 'day' y 'week', p.date es 'YYYY-MM-DD'
-    return p.date <= todayStr
-  })
-}
-
 const drawableTimeSeriesPoints = computed(() => {
   return getDrawablePoints(timeSeries.value?.points || [], timeSeries.value?.granularity || 'day')
 })
@@ -638,57 +694,6 @@ const isTimeSeriesEmpty = computed(() => {
 const isCategoriesEmpty = computed(() => {
   return !categories.value || categories.value.length === 0
 })
-
-/**
- * Formatea una fecha ISO ('YYYY-MM-DD' o 'YYYY-MM') para las etiquetas del eje X según la granularidad:
- * - day: 'dd/mm'
- * - week: 'sem dd/mm'
- * - month: 'mm/aaaa'
- * Sin conversión de zona horaria (procesamiento estricto de strings).
- */
-export function formatAxisDate(
-  dateStr: string,
-  granularity: 'day' | 'week' | 'month' = 'day'
-): string {
-  if (!dateStr) return ''
-  const parts = dateStr.split('-')
-  if (granularity === 'month') {
-    if (parts.length >= 2) {
-      return `${parts[1]}/${parts[0]}`
-    }
-    return dateStr
-  }
-  if (granularity === 'week') {
-    if (parts.length >= 3) {
-      return `sem ${parts[2]}/${parts[1]}`
-    }
-    if (parts.length === 2) {
-      return `sem ${parts[1]}`
-    }
-    return dateStr
-  }
-  // Default: 'day'
-  if (parts.length >= 3) {
-    return `${parts[2]}/${parts[1]}`
-  }
-  return dateStr
-}
-
-/**
- * Formatea una fecha ISO para el tooltip en formato completo 'dd/mm/aaaa' (o 'mm/aaaa' en month).
- * Sin desfase por zona horaria.
- */
-export function formatTooltipDate(dateStr: string): string {
-  if (!dateStr) return ''
-  const parts = dateStr.split('-')
-  if (parts.length >= 3) {
-    return `${parts[2]}/${parts[1]}/${parts[0]}`
-  }
-  if (parts.length === 2) {
-    return `${parts[1]}/${parts[0]}`
-  }
-  return dateStr
-}
 
 /**
  * Genera la configuración de tooltip para gráficos temporales (barras y línea).
