@@ -292,7 +292,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="point in timeSeries?.points || []" :key="point.date">
+                  <tr v-for="point in drawableTimeSeriesPoints" :key="point.date">
                     <td>{{ point.date }}</td>
                     <td>{{ point.salesTotal }}</td>
                     <td v-if="canSeeCosts">{{ point.purchasesTotal || '—' }}</td>
@@ -335,7 +335,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="point in timeSeries?.points || []" :key="point.date">
+                  <tr v-for="point in drawableTimeSeriesPoints" :key="point.date">
                     <td>{{ point.date }}</td>
                     <td>{{ point.grossProfit || '—' }}</td>
                   </tr>
@@ -436,9 +436,9 @@ import BaseBadge, { type BadgeVariant } from '@/shared/ui/BaseBadge.vue'
 import BaseChart from '@/shared/ui/BaseChart/BaseChart.vue'
 import EmptyState from '@/shared/ui/EmptyState.vue'
 import BaseButton from '@/shared/ui/BaseButton.vue'
-import { useReports } from '../composables/useReports'
+import { useReports, formatLocalDate } from '../composables/useReports'
 import { formatMoney } from '@/shared/utils/formatMoney'
-import type { ReportPeriodPreset } from '../types'
+import type { ReportPeriodPreset, TimeSeriesPoint } from '../types'
 
 const isDev = import.meta.env.DEV
 
@@ -603,8 +603,36 @@ const marginBadgeLabel = computed<string>(() => {
 })
 
 // Gráficos
+/**
+ * Trunca los puntos de la serie temporal para no graficar días posteriores a hoy (fecha local).
+ * Si el rango incluye días futuros (por ejemplo, el mes en curso), se trunca al último día <= hoy.
+ * Si el rango es pasado, se conserva completo. En días pasados sin movimientos se mantiene 0.
+ */
+export function getDrawablePoints(
+  points: TimeSeriesPoint[],
+  granularity: 'day' | 'week' | 'month' = 'day',
+  referenceDate: Date = new Date()
+): TimeSeriesPoint[] {
+  if (!points || points.length === 0) return []
+  const todayStr = formatLocalDate(referenceDate)
+  const todayMonth = todayStr.slice(0, 7)
+
+  return points.filter((p) => {
+    if (granularity === 'month') {
+      const pMonth = p.date.slice(0, 7)
+      return pMonth <= todayMonth
+    }
+    // Para 'day' y 'week', p.date es 'YYYY-MM-DD'
+    return p.date <= todayStr
+  })
+}
+
+const drawableTimeSeriesPoints = computed(() => {
+  return getDrawablePoints(timeSeries.value?.points || [], timeSeries.value?.granularity || 'day')
+})
+
 const isTimeSeriesEmpty = computed(() => {
-  return !timeSeries.value?.points || timeSeries.value.points.length === 0
+  return drawableTimeSeriesPoints.value.length === 0
 })
 
 const isCategoriesEmpty = computed(() => {
@@ -688,7 +716,7 @@ function createTimeSeriesTooltip() {
 
 // Gráfico 1: Ventas vs Compras (Barras Agrupadas)
 const barChartOption = computed(() => {
-  const points = timeSeries.value?.points || []
+  const points = drawableTimeSeriesPoints.value
   const dates = points.map((p) => p.date)
   const salesData = points.map((p) => Number(p.salesTotal))
   const purchasesData = points.map((p) => Number(p.purchasesTotal || 0))
@@ -737,7 +765,7 @@ const barChartOption = computed(() => {
 
 // Gráfico 2: Ganancia por período (Línea)
 const lineChartOption = computed(() => {
-  const points = timeSeries.value?.points || []
+  const points = drawableTimeSeriesPoints.value
   const dates = points.map((p) => p.date)
   const profitData = points.map((p) => Number(p.grossProfit || 0))
 
