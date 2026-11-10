@@ -1,5 +1,5 @@
 <template>
-  <div class="shadow-xs rounded-xl border border-border-subtle bg-surface-card p-4 sm:p-5">
+  <div class="rounded-xl border border-border-subtle bg-surface-card p-4 shadow-sm sm:p-5">
     <!-- Encabezado: Etiqueta e Icono neutro opcional -->
     <div class="flex items-center justify-between gap-2">
       <div class="flex min-w-0 items-center gap-2">

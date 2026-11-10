@@ -19,7 +19,7 @@
     </PageHeader>
 
     <!-- Barra de filtros -->
-    <div class="shadow-xs rounded-xl border border-border bg-surface-card p-4">
+    <div class="rounded-xl border border-border bg-surface-card p-4 shadow-sm">
       <FilterBar :show-search="false" :can-clear="hasActiveFilters" @clear-all="resetFilters">
         <template #filters>
           <div class="flex flex-wrap items-center gap-3">
@@ -261,7 +261,7 @@
         :class="canSeeCosts ? 'lg:grid-cols-2' : 'grid-cols-1'"
       >
         <!-- Gráfico 1: Ventas vs Compras por período (Barras agrupadas) -->
-        <div class="shadow-xs space-y-3 rounded-xl border border-border bg-surface-card p-4 sm:p-5">
+        <div class="space-y-3 rounded-xl border border-border bg-surface-card p-4 shadow-sm sm:p-5">
           <div class="flex items-center justify-between">
             <div>
               <h3 class="text-sm font-semibold text-content-primary">
@@ -305,7 +305,7 @@
         <!-- Gráfico 2: Ganancia por período (Línea; solo si canSeeCosts) -->
         <div
           v-if="canSeeCosts"
-          class="shadow-xs space-y-3 rounded-xl border border-border bg-surface-card p-4 sm:p-5"
+          class="space-y-3 rounded-xl border border-border bg-surface-card p-4 shadow-sm sm:p-5"
           data-test="profit-chart-container"
         >
           <div class="flex items-center justify-between">
@@ -358,7 +358,7 @@
 
       <div
         v-else
-        class="shadow-xs space-y-3 rounded-xl border border-border bg-surface-card p-4 sm:p-5"
+        class="space-y-3 rounded-xl border border-border bg-surface-card p-4 shadow-sm sm:p-5"
       >
         <div class="flex items-center justify-between">
           <div>
