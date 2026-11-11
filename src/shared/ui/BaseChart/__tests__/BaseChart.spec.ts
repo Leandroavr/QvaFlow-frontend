@@ -113,7 +113,7 @@ describe('BaseChart.vue', () => {
     expect(srOnlyContainer.find('[data-test="accessible-table"]').exists()).toBe(true)
   })
 
-  it('incluye leyenda arriba (top: 8), grid con containLabel y la paleta del tema', async () => {
+  it('incluye leyenda arriba (top: 8), grid con outerBoundsMode same y la paleta del tema', async () => {
     const wrapper = mount(BaseChart, {
       props: {
         option: {
@@ -131,10 +131,30 @@ describe('BaseChart.vue', () => {
     const lastCallOption = mockSetOption.mock.calls.at(-1)?.[0]
     expect(lastCallOption).toBeDefined()
     expect(lastCallOption.legend.top).toBe(8)
-    expect(lastCallOption.grid.containLabel).toBe(true)
+    expect(lastCallOption.grid.outerBoundsMode).toBe('same')
+    expect(lastCallOption.grid.containLabel).toBeUndefined()
     expect(lastCallOption.grid.top).toBe(48)
     expect(Array.isArray(lastCallOption.color)).toBe(true)
     expect(lastCallOption.color.length).toBe(8)
+  })
+
+  it('aplica outerBoundsMode same por defecto en grid sin leyenda y sin containLabel obsoleto', async () => {
+    const wrapper = mount(BaseChart, {
+      props: {
+        option: {
+          series: [{ type: 'line', data: [1, 2] }],
+        },
+        ariaLabel: 'Gráfico sin leyenda',
+      },
+    })
+
+    await wrapper.vm.$nextTick()
+    await new Promise((r) => setTimeout(r, 30))
+
+    const lastCallOption = mockSetOption.mock.calls.at(-1)?.[0]
+    expect(lastCallOption.grid.outerBoundsMode).toBe('same')
+    expect(lastCallOption.grid.containLabel).toBeUndefined()
+    expect(lastCallOption.grid.top).toBe(24)
   })
 
   it('al alternar el tema se vuelve a llamar a setOption con la paleta nueva', async () => {

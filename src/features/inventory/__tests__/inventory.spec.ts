@@ -459,4 +459,68 @@ describe('Módulo de Inventario y Almacenes (Pruebas Unitarias)', () => {
       expect(router.currentRoute.value.query.page).toBe('2')
     })
   })
+
+  // =========================================================================
+  // 5. Cabeceras numéricas y anchos de columna en Stock
+  // =========================================================================
+  describe('5. Cabeceras numéricas y anchos mínimos de Stock', () => {
+    it('alinea a la derecha las tres numéricas y mantiene anchos mínimos suficientes', async () => {
+      const authStore = useAuthStore()
+      await authStore.login({ username: 'superadmin', password: 'password123' })
+      await router.push('/inventory/stock')
+
+      const wrapper = mount(InventoryStockView, {
+        global: {
+          plugins: [pinia, router],
+        },
+      })
+      await wrapper.vm.$nextTick()
+
+      // Verificar la definición interna de columnas
+      const dataTable = wrapper.findComponent({ name: 'DataTable' })
+      expect(dataTable.exists()).toBe(true)
+
+      const columns = dataTable.props('columns') as Array<{
+        key: string
+        title: string
+        align?: string
+        width?: string
+        currency?: string
+      }>
+
+      const qtyCol = columns.find((c) => c.key === 'quantity')
+      const costCol = columns.find((c) => c.key === 'cost')
+      const priceCol = columns.find((c) => c.key === 'price')
+      const locCol = columns.find((c) => c.key === 'warehouseName')
+      const codeCol = columns.find((c) => c.key === 'productCode')
+      const statusCol = columns.find((c) => c.key === 'status')
+
+      // Alineación a la derecha de las tres columnas numéricas
+      expect(qtyCol?.align).toBe('right')
+      expect(costCol?.align).toBe('right')
+      expect(priceCol?.align).toBe('right')
+
+      // Anchos mínimos que garantizan no colisión ni solape
+      expect(qtyCol?.width).toBe('150px')
+      expect(costCol?.width).toBe('120px')
+      expect(priceCol?.width).toBe('120px')
+      expect(locCol?.width).toBe('220px')
+      expect(codeCol?.width).toBe('120px')
+      expect(statusCol?.width).toBe('120px')
+
+      // Verificar cabeceras renderizadas en la tabla
+      const ths = wrapper.findAll('th')
+      const thQty = ths.find((th) => th.text().includes('Cantidad'))
+      const thCost = ths.find((th) => th.text().includes('Costo'))
+      const thPrice = ths.find((th) => th.text().includes('Precio'))
+
+      expect(thQty?.classes()).toContain('text-right')
+      expect(thCost?.classes()).toContain('text-right')
+      expect(thPrice?.classes()).toContain('text-right')
+
+      // Verificar que la divisa se renderiza en línea secundaria
+      expect(thCost?.text()).toContain('CUP')
+      expect(thPrice?.text()).toContain('CUP')
+    })
+  })
 })
