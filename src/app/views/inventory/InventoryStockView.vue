@@ -526,7 +526,7 @@ const columns = computed<DataTableColumn<StockItem>[]>(() => {
     {
       key: 'productCode',
       title: 'Código',
-      width: '95px',
+      width: '120px',
       sortable: true,
     },
     {
@@ -537,13 +537,14 @@ const columns = computed<DataTableColumn<StockItem>[]>(() => {
     {
       key: 'warehouseName',
       title: 'Ubicación',
+      width: '220px',
       sortable: true,
     },
     {
       key: 'quantity',
       title: 'Cantidad',
       align: 'right',
-      width: '85px',
+      width: '150px',
       sortable: true,
     },
     {
@@ -551,7 +552,7 @@ const columns = computed<DataTableColumn<StockItem>[]>(() => {
       title: 'Costo',
       currency: 'CUP',
       align: 'right',
-      width: '90px',
+      width: '120px',
       sortable: true,
       visible: can('products.view_cost'),
     },
@@ -560,15 +561,15 @@ const columns = computed<DataTableColumn<StockItem>[]>(() => {
       title: 'Precio',
       currency: 'CUP',
       align: 'right',
-      width: '90px',
+      width: '120px',
       sortable: true,
     },
     {
       key: 'status',
       title: 'Estado',
       align: 'center',
-      width: '104px',
-      minWidth: '104px',
+      width: '120px',
+      minWidth: '120px',
       cellClass: 'whitespace-nowrap px-1 overflow-visible',
       sortable: true,
     },

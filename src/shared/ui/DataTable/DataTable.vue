@@ -89,7 +89,7 @@
             >
               <div
                 :class="[
-                  'inline-flex items-center gap-1.5 whitespace-nowrap',
+                  'inline-flex items-center gap-1 whitespace-nowrap',
                   col.align === 'right'
                     ? 'justify-end'
                     : col.align === 'center'
@@ -97,10 +97,24 @@
                       : 'justify-start',
                 ]"
               >
-                <span>{{ col.title }}</span>
-                <span v-if="col.currency" class="font-normal normal-case text-content-muted">
-                  ({{ col.currency }})
-                </span>
+                <div
+                  :class="[
+                    'inline-flex flex-col',
+                    col.align === 'right'
+                      ? 'items-end'
+                      : col.align === 'center'
+                        ? 'items-center'
+                        : 'items-start',
+                  ]"
+                >
+                  <span>{{ col.title }}</span>
+                  <span
+                    v-if="col.currency"
+                    class="text-xs font-normal normal-case leading-tight text-content-muted"
+                  >
+                    {{ col.currency }}
+                  </span>
+                </div>
 
                 <!-- Indicador de ordenación: solo en columnas ordenables, atenuado hasta hover u ordenación activa -->
                 <span v-if="col.sortable" class="inline-flex shrink-0">
