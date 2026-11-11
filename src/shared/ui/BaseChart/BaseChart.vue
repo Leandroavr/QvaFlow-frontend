@@ -138,7 +138,7 @@ function applyGridTheme(grid: any, theme: ChartThemeTokens, hasLegend: boolean):
     right: 20,
     bottom: 24,
     left: 20,
-    containLabel: true,
+    outerBoundsMode: 'same',
     borderColor: theme.borderSubtle,
   }
   if (Array.isArray(grid)) {
