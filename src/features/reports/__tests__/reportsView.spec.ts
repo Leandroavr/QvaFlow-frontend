@@ -25,6 +25,7 @@ import {
   formatLocalDate,
 } from '../composables/useReports'
 import { setEffectiveRouteQuery } from '@/shared/composables/useDataTableQuery'
+import { formatPaymentMethod } from '../constants'
 import { reportsService } from '@/services'
 import type { FinanceSummary } from '../types'
 import { setupNavigationGuard } from '@/app/router'
@@ -924,16 +925,20 @@ describe('Pantalla de Reportes (/reports)', () => {
     expect(wrapper.text()).toContain('T-OK')
   })
 
-  it('(24) importes con signo y 2 decimales (formatMovementDateTime y formatDecimalAmount)', () => {
+  it('(24) importes con separador de miles, signo y 2 decimales (formatMovementDateTime y formatDecimalAmount)', () => {
     // Helper de fecha y hora
     expect(formatMovementDateTime('2026-05-15T14:30:00Z')).toBe('15/05/2026 14:30')
     expect(formatMovementDateTime('2026-01-02T09:05:22')).toBe('02/01/2026 09:05')
     expect(formatMovementDateTime('')).toBe('')
 
-    // Helper de importe decimal
+    // Helper de importe decimal con miles y signo explícito
     expect(formatDecimalAmount('10')).toBe('10.00')
     expect(formatDecimalAmount('25.5')).toBe('25.50')
     expect(formatDecimalAmount('120.99')).toBe('120.99')
+    expect(formatDecimalAmount('3200', 'SALE')).toBe('+3,200.00')
+    expect(formatDecimalAmount('1280', 'PURCHASE')).toBe('-1,280.00')
+    expect(formatDecimalAmount('-1280.00')).toBe('-1,280.00')
+    expect(formatDecimalAmount('1000000.5', 'SALE')).toBe('+1,000,000.50')
     expect(formatDecimalAmount('0')).toBe('0.00')
     expect(formatDecimalAmount('')).toBe('0.00')
     expect(formatDecimalAmount(null)).toBe('0.00')
@@ -963,5 +968,43 @@ describe('Pantalla de Reportes (/reports)', () => {
     } else {
       expect(items.map((i: any) => i.id)).toEqual(['movements'])
     }
+  })
+
+  it('(26) la forma de pago se muestra en español y un valor desconocido sale tal cual', () => {
+    expect(formatPaymentMethod('CASH')).toBe('Efectivo')
+    expect(formatPaymentMethod('CARD')).toBe('Tarjeta')
+    expect(formatPaymentMethod('TRANSFER')).toBe('Transferencia')
+    expect(formatPaymentMethod('CRYPTO')).toBe('CRYPTO')
+    expect(formatPaymentMethod('DESCONOCIDO')).toBe('DESCONOCIDO')
+    expect(formatPaymentMethod(null)).toBe('')
+    expect(formatPaymentMethod(undefined)).toBe('')
+  })
+
+  it('(27) la columna Importe no es ordenable y Fecha y Referencia sí son ordenables', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    await router.push('/reports')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    const dataTable = wrapper.findComponent({ name: 'DataTable' })
+    expect(dataTable.exists()).toBe(true)
+
+    const columns = dataTable.props('columns') as any[]
+    const amountCol = columns.find((c) => c.key === 'amount')
+    const dateCol = columns.find((c) => c.key === 'date')
+    const refCol = columns.find((c) => c.key === 'reference')
+
+    expect(amountCol?.sortable).toBeFalsy()
+    expect(dateCol?.sortable).toBe(true)
+    expect(refCol?.sortable).toBe(true)
   })
 })
