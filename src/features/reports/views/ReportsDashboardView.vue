@@ -506,8 +506,11 @@
 
               <!-- 5. Forma de pago -->
               <template #cell-paymentMethod="{ value }">
-                <span class="truncate text-xs text-content-secondary" :title="value">
-                  {{ value || '—' }}
+                <span
+                  class="truncate text-xs text-content-secondary"
+                  :title="formatPaymentMethod(value)"
+                >
+                  {{ formatPaymentMethod(value) || '—' }}
                 </span>
               </template>
 
@@ -518,11 +521,11 @@
                 </span>
               </template>
 
-              <!-- 7. Importe alineado a la derecha como string decimal con 2 decimales y signo (+ / -) y color -->
+              <!-- 7. Importe alineado a la derecha como string decimal con miles, 2 decimales y signo (+ / -) y color -->
               <template #cell-amount="{ row }">
                 <div class="text-right font-mono text-xs font-semibold">
                   <span :class="row.type === 'SALE' ? 'text-state-success' : 'text-state-error'">
-                    {{ row.type === 'SALE' ? '+' : '-' }}{{ formatDecimalAmount(row.amount) }}
+                    {{ formatDecimalAmount(row.amount, row.type) }}
                   </span>
                 </div>
               </template>
@@ -648,18 +651,26 @@ export function formatMovementDateTime(isoStr: string): string {
 }
 
 /**
- * Normaliza cualquier importe decimal a string estándar de 2 decimales sin redondeo float.
+ * Formatea importes de movimientos con separador de miles, signo explícito (+/-) y 2 decimales sin redondeo float.
  */
-export function formatDecimalAmount(val: string | null | undefined): string {
+export function formatDecimalAmount(
+  val: string | null | undefined,
+  type?: 'SALE' | 'PURCHASE'
+): string {
   if (!val) return '0.00'
   const trimmed = String(val).trim()
   if (!trimmed) return '0.00'
-  const isNegative = trimmed.startsWith('-')
-  const abs = isNegative ? trimmed.slice(1) : trimmed
-  const parts = abs.split('.')
-  const whole = parts[0] || '0'
-  const decimals = (parts[1] || '').padEnd(2, '0').slice(0, 2)
-  return `${whole}.${decimals}`
+
+  const abs = trimmed.replace(/^-/, '')
+  const formatted = formatMoney(abs, 'USD', { showCurrency: false })
+
+  if (type === 'PURCHASE' || trimmed.startsWith('-')) {
+    return `-${formatted}`
+  }
+  if (type === 'SALE') {
+    return `+${formatted}`
+  }
+  return formatted
 }
 </script>
 
@@ -691,6 +702,7 @@ import { useReports } from '../composables/useReports'
 import { useReportMovements } from '../composables/useReportMovements'
 import { formatMoney } from '@/shared/utils/formatMoney'
 import { isPositiveDecimal } from '@/shared/utils/decimal'
+import { formatPaymentMethod } from '../constants'
 import type { ReportPeriodPreset, ReportMovement } from '../types'
 
 const isDev = import.meta.env.DEV
@@ -815,7 +827,7 @@ const movementColumns: DataTableColumn<ReportMovement>[] = [
   { key: 'description', title: 'Concepto' },
   { key: 'paymentMethod', title: 'Forma de pago', width: '130px' },
   { key: 'currency', title: 'Moneda', width: '80px' },
-  { key: 'amount', title: 'Importe', width: '130px', align: 'right', sortable: true },
+  { key: 'amount', title: 'Importe', width: '130px', align: 'right', sortable: false },
 ]
 
 const movementsCountText = computed(() => {

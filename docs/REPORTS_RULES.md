@@ -284,4 +284,5 @@ Esta sección consolida las decisiones de arquitectura de frontend y las propues
 | **H. Zona horaria** | `desde` y `hasta` son fechas locales YYYY-MM-DD en la zona horaria del negocio configurada en el servidor; las series agrupan por día en esa zona. | Zona horaria del negocio configurada en el servidor. | ¿Qué zona usa el backend y cómo se configura? |
 | **I. Rango máximo** | 366 días; si se supera, 400 con `details` por campo. | 366 días máximo. | ¿Se confirma el máximo? |
 | **J. Decimales** | Cantidades e importes con 2 decimales. | 2 decimales. | ¿Hay productos por peso con 3 o más decimales? |
+| **K. Importe en moneda base** | El movimiento incluye amount y currency; para ordenar y totalizar por importe se requiere amountBase en USD. | amountBase en USD. | ¿El backend entregará amountBase y la tasa aplicada? |
 
