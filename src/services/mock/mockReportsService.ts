@@ -186,6 +186,9 @@ export function generateSeedMovements(referenceDate = new Date()): InternalMockM
   const movements: InternalMockMovement[] = []
   const y = referenceDate.getFullYear()
   const m = referenceDate.getMonth() // 0-indexed
+  const currentDay = referenceDate.getDate()
+  const currentHour = referenceDate.getHours()
+  const currentMin = referenceDate.getMinutes()
 
   const currencies: Currency[] = ['USD', 'CUP', 'CUP_TRANSFER', 'MLC']
   const paymentMethods = {
@@ -197,11 +200,18 @@ export function generateSeedMovements(referenceDate = new Date()): InternalMockM
 
   let counter = 1
 
+  // Para el mes en curso, los días nunca superan el día actual
+  const currentMonthDays: number[] = []
+  const maxDay = Math.max(1, currentDay)
+  for (let d = 1; d <= maxDay; d++) {
+    currentMonthDays.push(d)
+  }
+
   // Distribuir en 3 meses: Month -2, Month -1, y Month 0 (actual)
   const monthConfigs = [
     { offset: -2, days: [3, 5, 8, 11, 14, 17, 20, 23, 26, 28], count: 22 },
     { offset: -1, days: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28], count: 24 },
-    { offset: 0, days: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], count: 20 },
+    { offset: 0, days: currentMonthDays, count: 20 },
   ]
 
   for (const cfg of monthConfigs) {
@@ -211,8 +221,22 @@ export function generateSeedMovements(referenceDate = new Date()): InternalMockM
 
     for (let i = 0; i < cfg.count; i++) {
       const day = cfg.days[i % cfg.days.length]
-      const hour = 9 + (i % 9)
-      const min = (i * 13) % 60
+      let hour = 9 + (i % 9)
+      let min = (i * 13) % 60
+
+      // Si es el mes en curso y es el día de hoy, garantizar que la hora no sea posterior a la actual
+      if (cfg.offset === 0 && day === currentDay) {
+        const nowMinutes = currentHour * 60 + currentMin
+        if (nowMinutes <= 0) {
+          hour = 0
+          min = 0
+        } else {
+          const safeMinutes = Math.max(0, nowMinutes - 1 - ((i * 11) % Math.max(1, nowMinutes - 1)))
+          hour = Math.floor(safeMinutes / 60)
+          min = safeMinutes % 60
+        }
+      }
+
       const isoDate = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}:00Z`
 
       // 1 de cada 4 es compra de reabastecimiento (PURCHASE), el resto venta (SALE)
@@ -295,7 +319,15 @@ export function generateSeedMovements(referenceDate = new Date()): InternalMockM
 }
 
 export class MockReportsService implements ReportsService {
-  private movements: InternalMockMovement[] = generateSeedMovements()
+  private movements: InternalMockMovement[]
+
+  constructor(referenceDate = new Date()) {
+    this.movements = generateSeedMovements(referenceDate)
+  }
+
+  resetSeedData(referenceDate = new Date()): void {
+    this.movements = generateSeedMovements(referenceDate)
+  }
 
   private delay(ms = 200): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms))

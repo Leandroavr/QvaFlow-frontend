@@ -330,4 +330,59 @@ describe('Servicio Mock de Reportes (MockReportsService)', () => {
       expect(c.amount).toMatch(/^\d+\.\d{2}$/)
     }
   })
+
+  it('(15) con fecha simulada, ningún movimiento ni punto de serie es posterior a ahora, y la suma de la serie iguala el resumen', async () => {
+    // Simular fecha fija: 10 de noviembre de 2026 a las 14:30:00
+    const fakeNow = new Date(2026, 10, 10, 14, 30, 0)
+    const testService = new MockReportsService(fakeNow)
+
+    // 1. Verificar movimientos generados en los 3 meses calendario
+    const movementsRes = await testService.listMovements({
+      desde: '2026-09-01',
+      hasta: '2026-11-30',
+      perPage: 100,
+    })
+    expect(movementsRes.items.length).toBeGreaterThanOrEqual(60)
+
+    const fakeNowIsoDate = '2026-11-10'
+    for (const m of movementsRes.items) {
+      const mDate = m.date.slice(0, 10)
+      expect(mDate <= fakeNowIsoDate).toBe(true)
+      if (mDate === fakeNowIsoDate) {
+        const timePart = m.date.slice(11, 16)
+        expect(timePart <= '14:30').toBe(true)
+      }
+    }
+
+    // 2. Verificar que los puntos con datos en el mes actual no superen hoy
+    const currentMonthSummary = await testService.getFinanceSummary({
+      desde: '2026-11-01',
+      hasta: '2026-11-30',
+    })
+    const ts = await testService.getFinanceTimeSeries(
+      { desde: '2026-11-01', hasta: '2026-11-30' },
+      'day'
+    )
+
+    const pointsWithData = ts.points.filter(
+      (p) =>
+        compareDecimals(p.salesTotal, '0.00') > 0 ||
+        (p.purchasesTotal && compareDecimals(p.purchasesTotal, '0.00') > 0)
+    )
+    for (const p of pointsWithData) {
+      expect(p.date <= fakeNowIsoDate).toBe(true)
+    }
+
+    // 3. Suma de la serie temporal iguala el total del resumen
+    let sumSales = '0.00'
+    let sumPurchases = '0.00'
+    for (const p of ts.points) {
+      sumSales = addDecimals(sumSales, p.salesTotal)
+      if (p.purchasesTotal) {
+        sumPurchases = addDecimals(sumPurchases, p.purchasesTotal)
+      }
+    }
+    expect(sumSales).toBe(currentMonthSummary.salesTotal)
+    expect(sumPurchases).toBe(currentMonthSummary.purchasesTotal)
+  })
 })
