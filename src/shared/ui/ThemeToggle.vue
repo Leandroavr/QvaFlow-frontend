@@ -12,18 +12,17 @@
     ]"
     @click="toggleTheme"
   >
-    <!-- Icono Sol cuando está en modo oscuro (para volver a claro) -->
-    <Sun
-      v-if="isDark"
-      class="h-4 w-4 transition-colors"
-      :class="onDark ? 'text-white' : 'text-amber-400 hover:text-amber-300'"
-      aria-hidden="true"
-    />
-    <!-- Icono Luna cuando está en modo claro (para cambiar a oscuro) -->
-    <Moon
-      v-else
-      class="h-4 w-4 transition-colors"
-      :class="onDark ? 'text-white' : 'text-slate-700 hover:text-primary dark:text-slate-300'"
+    <!-- Icono reactivo con pointer-events-none para evitar retargeting de foco al alternar con ratón -->
+    <component
+      :is="isDark ? Sun : Moon"
+      class="pointer-events-none h-4 w-4 transition-colors"
+      :class="
+        onDark
+          ? 'text-white'
+          : isDark
+            ? 'text-amber-400 hover:text-amber-300'
+            : 'text-slate-700 hover:text-primary dark:text-slate-300'
+      "
       aria-hidden="true"
     />
   </button>
