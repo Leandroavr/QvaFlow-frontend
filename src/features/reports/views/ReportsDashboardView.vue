@@ -533,8 +533,8 @@
           </div>
         </template>
 
-        <!-- Pestaña 2: Más vendidos (SOLO en DEV) -->
-        <template v-if="isDev" #top-selling>
+        <!-- Pestaña 2: Más vendidos -->
+        <template #top-selling>
           <div class="space-y-4 pt-2" data-test="tab-top-selling-content">
             <!-- Barra con selector de límite y contador -->
             <div class="flex items-center justify-between gap-4">
@@ -643,8 +643,8 @@
           </div>
         </template>
 
-        <!-- Pestaña 3: Ociosos (SOLO en DEV) -->
-        <template v-if="isDev" #idle>
+        <!-- Pestaña 3: Ociosos -->
+        <template #idle>
           <div class="space-y-4 pt-2" data-test="tab-idle-content">
             <!-- Barra superior: selector de días, nota y contador -->
             <div class="flex flex-wrap items-center justify-between gap-4">
@@ -914,7 +914,6 @@ import BaseChart from '@/shared/ui/BaseChart/BaseChart.vue'
 import BaseTabs, { type TabItem } from '@/shared/ui/BaseTabs.vue'
 import DataTable from '@/shared/ui/DataTable/DataTable.vue'
 import type { DataTableColumn } from '@/shared/ui/DataTable/types'
-import EmptyState from '@/shared/ui/EmptyState.vue'
 import BaseButton from '@/shared/ui/BaseButton.vue'
 import { useReports } from '../composables/useReports'
 import { useReportMovements } from '../composables/useReportMovements'
@@ -924,8 +923,6 @@ import { formatMoney } from '@/shared/utils/formatMoney'
 import { isPositiveDecimal } from '@/shared/utils/decimal'
 import { formatPaymentMethod } from '../constants'
 import type { ReportPeriodPreset, ReportMovement, TopProduct, IdleProduct } from '../types'
-
-const isDev = import.meta.env.DEV
 
 const route = useRoute()
 const router = useRouter()
@@ -966,29 +963,23 @@ onMounted(() => {
 })
 
 // Pestañas de Detalle
-const tabItems = computed<TabItem[]>(() => {
-  const items: TabItem[] = [{ id: 'movements', label: 'Movimientos' }]
-  if (isDev) {
-    items.push({ id: 'top-selling', label: 'Más vendidos' }, { id: 'idle', label: 'Ociosos' })
-  }
-  return items
-})
+const tabItems = computed<TabItem[]>(() => [
+  { id: 'movements', label: 'Movimientos' },
+  { id: 'top-selling', label: 'Más vendidos' },
+  { id: 'idle', label: 'Ociosos' },
+])
 
 const initialTab = typeof route?.query?.tab === 'string' ? route.query.tab : 'movements'
 const activeTab = ref<string>(
-  initialTab === 'top-selling' && isDev
-    ? 'top-selling'
-    : initialTab === 'idle' && isDev
-      ? 'idle'
-      : 'movements'
+  initialTab === 'top-selling' ? 'top-selling' : initialTab === 'idle' ? 'idle' : 'movements'
 )
 
 watch(
   () => route?.query?.tab,
   (newTab) => {
-    if (newTab === 'top-selling' && isDev) {
+    if (newTab === 'top-selling') {
       activeTab.value = 'top-selling'
-    } else if (newTab === 'idle' && isDev) {
+    } else if (newTab === 'idle') {
       activeTab.value = 'idle'
     } else {
       activeTab.value = 'movements'

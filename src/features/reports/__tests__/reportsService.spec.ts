@@ -385,4 +385,58 @@ describe('Servicio Mock de Reportes (MockReportsService)', () => {
     expect(sumSales).toBe(currentMonthSummary.salesTotal)
     expect(sumPurchases).toBe(currentMonthSummary.purchasesTotal)
   })
+
+  it('(16) mock top respeta limit y rango y calcula rotationPercent', async () => {
+    const top3 = await service.getTopProducts({ from: '2026-10-01', to: '2026-10-31', limit: 3 })
+    expect(top3).toHaveLength(3)
+    expect(top3[0].rotationPercent).toBe('100.00')
+    expect(compareDecimals(top3[1].rotationPercent, '100.00')).toBeLessThanOrEqual(0)
+    expect(top3[0].productId).toBeDefined()
+    expect(top3[0].code).toBeDefined()
+    expect(top3[0].name).toBeDefined()
+    expect(top3[0].category).toBeDefined()
+  })
+
+  it('(17) limit inválido da 400', async () => {
+    await expect(service.getTopProducts({ limit: 0 })).rejects.toMatchObject({ statusCode: 400 })
+    await expect(service.getTopProducts({ limit: 51 })).rejects.toMatchObject({ statusCode: 400 })
+    await expect(service.getTopProducts({ limit: 3.5 })).rejects.toMatchObject({ statusCode: 400 })
+  })
+
+  it('(18) mock ociosos filtra por days y ordena por daysWithoutSale desc', async () => {
+    const idle30 = await service.getIdleProducts({ days: 30 })
+    const idle60 = await service.getIdleProducts({ days: 60 })
+    expect(idle30.total).toBeGreaterThanOrEqual(idle60.total)
+    expect(idle30.items.length).toBeGreaterThanOrEqual(1)
+
+    for (let i = 0; i < idle30.items.length - 1; i++) {
+      const a = idle30.items[i].daysWithoutSale
+      const b = idle30.items[i + 1].daysWithoutSale
+      if (a !== null && b !== null) {
+        expect(a).toBeGreaterThanOrEqual(b)
+      }
+    }
+  })
+
+  it('(19) days inválido da 400', async () => {
+    await expect(service.getIdleProducts({ days: 0 })).rejects.toMatchObject({ statusCode: 400 })
+    await expect(service.getIdleProducts({ days: 366 })).rejects.toMatchObject({ statusCode: 400 })
+    await expect(service.getIdleProducts({ days: 20.5 })).rejects.toMatchObject({ statusCode: 400 })
+  })
+
+  it('(20) sin costos no hay tiedUpCapital ni totalTiedUpCapital en mock ociosos', async () => {
+    localStorage.setItem(
+      'qvaflow_user',
+      JSON.stringify({
+        username: 'vendedor_sin_costos',
+        permissions: ['reports.view'],
+      })
+    )
+    const idleRes = await service.getIdleProducts({ days: 30 })
+    expect(idleRes.totalTiedUpCapital).toBeUndefined()
+    expect(Object.prototype.hasOwnProperty.call(idleRes, 'totalTiedUpCapital')).toBe(false)
+    for (const item of idleRes.items) {
+      expect(Object.prototype.hasOwnProperty.call(item, 'tiedUpCapital')).toBe(false)
+    }
+  })
 })

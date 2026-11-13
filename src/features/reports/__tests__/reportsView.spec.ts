@@ -944,7 +944,7 @@ describe('Pantalla de Reportes (/reports)', () => {
     expect(formatDecimalAmount(null)).toBe('0.00')
   })
 
-  it('(25) las pestañas "Más vendidos" y "Ociosos" solo están presentes en entorno DEV', async () => {
+  it('(25) ambas pestañas existen siempre y la URL tab las selecciona', async () => {
     const authStore = useAuthStore()
     await authStore.login({ username: 'superadmin', password: 'password123' })
 
@@ -963,11 +963,15 @@ describe('Pantalla de Reportes (/reports)', () => {
     expect(baseTabs.exists()).toBe(true)
     const items = baseTabs.props('items') as any[]
 
-    if (import.meta.env.DEV) {
-      expect(items.map((i: any) => i.id)).toEqual(['movements', 'top-selling', 'idle'])
-    } else {
-      expect(items.map((i: any) => i.id)).toEqual(['movements'])
-    }
+    expect(items.map((i: any) => i.id)).toEqual(['movements', 'top-selling', 'idle'])
+
+    await router.push('/reports?tab=top-selling')
+    await flushPromises()
+    expect(baseTabs.props('modelValue')).toBe('top-selling')
+
+    await router.push('/reports?tab=idle')
+    await flushPromises()
+    expect(baseTabs.props('modelValue')).toBe('idle')
   })
 
   it('(26) la forma de pago se muestra en español y un valor desconocido sale tal cual', () => {
@@ -1006,5 +1010,195 @@ describe('Pantalla de Reportes (/reports)', () => {
     expect(amountCol?.sortable).toBeFalsy()
     expect(dateCol?.sortable).toBe(true)
     expect(refCol?.sortable).toBe(true)
+  })
+
+  it('(28) vista Top muestra barras con aria-valuenow', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    await router.push('/reports?tab=top-selling')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    const bars = wrapper.findAll('[role="progressbar"]')
+    expect(bars.length).toBeGreaterThan(0)
+    expect(bars[0].attributes('aria-valuenow')).toBe('100.00')
+    expect(bars[0].attributes('aria-valuemin')).toBe('0')
+    expect(bars[0].attributes('aria-valuemax')).toBe('100')
+    expect(bars[0].attributes('aria-label')).toBeDefined()
+  })
+
+  it('(29) cambiar Top 5 a 10 cambia las filas y la URL', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    await router.push('/reports?tab=top-selling')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    const select = wrapper.findComponent('[data-test="top-products-limit-select"]') as any
+    expect(select.exists()).toBe(true)
+
+    select.vm.$emit('update:modelValue', 10)
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    expect(router.currentRoute.value.query.limit).toBe('10')
+    const topTable = wrapper.findComponent('[data-test="top-products-table"]') as any
+    expect(topTable.exists()).toBe(true)
+    const data = topTable.props('data') as any[]
+    expect(data.length).toBeGreaterThan(5)
+  })
+
+  it('(30) vista Ociosos oculta la columna y la StatCard sin costos', async () => {
+    const authStore = useAuthStore()
+    const user = {
+      id: 'seller-user',
+      username: 'vendedor',
+      roles: ['SELLER'],
+      permissions: ['reports.view'],
+    }
+    localStorage.setItem('qvaflow_user', JSON.stringify(user))
+    localStorage.setItem('qvaflow_token', 'mock-token-vendedor')
+    authStore.user = user as any
+    authStore.token = 'mock-token-vendedor'
+
+    await router.push('/reports?tab=idle')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="idle-tied-up-card"]').exists()).toBe(false)
+
+    const idleTable = wrapper.findComponent('[data-test="idle-products-table"]') as any
+    expect(idleTable.exists()).toBe(true)
+    const columns = idleTable.props('columns') as any[]
+    expect(columns.some((c: any) => c.key === 'tiedUpCapital')).toBe(false)
+  })
+
+  it('(31) cambiar days vuelve a pagina 1', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    await router.push('/reports?tab=idle&iPage=2')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    const select = wrapper.findComponent('[data-test="idle-days-select"]') as any
+    expect(select.exists()).toBe(true)
+
+    select.vm.$emit('update:modelValue', 60)
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    expect(router.currentRoute.value.query.days).toBe('60')
+    expect(router.currentRoute.value.query.iPage).toBeUndefined()
+  })
+
+  it('(32) error con reintento en pestaña más vendidos', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    let failOnce = true
+    const origGetTop = reportsService.getTopProducts.bind(reportsService)
+    vi.spyOn(reportsService, 'getTopProducts').mockImplementation(async (...args) => {
+      if (failOnce) {
+        failOnce = false
+        throw new Error('Fallo simulado en top-products')
+      }
+      return origGetTop(...args)
+    })
+
+    await router.push('/reports?tab=top-selling')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    const topTable = wrapper.findComponent('[data-test="top-products-table"]') as any
+    expect(topTable.exists()).toBe(true)
+    expect(topTable.props('error')).toBe('Fallo simulado en top-products')
+
+    topTable.vm.$emit('retry')
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    expect(topTable.props('error')).toBeNull()
+    const data = topTable.props('data') as any[]
+    expect(data.length).toBeGreaterThan(0)
+  })
+
+  it('(33) error con reintento en pestaña productos ociosos', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    let failOnce = true
+    const origGetIdle = reportsService.getIdleProducts.bind(reportsService)
+    vi.spyOn(reportsService, 'getIdleProducts').mockImplementation(async (...args) => {
+      if (failOnce) {
+        failOnce = false
+        throw new Error('Fallo simulado en idle-products')
+      }
+      return origGetIdle(...args)
+    })
+
+    await router.push('/reports?tab=idle')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    const idleTable = wrapper.findComponent('[data-test="idle-products-table"]') as any
+    expect(idleTable.exists()).toBe(true)
+    expect(idleTable.props('error')).toBe('Fallo simulado en idle-products')
+
+    idleTable.vm.$emit('retry')
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    expect(idleTable.props('error')).toBeNull()
+    const data = idleTable.props('data') as any[]
+    expect(data.length).toBeGreaterThan(0)
   })
 })
