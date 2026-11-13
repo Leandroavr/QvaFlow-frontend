@@ -1201,4 +1201,98 @@ describe('Pantalla de Reportes (/reports)', () => {
     const data = idleTable.props('data') as any[]
     expect(data.length).toBeGreaterThan(0)
   })
+
+  it('(34) la celda de Producto de Ociosos tiene clase truncate y atributo title con el nombre completo', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    await router.push('/reports?tab=idle')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    const idleTable = wrapper.findComponent('[data-test="idle-products-table"]')
+    expect(idleTable.exists()).toBe(true)
+
+    const nameCells = idleTable.findAll('.truncate')
+    expect(nameCells.length).toBeGreaterThan(0)
+
+    const firstNameCell = nameCells[0]
+    expect(firstNameCell.classes()).toContain('truncate')
+    const titleAttr = firstNameCell.attributes('title')
+    expect(titleAttr).toBeDefined()
+    expect(titleAttr!.length).toBeGreaterThan(0)
+    expect(firstNameCell.text()).toBe(titleAttr)
+  })
+
+  it('(35) StatCard de capital inmovilizado muestra la divisa explícita USD', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    await router.push('/reports?tab=idle')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    const card = wrapper.find('[data-test="idle-tied-up-card"]')
+    expect(card.exists()).toBe(true)
+    expect(card.text()).toContain('USD')
+    expect(card.text()).toMatch(/\d+(\.\d{2})?\s+USD/)
+  })
+
+  it('(36) daysWithoutSale null renderiza "—" en la columna Días sin venta', async () => {
+    const authStore = useAuthStore()
+    await authStore.login({ username: 'superadmin', password: 'password123' })
+
+    vi.spyOn(reportsService, 'getIdleProducts').mockResolvedValueOnce({
+      items: [
+        {
+          productId: 'prod-null-sales',
+          code: 'PRD-TEST-NULL',
+          name: 'Producto Nunca Vendido',
+          category: 'Varios',
+          stockQuantity: '10.00',
+          lastSaleDate: null,
+          daysWithoutSale: null,
+          tiedUpCapital: '50.00',
+        },
+      ],
+      total: 1,
+      totalTiedUpCapital: '50.00',
+    } as any)
+
+    await router.push('/reports?tab=idle')
+    const wrapper = mount(ReportsDashboardView, {
+      global: {
+        plugins: [pinia, router],
+      },
+    })
+
+    await flushPromises()
+    await waitDelay()
+    await flushPromises()
+
+    const idleTable = wrapper.findComponent('[data-test="idle-products-table"]')
+    expect(idleTable.exists()).toBe(true)
+
+    const rows = idleTable.findAll('tbody tr')
+    expect(rows.length).toBeGreaterThan(0)
+    const firstRow = rows[0]
+    expect(firstRow.text()).toContain('PRD-TEST-NULL')
+    expect(firstRow.text()).toContain('Producto Nunca Vendido')
+    expect(firstRow.text()).toContain('Sin ventas')
+    expect(firstRow.text()).toContain('—')
+  })
 })
