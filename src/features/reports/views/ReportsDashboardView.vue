@@ -645,11 +645,129 @@
 
         <!-- Pestaña 3: Ociosos (SOLO en DEV) -->
         <template v-if="isDev" #idle>
-          <div class="p-6" data-test="tab-idle-content">
-            <EmptyState
-              title="Próximo paso"
-              description="El reporte de productos ociosos y sin rotación se integrará en la siguiente fase."
-            />
+          <div class="space-y-4 pt-2" data-test="tab-idle-content">
+            <!-- Barra superior: selector de días, nota y contador -->
+            <div class="flex flex-wrap items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
+                  <label
+                    for="idle-products-days"
+                    class="text-xs font-medium text-content-secondary"
+                  >
+                    Inactividad mínima:
+                  </label>
+                  <div class="w-32">
+                    <BaseSelect
+                      id="idle-products-days"
+                      :model-value="idleDays"
+                      :options="idleDaysOptions"
+                      density="compact"
+                      aria-label="Días mínimos de inactividad"
+                      data-test="idle-days-select"
+                      @update:model-value="handleIdleDaysChange"
+                    />
+                  </div>
+                </div>
+                <span class="text-xs text-content-muted"> (No depende del rango de fechas) </span>
+              </div>
+              <span class="text-xs font-medium text-content-muted" data-test="idle-products-count">
+                {{ idleProductsCountText }}
+              </span>
+            </div>
+
+            <!-- StatCard Capital inmovilizado (solo si llega el dato) -->
+            <div
+              v-if="idleTotalTiedUpCapital !== undefined"
+              class="max-w-xs"
+              data-test="idle-tied-up-card"
+            >
+              <StatCard
+                label="Capital inmovilizado"
+                :value="formatAmount(idleTotalTiedUpCapital)"
+                description="Total retenido en stock sin rotación"
+                :loading="idleLoading"
+                :icon="DollarSign"
+              />
+            </div>
+
+            <!-- Tabla de Productos Ociosos en modo server -->
+            <DataTable
+              mode="server"
+              :data="idleProducts"
+              :columns="idleColumns"
+              :total="idleTotal"
+              :page="idlePage"
+              :per-page="idlePerPage"
+              :sort="idleSort"
+              :loading="idleLoading"
+              :error="idleError"
+              empty-title="Sin productos ociosos"
+              empty-description="No se encontraron productos con inactividad mayor al umbral seleccionado"
+              row-key="productId"
+              :fixed-layout="true"
+              :page-size-options="[10, 20, 50]"
+              data-test="idle-products-table"
+              @update:page="setIdlePage"
+              @update:per-page="setIdlePerPage"
+              @update:sort="setIdleSort"
+              @query-change="handleIdleQueryChange"
+              @retry="retryIdle"
+            >
+              <!-- 1. Código -->
+              <template #cell-code="{ value }">
+                <span class="font-mono text-xs font-semibold text-content-primary">
+                  {{ value }}
+                </span>
+              </template>
+
+              <!-- 2. Producto (flexible, min 200) -->
+              <template #cell-name="{ value }">
+                <span class="truncate text-xs font-semibold text-content-primary" :title="value">
+                  {{ value }}
+                </span>
+              </template>
+
+              <!-- 3. Categoría -->
+              <template #cell-category="{ value }">
+                <span class="text-xs text-content-secondary">
+                  {{ value }}
+                </span>
+              </template>
+
+              <!-- 4. Existencias (120, derecha) -->
+              <template #cell-stockQuantity="{ value }">
+                <div class="text-right font-mono text-xs font-semibold text-content-primary">
+                  {{ formatDecimalAmount(value) }}
+                </div>
+              </template>
+
+              <!-- 5. Última venta (130, dd/mm/aaaa o "Sin ventas") -->
+              <template #cell-lastSaleDate="{ value }">
+                <span
+                  class="text-xs"
+                  :class="value ? 'font-mono text-content-secondary' : 'italic text-content-muted'"
+                >
+                  {{ formatLastSaleDate(value) }}
+                </span>
+              </template>
+
+              <!-- 6. Días sin venta (160, derecha, ordenable) -->
+              <template #cell-daysWithoutSale="{ value }">
+                <div class="text-right font-mono text-xs font-semibold">
+                  <span v-if="value !== null && value !== undefined" class="text-content-primary">
+                    {{ value }} días
+                  </span>
+                  <span v-else class="italic text-content-muted"> Sin ventas </span>
+                </div>
+              </template>
+
+              <!-- 7. Inmovilizado (150, con USD en segunda línea, derecha) -->
+              <template #cell-tiedUpCapital="{ value }">
+                <div class="text-right font-mono text-xs font-semibold text-state-error">
+                  {{ formatDecimalAmount(value) }}
+                </div>
+              </template>
+            </DataTable>
           </div>
         </template>
       </BaseTabs>
@@ -801,10 +919,11 @@ import BaseButton from '@/shared/ui/BaseButton.vue'
 import { useReports } from '../composables/useReports'
 import { useReportMovements } from '../composables/useReportMovements'
 import { useTopProducts } from '../composables/useTopProducts'
+import { useIdleProducts } from '../composables/useIdleProducts'
 import { formatMoney } from '@/shared/utils/formatMoney'
 import { isPositiveDecimal } from '@/shared/utils/decimal'
 import { formatPaymentMethod } from '../constants'
-import type { ReportPeriodPreset, ReportMovement, TopProduct } from '../types'
+import type { ReportPeriodPreset, ReportMovement, TopProduct, IdleProduct } from '../types'
 
 const isDev = import.meta.env.DEV
 
@@ -956,6 +1075,86 @@ const topColumns: DataTableColumn<TopProduct>[] = [
   { key: 'revenue', title: 'Ingresos', currency: 'USD', width: '140px', align: 'right' },
   { key: 'rotationPercent', title: 'Rotación', width: '220px' },
 ]
+
+// Configuración de Productos Ociosos
+const {
+  days: idleDays,
+  setDays: setIdleDays,
+  products: idleProducts,
+  total: idleTotal,
+  totalTiedUpCapital: idleTotalTiedUpCapital,
+  loading: idleLoading,
+  error: idleError,
+  retry: retryIdle,
+  page: idlePage,
+  perPage: idlePerPage,
+  sort: idleSort,
+  setPage: setIdlePage,
+  setPerPage: setIdlePerPage,
+  setSort: setIdleSort,
+  handleQueryChange: handleIdleQueryChange,
+} = useIdleProducts({
+  activeTab,
+})
+
+const idleDaysOptions = [
+  { value: 15, label: '15 días' },
+  { value: 30, label: '30 días' },
+  { value: 60, label: '60 días' },
+  { value: 90, label: '90 días' },
+]
+
+const handleIdleDaysChange = (val: string | number | null) => {
+  if (val) setIdleDays(Number(val))
+}
+
+const idleProductsCountText = computed(() => {
+  const count = idleTotal.value
+  return `${count} ${count === 1 ? 'producto ocioso' : 'productos ociosos'}`
+})
+
+const formatLastSaleDate = (isoDate: string | null | undefined): string => {
+  if (!isoDate) return 'Sin ventas'
+  const parts = isoDate.slice(0, 10).split('-')
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`
+  }
+  return isoDate
+}
+
+const hasTiedUpCapitalData = computed(() => {
+  if (idleTotalTiedUpCapital.value !== undefined) return true
+  return idleProducts.value.some((p) => p.tiedUpCapital !== undefined)
+})
+
+const idleColumns = computed<DataTableColumn<IdleProduct>[]>(() => {
+  const cols: DataTableColumn<IdleProduct>[] = [
+    { key: 'code', title: 'Código', width: '110px' },
+    { key: 'name', title: 'Producto', minWidth: '200px' },
+    { key: 'category', title: 'Categoría', width: '140px' },
+    { key: 'stockQuantity', title: 'Existencias', width: '120px', align: 'right' },
+    { key: 'lastSaleDate', title: 'Última venta', width: '130px' },
+    {
+      key: 'daysWithoutSale',
+      title: 'Días sin venta',
+      width: '160px',
+      align: 'right',
+      sortable: true,
+    },
+  ]
+
+  if (hasTiedUpCapitalData.value) {
+    cols.push({
+      key: 'tiedUpCapital',
+      title: 'Inmovilizado',
+      currency: 'USD',
+      width: '150px',
+      align: 'right',
+    })
+  }
+
+  return cols
+})
 const movementColumns: DataTableColumn<ReportMovement>[] = [
   { key: 'date', title: 'Fecha', width: '150px', sortable: true },
   { key: 'type', title: 'Tipo', width: '90px' },
