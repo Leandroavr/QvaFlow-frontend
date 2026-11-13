@@ -485,14 +485,16 @@ describe('Módulo de Inventario y Almacenes (Pruebas Unitarias)', () => {
         title: string
         align?: string
         width?: string
+        minWidth?: string
         currency?: string
       }>
 
+      const codeCol = columns.find((c) => c.key === 'productCode')
+      const prodCol = columns.find((c) => c.key === 'productName')
+      const locCol = columns.find((c) => c.key === 'warehouseName')
       const qtyCol = columns.find((c) => c.key === 'quantity')
       const costCol = columns.find((c) => c.key === 'cost')
       const priceCol = columns.find((c) => c.key === 'price')
-      const locCol = columns.find((c) => c.key === 'warehouseName')
-      const codeCol = columns.find((c) => c.key === 'productCode')
       const statusCol = columns.find((c) => c.key === 'status')
 
       // Alineación a la derecha de las tres columnas numéricas
@@ -500,13 +502,15 @@ describe('Módulo de Inventario y Almacenes (Pruebas Unitarias)', () => {
       expect(costCol?.align).toBe('right')
       expect(priceCol?.align).toBe('right')
 
-      // Anchos mínimos que garantizan no colisión ni solape
-      expect(qtyCol?.width).toBe('150px')
-      expect(costCol?.width).toBe('120px')
-      expect(priceCol?.width).toBe('120px')
-      expect(locCol?.width).toBe('220px')
-      expect(codeCol?.width).toBe('120px')
-      expect(statusCol?.width).toBe('120px')
+      // Anchos configurados con presupuesto fijo <= 780px y producto flexible
+      expect(codeCol?.width).toBe('110px')
+      expect(prodCol?.minWidth).toBe('200px')
+      expect(locCol?.width).toBe('180px')
+      expect(qtyCol?.width).toBe('130px')
+      expect(costCol?.width).toBe('100px')
+      expect(priceCol?.width).toBe('100px')
+      expect(statusCol?.width).toBe('104px')
+      expect(statusCol?.minWidth).toBe('104px')
 
       // Verificar cabeceras renderizadas en la tabla
       const ths = wrapper.findAll('th')
