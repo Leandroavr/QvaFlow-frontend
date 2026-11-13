@@ -739,7 +739,8 @@ export class MockReportsService implements ReportsService {
     await this.delay()
     this.ensureViewPermission()
 
-    const limit = limitArg ?? query?.limit ?? 5
+    const topQuery = (query || {}) as TopProductsQueryParams & Partial<ReportQuery>
+    const limit = limitArg ?? topQuery.limit ?? 5
     if (typeof limit !== 'number' || !Number.isInteger(limit) || limit < 1 || limit > 50) {
       throw new ApiError(
         {
@@ -751,8 +752,8 @@ export class MockReportsService implements ReportsService {
       )
     }
 
-    const desde = query?.from || query?.desde
-    const hasta = query?.to || query?.hasta
+    const desde = topQuery.from || topQuery.desde
+    const hasta = topQuery.to || topQuery.hasta
     const range = this.parseDateRange(desde, hasta)
     const filtered = this.filterMovements(query, range)
 
@@ -838,7 +839,8 @@ export class MockReportsService implements ReportsService {
     await this.delay()
     this.ensureViewPermission()
 
-    const days = daysArg ?? query?.days ?? 30
+    const idleQuery = (query || {}) as IdleProductsQueryParams & Partial<ReportQuery>
+    const days = daysArg ?? idleQuery.days ?? 30
     if (typeof days !== 'number' || !Number.isInteger(days) || days < 1 || days > 365) {
       throw new ApiError(
         {
@@ -850,10 +852,10 @@ export class MockReportsService implements ReportsService {
       )
     }
 
-    const page = Math.max(1, query?.page ?? 1)
-    const pageSize = Math.max(1, query?.pageSize ?? (query as any)?.perPage ?? 10)
-    const sort = query?.sort ?? 'daysWithoutSale'
-    const order = query?.order ?? 'desc'
+    const page = Math.max(1, idleQuery.page ?? 1)
+    const pageSize = Math.max(1, idleQuery.pageSize ?? idleQuery.perPage ?? 10)
+    const sort = idleQuery.sort ?? 'daysWithoutSale'
+    const order = idleQuery.order ?? 'desc'
 
     const canViewCost = this.hasCostPermission()
     const nowTime = this.referenceDate.getTime()

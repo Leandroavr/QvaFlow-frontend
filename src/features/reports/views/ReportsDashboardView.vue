@@ -535,11 +535,111 @@
 
         <!-- Pestaña 2: Más vendidos (SOLO en DEV) -->
         <template v-if="isDev" #top-selling>
-          <div class="p-6" data-test="tab-top-selling-content">
-            <EmptyState
-              title="Próximo paso"
-              description="El ranking de productos más vendidos por unidades e ingresos se integrará en la siguiente fase."
-            />
+          <div class="space-y-4 pt-2" data-test="tab-top-selling-content">
+            <!-- Barra con selector de límite y contador -->
+            <div class="flex items-center justify-between gap-4">
+              <div class="flex items-center gap-2">
+                <label for="top-products-limit" class="text-xs font-medium text-content-secondary">
+                  Mostrar:
+                </label>
+                <div class="w-32">
+                  <BaseSelect
+                    id="top-products-limit"
+                    :model-value="topLimit"
+                    :options="topLimitOptions"
+                    density="compact"
+                    aria-label="Cantidad de productos más vendidos"
+                    data-test="top-products-limit-select"
+                    @update:model-value="handleTopLimitChange"
+                  />
+                </div>
+              </div>
+              <span class="text-xs font-medium text-content-muted" data-test="top-products-count">
+                {{ topProductsCountText }}
+              </span>
+            </div>
+
+            <!-- Tabla de Más Vendidos -->
+            <DataTable
+              mode="client"
+              :data="topProducts"
+              :columns="topColumns"
+              :loading="topProductsLoading"
+              :error="topProductsError"
+              :pagination="false"
+              empty-title="Sin productos vendidos"
+              empty-description="No se registraron ventas en el período seleccionado"
+              row-key="productId"
+              :fixed-layout="true"
+              data-test="top-products-table"
+              @retry="retryTopProducts"
+            >
+              <!-- 1. Posición / Ranking -->
+              <template #cell-rank="{ index }">
+                <span class="font-mono text-xs font-semibold text-content-muted">
+                  {{ index + 1 }}
+                </span>
+              </template>
+
+              <!-- 2. Producto: flexible, min 200, truncate con title -->
+              <template #cell-name="{ row }">
+                <div class="min-w-0 max-w-full">
+                  <div
+                    class="truncate text-xs font-semibold text-content-primary"
+                    :title="row.name"
+                  >
+                    {{ row.name }}
+                  </div>
+                  <div
+                    class="truncate text-[10px] text-content-muted"
+                    :title="`${row.code} • ${row.category}`"
+                  >
+                    {{ row.code }} • {{ row.category }}
+                  </div>
+                </div>
+              </template>
+
+              <!-- 3. Unidades (130, derecha) -->
+              <template #cell-unitsSold="{ value }">
+                <span class="font-mono text-xs font-semibold text-content-primary">
+                  {{ formatDecimalAmount(value) }}
+                </span>
+              </template>
+
+              <!-- 4. Ingresos con USD en segunda línea (140, derecha) -->
+              <template #cell-revenue="{ value }">
+                <span class="font-mono text-xs font-semibold text-content-primary">
+                  {{ formatDecimalAmount(value) }}
+                </span>
+              </template>
+
+              <!-- 5. Barra de rotación con div + tokens, width style, role="progressbar" con aria-valuenow/min/max y aria-label, y el porcentaje en texto al lado -->
+              <template #cell-rotationPercent="{ row }">
+                <div class="flex items-center gap-2">
+                  <div
+                    class="h-2 flex-1 overflow-hidden rounded-full bg-surface-sunken"
+                    role="progressbar"
+                    :aria-valuenow="row.rotationPercent"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    :aria-label="`Rotación de ${row.name}: ${row.rotationPercent}%`"
+                  >
+                    <div
+                      class="h-full rounded-full"
+                      :style="{
+                        width: `${Math.min(100, Math.max(0, Number(row.rotationPercent)))}%`,
+                        backgroundColor: 'var(--chart-1)',
+                      }"
+                    />
+                  </div>
+                  <span
+                    class="w-14 shrink-0 text-right font-mono text-xs font-medium text-content-secondary"
+                  >
+                    {{ row.rotationPercent }}%
+                  </span>
+                </div>
+              </template>
+            </DataTable>
           </div>
         </template>
 
@@ -700,10 +800,11 @@ import EmptyState from '@/shared/ui/EmptyState.vue'
 import BaseButton from '@/shared/ui/BaseButton.vue'
 import { useReports } from '../composables/useReports'
 import { useReportMovements } from '../composables/useReportMovements'
+import { useTopProducts } from '../composables/useTopProducts'
 import { formatMoney } from '@/shared/utils/formatMoney'
 import { isPositiveDecimal } from '@/shared/utils/decimal'
 import { formatPaymentMethod } from '../constants'
-import type { ReportPeriodPreset, ReportMovement } from '../types'
+import type { ReportPeriodPreset, ReportMovement, TopProduct } from '../types'
 
 const isDev = import.meta.env.DEV
 
@@ -819,7 +920,42 @@ const {
   activeTab,
 })
 
-// Configuración de la Tabla de Movimientos
+const {
+  limit: topLimit,
+  setLimit: setTopLimit,
+  products: topProducts,
+  loading: topProductsLoading,
+  error: topProductsError,
+  retry: retryTopProducts,
+} = useTopProducts({
+  desde,
+  hasta,
+  categoryId,
+  activeTab,
+})
+
+const topLimitOptions = [
+  { value: 5, label: 'Top 5' },
+  { value: 10, label: 'Top 10' },
+  { value: 20, label: 'Top 20' },
+]
+
+const handleTopLimitChange = (val: string | number | null) => {
+  if (val) setTopLimit(Number(val))
+}
+
+const topProductsCountText = computed(() => {
+  const count = topProducts.value.length
+  return `${count} ${count === 1 ? 'producto' : 'productos'}`
+})
+
+const topColumns: DataTableColumn<TopProduct>[] = [
+  { key: 'rank', title: '#', width: '56px', align: 'center' },
+  { key: 'name', title: 'Producto', minWidth: '200px' },
+  { key: 'unitsSold', title: 'Unidades', width: '130px', align: 'right' },
+  { key: 'revenue', title: 'Ingresos', currency: 'USD', width: '140px', align: 'right' },
+  { key: 'rotationPercent', title: 'Rotación', width: '220px' },
+]
 const movementColumns: DataTableColumn<ReportMovement>[] = [
   { key: 'date', title: 'Fecha', width: '150px', sortable: true },
   { key: 'type', title: 'Tipo', width: '90px' },
