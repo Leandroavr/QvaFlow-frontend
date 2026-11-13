@@ -117,11 +117,32 @@ export interface CategorySales {
  * Registro de rendimiento para los productos de mayor rotación / recaudación.
  */
 export interface TopProduct {
-  productCode: string
-  productName: string
-  categoryName: string
+  productId: string
+  code: string
+  name: string
+  category: string
   unitsSold: DecimalString
   revenue: DecimalString
+  rotationPercent: DecimalString // 0-100 decimal string (ej: '100.00', '75.50')
+
+  // Compatibilidad con contratos previos
+  productCode?: string
+  productName?: string
+  categoryName?: string
+}
+
+/**
+ * Parámetros de consulta para el ranking de productos más vendidos.
+ */
+export interface TopProductsQueryParams {
+  from?: string
+  to?: string
+  limit?: number
+  // Aliases de compatibilidad
+  desde?: string
+  hasta?: string
+  categoryId?: string | number
+  warehouseCode?: string
 }
 
 /**
@@ -129,13 +150,48 @@ export interface TopProduct {
  * El campo tiedUpCapital es sensible y solo se incluye con `products.view_cost`.
  */
 export interface IdleProduct {
-  productCode: string
-  productName: string
-  warehouseName: string
-  stock: DecimalString
-  daysWithoutSale: number
-  /** Capital retenido en stock calculado como stock * costPrice (opcional, sensible) */
+  productId: string
+  code: string
+  name: string
+  category: string
+  stockQuantity: DecimalString
+  lastSaleDate: string | null
+  daysWithoutSale: number | null
+  /** Capital retenido en stock calculado como stock * costPrice en USD (opcional, sensible) */
   tiedUpCapital?: DecimalString
+
+  // Compatibilidad con contratos previos
+  stock?: DecimalString
+  productCode?: string
+  productName?: string
+  warehouseName?: string
+}
+
+/**
+ * Parámetros de consulta para productos ociosos.
+ */
+export interface IdleProductsQueryParams {
+  days?: number
+  page?: number
+  pageSize?: number
+  sort?: string
+  order?: 'asc' | 'desc'
+  warehouseCode?: string
+  categoryId?: string | number
+  // Aliases de compatibilidad
+  perPage?: number
+}
+
+/**
+ * Respuesta paginada del endpoint de productos ociosos.
+ */
+export interface IdleProductsResponse {
+  items: IdleProduct[]
+  total: number
+  page?: number
+  pageSize?: number
+  /** Suma del capital retenido de todos los productos ociosos (opcional, requiere products.view_cost) */
+  totalTiedUpCapital?: DecimalString
 }
 
 /**

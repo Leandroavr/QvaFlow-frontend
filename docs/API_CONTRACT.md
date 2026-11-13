@@ -1186,9 +1186,9 @@ Ranking de productos con mayor rotación comercial en unidades o recaudación.
 
 - **Permiso requerido:** `reports.view`.
 - **Parámetros de consulta (Query Params):**
-  - `limit` _(integer, opcional)_: Límite de registros a retornar (por defecto `5`, máximo `50`).
-  - `desde` _(string, opcional)_: Fecha de inicio (`YYYY-MM-DD`).
-  - `hasta` _(string, opcional)_: Fecha de fin (`YYYY-MM-DD`).
+  - `limit` _(integer, opcional)_: Límite de registros a retornar (por defecto `5`, rango permitido `1` a `50`).
+  - `desde` / `from` _(string, opcional)_: Fecha de inicio (`YYYY-MM-DD`).
+  - `hasta` / `to` _(string, opcional)_: Fecha de fin (`YYYY-MM-DD`).
   - `categoryId` _(string|number, opcional)_: Filtro por categoría.
   - `warehouseCode` _(string, opcional)_: Filtro por almacén.
 
@@ -1204,45 +1204,56 @@ Accept: application/json
 ```json
 [
   {
-    "productCode": "PRD-001",
-    "productName": "Refresco Ciego Montero 330ml",
-    "categoryName": "Bebidas",
+    "productId": "PRD-001",
+    "code": "PRD-001",
+    "name": "Refresco Ciego Montero 330ml",
+    "category": "Bebidas",
     "unitsSold": "145.00",
-    "revenue": "12325.00"
+    "revenue": "12325.00",
+    "rotationPercent": "100.00"
   },
   {
-    "productCode": "PRD-002",
-    "productName": "Cerveza Cristal 355ml",
-    "categoryName": "Bebidas",
+    "productId": "PRD-002",
+    "code": "PRD-002",
+    "name": "Cerveza Cristal 355ml",
+    "category": "Bebidas",
     "unitsSold": "120.00",
-    "revenue": "26400.00"
+    "revenue": "26400.00",
+    "rotationPercent": "82.76"
   },
   {
-    "productCode": "PRD-005",
-    "productName": "Arroz Criollo Especial 1kg",
-    "categoryName": "Alimentos",
+    "productId": "PRD-005",
+    "code": "PRD-005",
+    "name": "Arroz Criollo Especial 1kg",
+    "category": "Alimentos",
     "unitsSold": "85.00",
-    "revenue": "17850.00"
+    "revenue": "17850.00",
+    "rotationPercent": "58.62"
   },
   {
-    "productCode": "PRD-007",
-    "productName": "Aceite Vegetal Cocinero 1L",
-    "categoryName": "Alimentos",
+    "productId": "PRD-007",
+    "code": "PRD-007",
+    "name": "Aceite Vegetal Cocinero 1L",
+    "category": "Alimentos",
     "unitsSold": "48.00",
-    "revenue": "31200.00"
+    "revenue": "31200.00",
+    "rotationPercent": "33.10"
   },
   {
-    "productCode": "PRD-014",
-    "productName": "Ron Havana Club 7 Años 700ml",
-    "categoryName": "Bebidas",
+    "productId": "PRD-014",
+    "code": "PRD-014",
+    "name": "Ron Havana Club 7 Años 700ml",
+    "category": "Bebidas",
     "unitsSold": "32.00",
-    "revenue": "46400.00"
+    "revenue": "46400.00",
+    "rotationPercent": "22.07"
   }
 ]
 ```
+> **Nota de cálculo de rotación (PROPUESTA - Decisión A):** Dado que el legado no definía fórmula para la rotación porcentual ante límites dinámicos, se propone calcularla en servidor como porcentaje de `unitsSold` respecto al producto con más unidades comercializadas del resultado obtenido (`(unitsSold / maxUnitsSold) * 100`).
 
 #### Errores Posibles
-- `400 Bad Request` (`INVALID_LIMIT`, `INVALID_DATE_RANGE`).
+- `400 Bad Request` (`INVALID_LIMIT`, `INVALID_DATE_RANGE`, `INVALID_DATE_FORMAT`).
 - `403 Forbidden` (`FORBIDDEN`).
 - `500 Internal Server Error` (`SERVER_ERROR`).
 
@@ -1252,15 +1263,19 @@ Accept: application/json
 
 Productos con existencias en inventario que no han registrado ventas en un período superior a un umbral de días.
 
-- **Permiso requerido:** `reports.view` (`tiedUpCapital` ausente sin `products.view_cost`).
+- **Permiso requerido:** `reports.view` (`tiedUpCapital` y `totalTiedUpCapital` ausentes sin `products.view_cost`).
 - **Parámetros de consulta (Query Params):**
-  - `days` _(integer, opcional)_: Umbral mínimo de días de inactividad (por defecto `30`).
+  - `days` _(integer, opcional)_: Umbral mínimo de días de inactividad (por defecto `30`, rango permitido `1` a `365`).
+  - `page` _(integer, opcional)_: Número de página (por defecto `1`).
+  - `pageSize` _(integer, opcional)_: Tamaño de página (por defecto `10`).
+  - `sort` _(string, opcional)_: Campo de ordenación (por defecto `daysWithoutSale`).
+  - `order` _(string, opcional)_: Dirección de ordenación (`asc` o `desc`, por defecto `desc`).
   - `warehouseCode` _(string, opcional)_: Filtrar por almacén.
   - `categoryId` _(string|number, opcional)_: Filtrar por categoría.
 
 #### Ejemplo de Petición HTTP
 ```http
-GET /api/reports/idle-products?days=30&warehouseCode=wh-central HTTP/1.1
+GET /api/reports/idle-products?days=30&page=1&pageSize=10&sort=daysWithoutSale&order=desc HTTP/1.1
 Host: localhost:8000
 Authorization: Bearer <accessToken>
 Accept: application/json
@@ -1268,32 +1283,81 @@ Accept: application/json
 
 #### Ejemplo de Respuesta CON `products.view_cost` (200 OK)
 ```json
-[
-  {
-    "productCode": "PRD-089",
-    "productName": "Vino Tinto Dulce Reserva 750ml",
-    "warehouseName": "Almacén Central",
-    "stock": "35.00",
-    "daysWithoutSale": 48,
-    "tiedUpCapital": "18200.00"
-  },
-  {
-    "productCode": "PRD-102",
-    "productName": "Galletas Integrales Dietéticas 250g",
-    "warehouseName": "Almacén Central",
-    "stock": "60.00",
-    "daysWithoutSale": 34,
-    "tiedUpCapital": "5400.00"
-  }
-]
+{
+  "items": [
+    {
+      "productId": "PRD-089",
+      "code": "PRD-089",
+      "name": "Vino Tinto Dulce Reserva 750ml",
+      "category": "Bebidas",
+      "stockQuantity": "35.00",
+      "lastSaleDate": "2026-09-15T14:30:00Z",
+      "daysWithoutSale": 48,
+      "tiedUpCapital": "18200.00"
+    },
+    {
+      "productId": "PRD-102",
+      "code": "PRD-102",
+      "name": "Galletas Integrales Dietéticas 250g",
+      "category": "Alimentos",
+      "stockQuantity": "60.00",
+      "lastSaleDate": "2026-09-29T10:15:00Z",
+      "daysWithoutSale": 34,
+      "tiedUpCapital": "5400.00"
+    },
+    {
+      "productId": "PRD-105",
+      "code": "PRD-105",
+      "name": "Harina de Maíz Fina 500g",
+      "category": "Alimentos",
+      "stockQuantity": "20.00",
+      "lastSaleDate": null,
+      "daysWithoutSale": null,
+      "tiedUpCapital": "1200.00"
+    }
+  ],
+  "total": 3,
+  "page": 1,
+  "pageSize": 10,
+  "totalTiedUpCapital": "24800.00"
+}
+```
+
+#### Ejemplo de Respuesta SIN `products.view_cost` (200 OK)
+```json
+{
+  "items": [
+    {
+      "productId": "PRD-089",
+      "code": "PRD-089",
+      "name": "Vino Tinto Dulce Reserva 750ml",
+      "category": "Bebidas",
+      "stockQuantity": "35.00",
+      "lastSaleDate": "2026-09-15T14:30:00Z",
+      "daysWithoutSale": 48
+    },
+    {
+      "productId": "PRD-102",
+      "code": "PRD-102",
+      "name": "Galletas Integrales Dietéticas 250g",
+      "category": "Alimentos",
+      "stockQuantity": "60.00",
+      "lastSaleDate": "2026-09-29T10:15:00Z",
+      "daysWithoutSale": 34
+    }
+  ],
+  "total": 2,
+  "page": 1,
+  "pageSize": 10
+}
 ```
 
 #### Errores Posibles
-- `400 Bad Request` (Días no positivos):
+- `400 Bad Request` (`INVALID_DAYS`, `INVALID_PAGE`, `INVALID_PAGE_SIZE`):
   ```json
   {
-    "code": "INVALID_DAYS_PARAM",
-    "message": "El parámetro 'days' debe ser un entero positivo mayor que cero."
+    "code": "INVALID_DAYS",
+    "message": "El parámetro 'days' debe ser un número entero entre 1 y 365."
   }
   ```
 - `403 Forbidden` (`FORBIDDEN`).

@@ -7,7 +7,10 @@ import type {
   FinanceTimeSeries,
   CategorySales,
   TopProduct,
+  TopProductsQueryParams,
   IdleProduct,
+  IdleProductsQueryParams,
+  IdleProductsResponse,
   ReportMovement,
   ReportMovementQueryParams,
 } from '@/features/reports/types'
@@ -63,29 +66,55 @@ export class HttpReportsService implements ReportsService {
   }
 
   /**
-   * TODO: [Backend Symfony] Endpoint GET /reports/top-products
-   * Query params: { desde?, hasta?, limit?, warehouseCode? }
+   * Endpoint GET /reports/top-products
+   * Query params: { from?, to?, limit?, categoryId?, warehouseCode? }
    * Response: TopProduct[]
-   * Errors: 400 INVALID_DATE_RANGE / DATE_RANGE_EXCEEDED, 403 FORBIDDEN
+   * Errors: 400 INVALID_LIMIT / INVALID_DATE_RANGE, 403 FORBIDDEN
    */
-  async getTopProducts(query?: Partial<ReportQuery>, limit = 5): Promise<TopProduct[]> {
+  async getTopProducts(
+    query?: TopProductsQueryParams | Partial<ReportQuery>,
+    limit = 5
+  ): Promise<TopProduct[]> {
+    const params: Record<string, any> = { ...query }
+    if (params.from && !params.desde) params.desde = params.from
+    if (params.to && !params.hasta) params.hasta = params.to
+    if (limit !== undefined && params.limit === undefined) params.limit = limit
     const response = await httpClient.get<TopProduct[]>('/reports/top-products', {
-      params: { ...query, limit },
+      params,
     })
     return response.data
   }
 
   /**
-   * TODO: [Backend Symfony] Endpoint GET /reports/idle-products
-   * Query params: { days?, warehouseCode? }
-   * Response: IdleProduct[]
-   * Errors: 403 FORBIDDEN
+   * Endpoint GET /reports/idle-products
+   * Query params: { days?, page?, pageSize?, sort?, order?, warehouseCode?, categoryId? }
+   * Response: IdleProductsResponse
+   * Errors: 400 INVALID_DAYS, 403 FORBIDDEN
    */
-  async getIdleProducts(query?: Partial<ReportQuery>, days = 30): Promise<IdleProduct[]> {
-    const response = await httpClient.get<IdleProduct[]>('/reports/idle-products', {
-      params: { ...query, days },
-    })
-    return response.data
+  async getIdleProducts(
+    query?: IdleProductsQueryParams | Partial<ReportQuery>,
+    days = 30
+  ): Promise<IdleProductsResponse & IdleProduct[]> {
+    const params: Record<string, any> = { ...query }
+    if (days !== undefined && params.days === undefined) params.days = days
+    const response = await httpClient.get<IdleProductsResponse | IdleProduct[]>(
+      '/reports/idle-products',
+      {
+        params,
+      }
+    )
+    const data = response.data
+    if (Array.isArray(data)) {
+      const items = data
+      return Object.assign([...items], {
+        items,
+        total: items.length,
+        page: 1,
+        pageSize: items.length,
+      }) as unknown as IdleProductsResponse & IdleProduct[]
+    }
+    const items = data.items || []
+    return Object.assign([...items], data) as unknown as IdleProductsResponse & IdleProduct[]
   }
 
   /**

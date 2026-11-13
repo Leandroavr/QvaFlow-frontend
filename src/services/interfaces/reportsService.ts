@@ -6,7 +6,10 @@ import type {
   FinanceTimeSeries,
   CategorySales,
   TopProduct,
+  TopProductsQueryParams,
   IdleProduct,
+  IdleProductsQueryParams,
+  IdleProductsResponse,
   ReportMovement,
   ReportMovementQueryParams,
 } from '@/features/reports/types'
@@ -34,12 +37,18 @@ export interface ReportsService {
   /**
    * Ranking de productos de mayor rotación por unidades comercializadas.
    */
-  getTopProducts(query?: Partial<ReportQuery>, limit?: number): Promise<TopProduct[]>
+  getTopProducts(
+    query?: TopProductsQueryParams | Partial<ReportQuery>,
+    limit?: number
+  ): Promise<TopProduct[]>
 
   /**
-   * Listado de productos en stock sin ventas en los últimos N días.
+   * Listado paginado de productos en stock sin ventas en los últimos N días.
    */
-  getIdleProducts(query?: Partial<ReportQuery>, days?: number): Promise<IdleProduct[]>
+  getIdleProducts(
+    query?: IdleProductsQueryParams | Partial<ReportQuery>,
+    days?: number
+  ): Promise<IdleProductsResponse & IdleProduct[]>
 
   /**
    * Auditoría detallada y paginada de movimientos (ventas y compras).

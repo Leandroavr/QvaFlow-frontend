@@ -9,7 +9,10 @@ import type {
   FinanceTimeSeries,
   CategorySales,
   TopProduct,
+  TopProductsQueryParams,
   IdleProduct,
+  IdleProductsQueryParams,
+  IdleProductsResponse,
   ReportMovement,
   ReportMovementQueryParams,
   MarginHealthStatus,
@@ -320,12 +323,15 @@ export function generateSeedMovements(referenceDate = new Date()): InternalMockM
 
 export class MockReportsService implements ReportsService {
   private movements: InternalMockMovement[]
+  private referenceDate: Date
 
   constructor(referenceDate = new Date()) {
+    this.referenceDate = referenceDate
     this.movements = generateSeedMovements(referenceDate)
   }
 
   resetSeedData(referenceDate = new Date()): void {
+    this.referenceDate = referenceDate
     this.movements = generateSeedMovements(referenceDate)
   }
 
@@ -721,34 +727,64 @@ export class MockReportsService implements ReportsService {
   }
 
   /**
-   * Ranking de productos más vendidos.
+   * Ranking de productos de mayor rotación por unidades comercializadas.
+   * Valida limit (1-50, 400 si inválido).
+   * Usa rango from/to (o desde/hasta).
+   * Nunca devuelve datos posteriores a hoy.
    */
-  async getTopProducts(query?: Partial<ReportQuery>, limit = 5): Promise<TopProduct[]> {
+  async getTopProducts(
+    query?: TopProductsQueryParams | Partial<ReportQuery>,
+    limitArg?: number
+  ): Promise<TopProduct[]> {
     await this.delay()
     this.ensureViewPermission()
 
-    const range = this.parseDateRange(query?.desde, query?.hasta)
+    const limit = limitArg ?? query?.limit ?? 5
+    if (typeof limit !== 'number' || !Number.isInteger(limit) || limit < 1 || limit > 50) {
+      throw new ApiError(
+        {
+          code: 'INVALID_LIMIT',
+          message: 'El parámetro limit debe ser un número entero entre 1 y 50',
+          details: { limit: ['El límite debe estar entre 1 y 50'] },
+        },
+        400
+      )
+    }
+
+    const desde = query?.from || query?.desde
+    const hasta = query?.to || query?.hasta
+    const range = this.parseDateRange(desde, hasta)
     const filtered = this.filterMovements(query, range)
 
     const prodMap = new Map<
       string,
       {
-        productCode: string
-        productName: string
-        categoryName: string
+        productId: string
+        code: string
+        name: string
+        category: string
         unitsSold: string
         revenue: string
       }
     >()
 
+    const maxIso = this.referenceDate.toISOString()
+
     for (const mov of filtered) {
       if (mov.type !== 'SALE') continue
+      if (mov.date > maxIso) continue
+
       let entry = prodMap.get(mov.productCode)
       if (!entry) {
+        const catProd = SEED_CATALOG_PRODUCTS.find((p) => p.code === mov.productCode)
+        const pId =
+          (catProd as any)?.id !== undefined ? String((catProd as any).id) : mov.productCode
+
         entry = {
-          productCode: mov.productCode,
-          productName: mov.description.replace(/^Venta POS - /, ''),
-          categoryName: mov.categoryName,
+          productId: pId,
+          code: mov.productCode,
+          name: mov.description.replace(/^Venta POS - /, ''),
+          category: mov.categoryName,
           unitsSold: '0.00',
           revenue: '0.00',
         }
@@ -764,66 +800,186 @@ export class MockReportsService implements ReportsService {
       return compareDecimals(b.revenue, a.revenue)
     })
 
-    return sorted.slice(0, Math.max(1, limit))
+    const sliced = sorted.slice(0, limit)
+    const maxUnits = sliced.length > 0 ? sliced[0].unitsSold : '0.00'
+
+    return sliced.map((item) => {
+      const rotationPercent =
+        compareDecimals(maxUnits, '0.00') > 0
+          ? calculatePercentage(item.unitsSold, maxUnits)
+          : '0.00'
+
+      return {
+        productId: item.productId,
+        code: item.code,
+        name: item.name,
+        category: item.category,
+        unitsSold: item.unitsSold,
+        revenue: item.revenue,
+        rotationPercent,
+        // Compatibilidad hacia atrás
+        productCode: item.code,
+        productName: item.name,
+        categoryName: item.category,
+      }
+    })
   }
 
   /**
    * Productos inmovilizados o sin ventas recientes con stock > 0.
+   * Valida days (1-365, 400 si inválido).
+   * Orden por defecto daysWithoutSale desc.
+   * Paginado con total y totalTiedUpCapital opcional (solo con products.view_cost).
    */
-  async getIdleProducts(query?: Partial<ReportQuery>, days = 30): Promise<IdleProduct[]> {
+  async getIdleProducts(
+    query?: IdleProductsQueryParams | Partial<ReportQuery>,
+    daysArg?: number
+  ): Promise<IdleProductsResponse & IdleProduct[]> {
     await this.delay()
     this.ensureViewPermission()
 
+    const days = daysArg ?? query?.days ?? 30
+    if (typeof days !== 'number' || !Number.isInteger(days) || days < 1 || days > 365) {
+      throw new ApiError(
+        {
+          code: 'INVALID_DAYS',
+          message: 'El parámetro days debe ser un número entero entre 1 y 365',
+          details: { days: ['Los días deben ser un entero entre 1 y 365'] },
+        },
+        400
+      )
+    }
+
+    const page = Math.max(1, query?.page ?? 1)
+    const pageSize = Math.max(1, query?.pageSize ?? (query as any)?.perPage ?? 10)
+    const sort = query?.sort ?? 'daysWithoutSale'
+    const order = query?.order ?? 'desc'
+
     const canViewCost = this.hasCostPermission()
-    const nowTime = query?.hasta
-      ? new Date(`${query.hasta}T23:59:59Z`).getTime()
-      : new Date().getTime()
+    const nowTime = this.referenceDate.getTime()
+    const maxIso = this.referenceDate.toISOString()
 
-    const idleProducts: IdleProduct[] = []
+    const idleList: IdleProduct[] = []
 
-    for (const prod of SEED_CATALOG_PRODUCTS) {
+    for (let idx = 0; idx < SEED_CATALOG_PRODUCTS.length; idx++) {
+      const prod = SEED_CATALOG_PRODUCTS[idx]
       // Condición: stock > 0
       if (compareDecimals(prod.stock, '0.00') <= 0) {
         continue
       }
 
-      // Buscar la venta más reciente de este producto anterior o igual a nowTime
+      // Filtro almacén si aplica
+      if (query?.warehouseCode && prod.warehouseCode !== query.warehouseCode) {
+        continue
+      }
+
+      // Filtro categoría si aplica
+      if (
+        query?.categoryId !== undefined &&
+        query.categoryId !== '' &&
+        query.categoryId !== 'ALL' &&
+        String(prod.categoryId) !== String(query.categoryId)
+      ) {
+        continue
+      }
+
+      // Buscar ventas válidas del producto (hasta la fecha de referencia / ahora)
       const sales = this.movements.filter(
         (m) =>
-          m.productCode === prod.code && m.type === 'SALE' && new Date(m.date).getTime() <= nowTime
+          m.productCode === prod.code &&
+          m.type === 'SALE' &&
+          m.date <= maxIso &&
+          new Date(m.date).getTime() <= nowTime
       )
 
-      let daysWithoutSale = 999
+      let lastSaleDate: string | null = null
+      let daysWithoutSale: number | null = null
+
       if (sales.length > 0) {
-        // Ordenar fecha descendente
+        // Ordenar desc por fecha
         sales.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        const lastSaleTime = new Date(sales[0].date).getTime()
+        lastSaleDate = sales[0].date
+        const lastSaleTime = new Date(lastSaleDate).getTime()
         daysWithoutSale = Math.max(0, Math.floor((nowTime - lastSaleTime) / (1000 * 60 * 60 * 24)))
       }
 
-      if (daysWithoutSale >= days) {
-        if (!canViewCost) {
-          idleProducts.push({
-            productCode: prod.code,
-            productName: prod.name,
-            warehouseName: prod.warehouseName,
-            stock: prod.stock,
-            daysWithoutSale,
-          })
-        } else {
-          idleProducts.push({
-            productCode: prod.code,
-            productName: prod.name,
-            warehouseName: prod.warehouseName,
-            stock: prod.stock,
-            daysWithoutSale,
-            tiedUpCapital: multiplyDecimals(prod.stock, prod.costUSD),
-          })
+      // Es ocioso si nunca se ha vendido (null) o si daysWithoutSale >= days
+      const isIdle = daysWithoutSale === null || daysWithoutSale >= days
+
+      if (isIdle) {
+        const pId = (prod as any).id !== undefined ? String((prod as any).id) : `prod-${idx + 1}`
+        const item: IdleProduct = {
+          productId: pId,
+          code: prod.code,
+          name: prod.name,
+          category: prod.categoryName,
+          stockQuantity: prod.stock,
+          lastSaleDate,
+          daysWithoutSale,
+          ...(canViewCost ? { tiedUpCapital: multiplyDecimals(prod.stock, prod.costUSD) } : {}),
+          // Compatibilidad hacia atrás
+          stock: prod.stock,
+          productCode: prod.code,
+          productName: prod.name,
+          warehouseName: prod.warehouseName,
         }
+        idleList.push(item)
       }
     }
 
-    return idleProducts.sort((a, b) => b.daysWithoutSale - a.daysWithoutSale)
+    // Calcular totalTiedUpCapital antes de paginar (suma de todos los ociosos)
+    let totalTiedUpCapital: DecimalString | undefined = undefined
+    if (canViewCost) {
+      let sum = '0.00'
+      for (const item of idleList) {
+        if (item.tiedUpCapital) {
+          sum = addDecimals(sum, item.tiedUpCapital)
+        }
+      }
+      totalTiedUpCapital = sum
+    }
+
+    // Ordenación
+    idleList.sort((a, b) => {
+      let cmp = 0
+      if (sort === 'daysWithoutSale') {
+        if (a.daysWithoutSale === null && b.daysWithoutSale === null) cmp = 0
+        else if (a.daysWithoutSale === null) cmp = 1
+        else if (b.daysWithoutSale === null) cmp = -1
+        else cmp = a.daysWithoutSale - b.daysWithoutSale
+      } else if (sort === 'stockQuantity' || sort === 'stock') {
+        cmp = compareDecimals(a.stockQuantity, b.stockQuantity)
+      } else if (sort === 'tiedUpCapital' && canViewCost) {
+        cmp = compareDecimals(a.tiedUpCapital || '0.00', b.tiedUpCapital || '0.00')
+      } else if (sort === 'code' || sort === 'productCode') {
+        cmp = a.code.localeCompare(b.code)
+      } else if (sort === 'name' || sort === 'productName') {
+        cmp = a.name.localeCompare(b.name)
+      } else if (sort === 'category') {
+        cmp = a.category.localeCompare(b.category)
+      } else if (sort === 'lastSaleDate') {
+        if (!a.lastSaleDate && !b.lastSaleDate) cmp = 0
+        else if (!a.lastSaleDate) cmp = -1
+        else if (!b.lastSaleDate) cmp = 1
+        else cmp = new Date(a.lastSaleDate).getTime() - new Date(b.lastSaleDate).getTime()
+      }
+
+      return order === 'desc' ? -cmp : cmp
+    })
+
+    const total = idleList.length
+    const startIndex = (page - 1) * pageSize
+    const pagedItems = idleList.slice(startIndex, startIndex + pageSize)
+
+    const response = Object.assign([...pagedItems], {
+      items: pagedItems,
+      total,
+      page,
+      pageSize,
+      ...(canViewCost ? { totalTiedUpCapital } : {}),
+    })
+
+    return response as unknown as IdleProductsResponse & IdleProduct[]
   }
 
   /**
