@@ -683,7 +683,7 @@
             >
               <StatCard
                 label="Capital inmovilizado"
-                :value="formatAmount(idleTotalTiedUpCapital)"
+                :value="`${formatAmount(idleTotalTiedUpCapital)} USD`"
                 description="Total retenido en stock sin rotación"
                 :loading="idleLoading"
                 :icon="DollarSign"
@@ -722,9 +722,14 @@
 
               <!-- 2. Producto (flexible, min 200) -->
               <template #cell-name="{ value }">
-                <span class="truncate text-xs font-semibold text-content-primary" :title="value">
-                  {{ value }}
-                </span>
+                <div class="min-w-0 max-w-full">
+                  <span
+                    class="block min-w-0 truncate text-xs font-semibold text-content-primary"
+                    :title="value"
+                  >
+                    {{ value }}
+                  </span>
+                </div>
               </template>
 
               <!-- 3. Categoría -->
@@ -751,13 +756,11 @@
                 </span>
               </template>
 
-              <!-- 6. Días sin venta (160, derecha, ordenable) -->
+              <!-- 6. Días sin venta (150, derecha, ordenable) -->
               <template #cell-daysWithoutSale="{ value }">
-                <div class="text-right font-mono text-xs font-semibold">
-                  <span v-if="value !== null && value !== undefined" class="text-content-primary">
-                    {{ value }} días
-                  </span>
-                  <span v-else class="italic text-content-muted"> Sin ventas </span>
+                <div class="text-right text-xs tabular-nums text-content-primary">
+                  <span v-if="value !== null && value !== undefined">{{ value }}</span>
+                  <span v-else class="text-content-muted">—</span>
                 </div>
               </template>
 
@@ -1122,13 +1125,13 @@ const idleColumns = computed<DataTableColumn<IdleProduct>[]>(() => {
   const cols: DataTableColumn<IdleProduct>[] = [
     { key: 'code', title: 'Código', width: '110px' },
     { key: 'name', title: 'Producto', minWidth: '200px' },
-    { key: 'category', title: 'Categoría', width: '140px' },
-    { key: 'stockQuantity', title: 'Existencias', width: '120px', align: 'right' },
-    { key: 'lastSaleDate', title: 'Última venta', width: '130px' },
+    { key: 'category', title: 'Categoría', width: '120px' },
+    { key: 'stockQuantity', title: 'Existencias', width: '130px', align: 'right' },
+    { key: 'lastSaleDate', title: 'Última venta', width: '140px' },
     {
       key: 'daysWithoutSale',
       title: 'Días sin venta',
-      width: '160px',
+      width: '150px',
       align: 'right',
       sortable: true,
     },
@@ -1139,7 +1142,7 @@ const idleColumns = computed<DataTableColumn<IdleProduct>[]>(() => {
       key: 'tiedUpCapital',
       title: 'Inmovilizado',
       currency: 'USD',
-      width: '150px',
+      width: '130px',
       align: 'right',
     })
   }
