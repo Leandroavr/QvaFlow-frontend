@@ -44,6 +44,7 @@ export default defineConfig(({ mode }) => {
       globals: true,
       environment: 'happy-dom',
       testTimeout: 15000,
+      maxWorkers: 3,
       include: ['src/**/*.{test,spec}.{ts,js}', 'tests/**/*.{test,spec}.{ts,js}'],
     },
   }
