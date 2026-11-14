@@ -47,4 +47,8 @@ export interface InventoryService {
   ): Promise<PaginatedResponse<InventoryAdjustment>>
   getAdjustment(id: Id): Promise<InventoryAdjustment>
   createAdjustment(dto: CreateInventoryAdjustmentDto): Promise<InventoryAdjustment>
+
+  // Operaciones de existencias desde Ventas
+  deductStock(productCode: string, quantity: DecimalString, warehouseCode?: string): Promise<void>
+  restoreStock(productCode: string, quantity: DecimalString, warehouseCode?: string): Promise<void>
 }

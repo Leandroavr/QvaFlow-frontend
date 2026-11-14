@@ -1636,4 +1636,34 @@ export class MockInventoryService implements InventoryService {
     this.adjustments.unshift(newAdjustment)
     return JSON.parse(JSON.stringify(newAdjustment))
   }
+
+  /**
+   * Descuenta stock físico de un producto tras completarse una venta.
+   */
+  async deductStock(productCode: string, quantity: DecimalString, warehouseCode?: string): Promise<void> {
+    const item = this.stock.find(
+      (s) => s.productCode === productCode && (!warehouseCode || s.warehouseCode === warehouseCode)
+    )
+    if (!item) {
+      throw new ApiError(404, 'PRODUCT_NOT_FOUND', `Producto ${productCode} no encontrado en stock.`)
+    }
+    if (compareDecimals(quantity, item.quantity) > 0) {
+      throw new ApiError(409, 'STOCK_INSUFFICIENT', `Existencias insuficientes para ${item.productName}.`, {
+        [productCode]: [`Stock disponible: ${item.quantity} ${item.unit}, solicitado: ${quantity} ${item.unit}`],
+      })
+    }
+    item.quantity = subtractDecimals(item.quantity, quantity)
+  }
+
+  /**
+   * Repone existencias de un producto al almacén tras la anulación de una venta.
+   */
+  async restoreStock(productCode: string, quantity: DecimalString, warehouseCode?: string): Promise<void> {
+    const item = this.stock.find(
+      (s) => s.productCode === productCode && (!warehouseCode || s.warehouseCode === warehouseCode)
+    )
+    if (item) {
+      item.quantity = addDecimals(item.quantity, quantity)
+    }
+  }
 }
