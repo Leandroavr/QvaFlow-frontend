@@ -152,3 +152,50 @@ export function isPositiveDecimal(
   if (!str) return false
   return parseToHundredths(str) > 0n
 }
+
+/**
+ * Redondea un importe o cantidad decimal al entero más cercano (half-up simétrico).
+ * Retorna siempre un DecimalString con 2 decimales estándar ("0.50" -> "1.00", "4.12" -> "4.00").
+ */
+export function roundToInteger(val: DecimalString | number | string): DecimalString {
+  const h = parseToHundredths(val)
+  const isNegative = h < 0n
+  const absH = isNegative ? -h : h
+  const rounded = (absH + 50n) / 100n
+  const resultH = (isNegative ? -rounded : rounded) * 100n
+  return formatFromHundredths(resultH)
+}
+
+/**
+ * Redondea forzadamente hacia arriba (ceil) al entero superior.
+ * Retorna siempre un DecimalString con 2 decimales estándar ("4.12" -> "5.00", "4.00" -> "4.00").
+ */
+export function ceilToInteger(val: DecimalString | number | string): DecimalString {
+  const h = parseToHundredths(val)
+  if (h >= 0n) {
+    const remainder = h % 100n
+    const whole = remainder > 0n ? h / 100n + 1n : h / 100n
+    return formatFromHundredths(whole * 100n)
+  } else {
+    const whole = h / 100n
+    return formatFromHundredths(whole * 100n)
+  }
+}
+
+/**
+ * Retorna el valor máximo entre dos o más cantidades decimales exactas.
+ */
+export function maxDecimal(
+  first: DecimalString | number | string,
+  ...rest: (DecimalString | number | string)[]
+): DecimalString {
+  let maxH = parseToHundredths(first)
+  for (const v of rest) {
+    const h = parseToHundredths(v)
+    if (h > maxH) {
+      maxH = h
+    }
+  }
+  return formatFromHundredths(maxH)
+}
+
