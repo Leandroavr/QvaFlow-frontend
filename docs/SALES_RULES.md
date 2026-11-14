@@ -302,29 +302,35 @@ Implementado en [`src/modules/pos/views/SalesAndShiftsView.vue:497-567, 717-719`
 
 Implementado en [`src/modules/pos/views/SalesAndShiftsView.vue:68-263, 623-764`](../src/modules/pos/views/SalesAndShiftsView.vue):
 
-### 10.1 Problema del Enfoque Legado: Mezcla de Ventas y Cuadres
-En la vista legada [`src/modules/pos/views/SalesAndShiftsView.vue`](../src/modules/pos/views/SalesAndShiftsView.vue), se agruparon en una misma pantalla mediante pestañas (`a-tabs`, [`SalesAndShiftsView.vue:69, 266`](../src/modules/pos/views/SalesAndShiftsView.vue#L69)) dos conceptos operativos y de seguridad completamente diferentes:
-1. Pestaña 1 (`key="sales"`): Historial de Ventas comerciales (tickets a clientes).
-2. Pestaña 2 (`key="shifts"`): Cuadres de Caja (arqueos físicos, turnos, fondos iniciales, diferencias de dinero).
+### 10.1 Problema del Enfoque Legado: Mezcla de Ventas y Cuadres en una Pantalla
+En la vista legada [`src/modules/pos/views/SalesAndShiftsView.vue`](../src/modules/pos/views/SalesAndShiftsView.vue), la interfaz agrupa mediante pestañas de Ant Design (`a-tabs`, [`SalesAndShiftsView.vue:67-69, 266`](../src/modules/pos/views/SalesAndShiftsView.vue#L67-L69)) dos áreas de negocio y perfiles de usuario totalmente heterogéneos:
+1. **Pestaña 1: "Historial de Ventas"** (`key="sales"`, [`SalesAndShiftsView.vue:69`](../src/modules/pos/views/SalesAndShiftsView.vue#L69)): contiene la tabla de tickets comerciales emitidos (`a-table`, [`SalesAndShiftsView.vue:167-174`](../src/modules/pos/views/SalesAndShiftsView.vue#L167-L174)).
+2. **Pestaña 2: "Cuadres de Caja"** (`key="shifts"`, [`SalesAndShiftsView.vue:266`](../src/modules/pos/views/SalesAndShiftsView.vue#L266)): contiene la tabla de turnos de caja, fondos iniciales, arqueos y justificación de descuadres (`a-table`, [`SalesAndShiftsView.vue:280-287`](../src/modules/pos/views/SalesAndShiftsView.vue#L280-L287)).
 
-**Propuesta de Reparto para la Nueva Arquitectura**:
-Se establece la separación formal en **dos pantallas independientes**, cada una asignada a su respectiva ruta y con su permiso RBAC granular:
+Esta mezcla en una única ruta (`/sales-and-shifts`) vulnera la separación de responsabilidades RBAC: los dependientes y cajeros requieren ver únicamente sus ventas, mientras que la fiscalización de arqueos de caja pertenece al ámbito supervisor y administrativo.
+
+### 10.2 Reparto en el Nuevo Menú y Arquitectura Modular
+Se establece la separación formal en **dos pantallas independientes**, cada una asignada a su respectiva ruta del router y protegida por su permiso RBAC canónico:
 - **Pantalla 1: Historial de Ventas** (Ruta: `/sales/history`):
-  - Permiso exigido: `sales.view`.
-  - Audiencia: Cajeros, dependientes y auditores de operaciones.
-  - Funcionalidad: Listado de tickets emitidos, búsqueda por folio/cajero, detalle del comprobante de venta e inicio de anulaciones/devoluciones (`sales.cancel`).
-- **Pantalla 2: Historial de Cuadres de Caja** (Ruta: `/cash/shifts` o `/cash/history`):
-  - Permiso exigido: `cash.view_history`.
-  - Audiencia: Administradores, encargados de negocio y supervisores de caja.
-  - Funcionalidad: Auditoría de aperturas y cierres de turno, fondos de cambio entregados, ingresos en efectivo vs banco (transferencias), canjes de mostrador, conteos físicos y justificación obligatoria de faltantes y sobrantes.
+  - **Permiso exigido**: `sales.view` (y `sales.cancel` para autorizar anulaciones).
+  - **Audiencia**: Cajeros, dependientes, contadores y auditores comerciales.
+  - **Funcionalidad**: Consulta de tickets y comprobantes emitidos, filtrado por fecha y cajero, detalle de productos facturados e inicio de anulación/devolución.
+  - **Tarjetas KPI asignadas**: Tarjeta 1 "Ventas Registradas" (conteo de tickets del período, [`SalesAndShiftsView.vue:5-22`](../src/modules/pos/views/SalesAndShiftsView.vue#L5-L22)).
+  - **Uso del Filtro por Turno**: actúa como criterio de filtro secundario para auditar qué ventas específicas se facturaron durante un turno determinado ([`SalesAndShiftsView.vue:78-92`](../src/modules/pos/views/SalesAndShiftsView.vue#L78-L92)).
+- **Pantalla 2: Cuadres de Caja (Historial de Turnos y Arqueos)** (Ruta: `/cash/history` o `/cash/shifts`):
+  - **Permiso exigido**: `cash.view_history`.
+  - **Audiencia**: Administradores, encargados de tienda y supervisores financieros.
+  - **Funcionalidad**: Auditoría de turnos cerrados, cotejo de fondos iniciales duales (CUP/USD), desglose de ventas en efectivo vs transferencias bancarias, ajustes por canje, efectivo contado físicamente y justificación obligatoria de faltantes y sobrantes.
+  - **Tarjetas KPI asignadas**: Tarjeta 2 "Cobrado en CUP (Caja / Transf.)" (recaudación real en pesos para arqueo de gaveta física, [`SalesAndShiftsView.vue:24-43`](../src/modules/pos/views/SalesAndShiftsView.vue#L24-L43)) y Tarjeta 3 "Cobrado en USD (Billetes)" (billetes enteros físicos de divisa extranjera, [`SalesAndShiftsView.vue:45-62`](../src/modules/pos/views/SalesAndShiftsView.vue#L45-L62)).
+  - **Uso de la Entidad Turno**: el turno no es un filtro secundario sino la **entidad primaria** que estructura cada fila de la tabla ([`SalesAndShiftsView.vue:767-803`](../src/modules/pos/views/SalesAndShiftsView.vue#L767-L803)).
 
-### 10.2 Tarjetas de Métricas Superiores (KPIs en el Legado)
+### 10.3 Tarjetas de Métricas Superiores (KPIs en el Legado)
 Ubicadas en [`SalesAndShiftsView.vue:4-63`](../src/modules/pos/views/SalesAndShiftsView.vue#L4-L63):
 1. **Ventas Registradas**: con icono `🧾` (texto del legado, no migrar), total de tickets en el filtro activo (`filteredSales.length`).
 2. **Cobrado en CUP (Caja / Transf.)**: con icono `🇨🇺` (texto del legado, no migrar), total acumulado recaudado en pesos cubanos (`totalChargedCUP`, [`SalesAndShiftsView.vue:692-696`](../src/modules/pos/views/SalesAndShiftsView.vue#L692-L696)).
 3. **Cobrado en USD (Billetes)**: con icono `💵` (texto del legado, no migrar), total acumulado recaudado en dólares enteros (`totalChargedUSD`, [`SalesAndShiftsView.vue:698-702`](../src/modules/pos/views/SalesAndShiftsView.vue#L698-L702)).
 
-### 10.3 Filtros Disponibles en la Barra de Herramientas de Ventas
+### 10.4 Filtros Disponibles en la Barra de Herramientas de Ventas
 En [`SalesAndShiftsView.vue:75-164`](../src/modules/pos/views/SalesAndShiftsView.vue#L75-L164):
 1. **Turno (`selectedShiftFilter`)**: `'ALL'` o ID del turno (`shiftId`, derivado dinámicamente de las ventas).
 2. **Fecha (`selectedDatePreset`)**: `'ALL'`, `'TODAY'` (fecha de hoy ISO), `'YESTERDAY'` (fecha de ayer ISO), o `'CUSTOM'` (despliega un `a-date-picker` en formato `YYYY-MM-DD`).
@@ -333,7 +339,7 @@ En [`SalesAndShiftsView.vue:75-164`](../src/modules/pos/views/SalesAndShiftsView
 5. **Botón "Limpiar filtros"**: visible condicionalmente si hay algún filtro o búsqueda activa ([`SalesAndShiftsView.vue:134-146`](../src/modules/pos/views/SalesAndShiftsView.vue#L134-L146)).
 6. **Botón "Actualizar"**: invoca `posStore.fetchSalesHistory()`.
 
-### 10.4 Columnas de la Tabla de Ventas (`salesColumns`, `SalesAndShiftsView.vue:722-764`)
+### 10.5 Columnas de la Tabla de Ventas (`salesColumns`, `SalesAndShiftsView.vue:722-764`)
 1. **Ticket (`id`)**: ancho 140px, muestra el código en monospace negrita (`TICK-908123`) y debajo la cantidad de productos (`N productos`).
 2. **Turno (`shiftId`)**: ancho 140px, badge gris en monospace con el ID del turno o `'Sin Turno'`.
 3. **Fecha / Hora (`createdAt`)**: ancho 150px, formateada con `formatearFechaHora` (`DD/MM/YYYY HH:mm`).
@@ -342,10 +348,10 @@ En [`SalesAndShiftsView.vue:75-164`](../src/modules/pos/views/SalesAndShiftsView
 6. **Cobro (`payment`)**: ancho 140px, badge con la divisa cobrada (`CUP` o `USD`) y texto con el método (`Efectivo` o `Transferencia`).
 7. **Acción (`actions`)**: ancho 100px, botón enlace "Ver Ticket" que abre el modal del recibo detallado.
 
-### 10.5 Paginación
+### 10.6 Paginación
 - Paginación local del cliente con `a-table`: `pageSize: 8` y texto de totalización `Total {t} tickets` ([`SalesAndShiftsView.vue:171`](../src/modules/pos/views/SalesAndShiftsView.vue#L171)).
 
-### 10.6 Anulación y Devolución de Ventas
+### 10.7 Anulación y Devolución de Ventas
 - **No definido en el legado**. En la tabla de ventas legada no existe ninguna acción para cancelar o anular tickets, reintegrar stock al almacén ni registrar devolución de dinero. La única acción permitida es "Ver Ticket" ([`SalesAndShiftsView.vue:251-258`](../src/modules/pos/views/SalesAndShiftsView.vue#L251-L258)).
 
 ---
@@ -381,13 +387,13 @@ En el catálogo canónico de permisos de QvaFlow (`KNOWN_PERMISSIONS`), los perm
 > [!WARNING] INCOHERENCIA DE PERMISOS DETECTADA (PENDIENTE DE SUBSANAR)
 > El permiso `'cash.shift_manage'` presente en [`src/app/router/index.ts:77`](../src/app/router/index.ts#L77) **NO EXISTE** dentro de `KNOWN_PERMISSIONS` en [`src/shared/types/permissions.ts`](../src/shared/types/permissions.ts). Esta discrepancia impide la validación estricta de TypeScript y el chequeo en guards de navegación.
 
-### 11.4 Asignación Recomendada de Permisos por Ruta de Menú
-Para subsanar la incoherencia y alinear el router con `KNOWN_PERMISSIONS`, cada pantalla del menú debe exigir:
+### 11.4 Asignación Canónica de Permisos por Ruta de Menú
+Para subsanar la incoherencia y alinear el router con `KNOWN_PERMISSIONS`, cada pantalla del menú de Ventas y las **tres rutas operativas de Caja** deben exigir:
 1. **Punto de Venta / Terminal de Cobro** (`/sales/pos`): debe exigir **`sales.create`**.
 2. **Historial de Ventas** (`/sales/history`): debe exigir **`sales.view`** (y `sales.cancel` para la acción de anular).
-3. **Turno y Arqueo (Apertura y Cierre)** (`/cash/shift` o `/cash/turn`): debe exigir **`cash.open_close`** (en sustitución de `cash.shift_manage`).
-4. **Cambio y Canje (Tasa Diaria y Mostrador)** (`/cash/exchange`): debe exigir **`cash.exchange`**.
-5. **Cuadres (Historial de Turnos y Arqueos)** (`/cash/history`): debe exigir **`cash.view_history`**.
+3. **Caja 1 - Turno y Arqueo (Apertura y Cierre de Turno)** (`/cash/shift` o `/cash/turn`): debe exigir **`cash.open_close`** (en sustitución de `cash.shift_manage`).
+4. **Caja 2 - Cambio y Canje (Tasa Diaria y Canje de Mostrador)** (`/cash/exchange`): debe exigir **`cash.exchange`**.
+5. **Caja 3 - Cuadres (Historial de Turnos y Arqueos Anteriores)** (`/cash/history`): debe exigir **`cash.view_history`**.
 6. **Gestión Administrativa Global de Caja** (`/cash/manage`): debe exigir **`cash.manage`**.
 
 ### 11.5 Permisos Evaluados Dentro de los Componentes Legados
@@ -458,8 +464,8 @@ Las siguientes definiciones son indispensables para coordinar la integración de
 
 1. **Rutas y Contrato de Endpoints**:
    - En [`docs/API_CONTRACT.md`](API_CONTRACT.md) aún no existe la sección del módulo de Ventas y Caja. ¿Cuáles serán las rutas exactas? ¿`POST /api/sales` para emitir venta? ¿`GET /api/sales` con paginación para el historial? ¿`POST /api/cash-shifts/open` y `POST /api/cash-shifts/close` para turnos?
-2. **Validación y Cálculo de Precios en el Servidor**:
-   - Al registrar una venta vía `POST /api/sales`, ¿el backend espera que el frontend envíe solo `{ productId, quantity }` y el servidor recalcula precios vigentes, subtotales y tasa de cambio, o el frontend debe enviar la instantánea de precios pactada en el carrito?
+2. **Validación, Idempotencia y Cálculo de Precios en el Servidor**:
+   - Al registrar una venta vía `POST /api/sales`, ¿el backend acepta el contrato de payload con `clientRequestId` (UUID), `shiftId`, `warehouseId` y `{ productCode, quantity }`, encargándose el servidor de resolver existencias, precios vigentes, subtotales y tasa de cambio?
 3. **Mecanismo de Descuento de Existencias**:
    - ¿A qué almacén físico (`warehouseId`) se imputa la venta del POS? ¿El terminal POS tiene un almacén predeterminado vinculado a su estación de trabajo, o el backend descuenta automáticamente del almacén central o de la tienda asignada al usuario autenticado?
 4. **Política de Anulación de Ventas (`sales.cancel`)**:
@@ -481,9 +487,9 @@ A continuación se consolidan las propuestas técnicas y operativas para el nuev
 
 | Ref | Área | Propuesta Técnica / Funcional | Valor por Defecto | Pregunta / Requerimiento al Backend |
 | :---: | :--- | :--- | :--- | :--- |
-| **A1** | **Redondeo de Cobro en Efectivo (Multimoneda)** | Mantener la regla del mercado cubano implementada en el legado: en CUP efectivo redondeo exacto al entero más cercano (`Math.round`, sin centavos); en USD efectivo redondeo forzado hacia arriba al entero superior (`Math.ceil`) cobrando billetes enteros sin centavos de dólar y entregando el vuelto restante en CUP ([`posStore.ts:80, 121, 130-135`](../src/modules/pos/store/posStore.ts#L80)). | CUP entero (`precision: 0`), USD entero (`Math.ceil`), vuelto en CUP. | ¿El backend Symfony valida y almacena los importes en `DECIMAL(12, 2)` con montos redondeados a enteros para cobros en efectivo de CUP y USD, o almacena los decimales teóricos y registra el redondeo como ajuste contable? |
+| **A1** | **Redondeo de Cobro en Efectivo (Multimoneda)** | Mantener la regla del mercado cubano implementada en el legado: en CUP efectivo redondeo exacto al entero más cercano (`Math.round`, sin centavos); en USD efectivo redondeo forzado hacia arriba al entero superior (`Math.ceil`) cobrando billetes enteros sin centavos de dólar y entregando el vuelto restante en CUP ([`posStore.ts:80, 121, 130-135`](../src/modules/pos/store/posStore.ts#L80)). | CUP entero (`precision: 0`), USD entero (`Math.ceil`), vuelto en CUP. | (a) ¿Se almacenan los importes como `DECIMAL(12, 2)` de enteros redondeados para cobros en efectivo en CUP y USD? (b) ¿El redondeo aplicado se registra como un ajuste contable separado en la base de datos o se absorbe directamente en el total del ticket? |
 | **A2** | **Cálculo de Totales, Tasas y Vuelto (Servidor vs Cliente)** | El servidor debe calcular de forma autoritativa el total de la orden, la tasa de cambio aplicable, el importe a cobrar y el vuelto correspondiente; el cliente solo actúa como interfaz de captura y visualización reactiva sin aplicar lógica financiera crítica unilateralmente. | Servidor autoritativo calcula y valida; cliente muestra estimación previa y renderiza el resultado final retornado por la API. | ¿El backend Symfony proporcionará un endpoint de cotización previa (`POST /api/sales/quote` o similar) para validar el cobro antes de confirmar la venta, o la validación y cálculo de vuelto y tasa se devuelven directamente en la respuesta del `POST /api/sales`? |
-| **B** | **Pantalla Completa POS (Kiosk Mode)** | Diseñar el terminal POS en modo Kiosk / Fullscreen real ocupando el 100% del viewport sin barra lateral ni cabecera de la SPA. La ruta exige el permiso `sales.create`. Para salir del modo pantalla completa, se proporciona un botón visible accesible en la cabecera ("Salir del POS" / icono de cierre) y atajos de teclado (`Escape` y `F11`) para conmutar pantalla completa o retornar al menú principal de la aplicación. | Pantalla completa activa por defecto al ingresar a `/sales/pos`. Exige permiso `sales.create`. Salida con botón visible o tecla `Escape`/`F11`. | N/A (Decisión exclusiva de Frontend y Ergonomía de Mostrador). |
+| **B** | **Pantalla Completa POS (Kiosk Mode)** | Diseñar el terminal POS en modo Kiosk / Fullscreen real ocupando el 100% del viewport sin barra lateral ni cabecera de la SPA. La ruta exige el permiso `sales.create`. La entrada y salida de pantalla completa nativa del navegador se opera mediante un botón propio con la Fullscreen API (`document.documentElement.requestFullscreen()` / `document.exitFullscreen()`). La salida del modo POS hacia el menú de la aplicación se realiza mediante un botón visible en la cabecera ("Salir del POS" / icono de cierre) y mediante la tecla `Escape`. | Pantalla completa activa por defecto al ingresar a `/sales/pos`. Exige permiso `sales.create`. Control de pantalla completa con botón propio (Fullscreen API). Salida del POS con botón visible o tecla `Escape`. | N/A (Decisión exclusiva de Frontend y Ergonomía de Mostrador). |
 | **C** | **Persistencia de Tickets Suspendidos (Hold Tickets)** | Almacenar las órdenes en espera en `localStorage` del navegador para evitar su pérdida accidental por recarga o corte eléctrico local. Si el backend implementa endpoint, sincronizarlos. | Almacenamiento local en `localStorage` (`qvaflow_pos_held_orders`). | ¿Implementará el backend un endpoint `GET/POST /api/pos/held-orders` para compartir tickets en espera entre varios terminales LAN? |
 | **D** | **Pagos Mixtos (Split Payments)** | En la primera fase de migración, mantener cobro monomodal (un solo método y divisa por ticket) tal como en el legado. Diseñar el tipo TypeScript de forma extensible (`PaymentAllocation[]`) para soportar pagos combinados cuando el backend lo admita. | Pago único (1 divisa, 1 método). | ¿Se requiere soporte de pagos mixtos en el lanzamiento inicial o se pospone para una segunda fase? |
 | **E** | **Depuración de Divisa EUR** | Alinear el terminal POS estrictamente con [`src/shared/types/currency.ts`](../src/shared/types/currency.ts), suprimiendo la moneda `EUR` y conservando exclusivamente `USD`, `CUP`, `CUP_TRANSFER` y `MLC`. | `EUR` eliminado del POS. | ¿Confirmar si algún cliente o flujo requerirá cobro o canje de Euros en efectivo? |
@@ -493,4 +499,4 @@ A continuación se consolidan las propuestas técnicas y operativas para el nuev
 | **I** | **Impresión de Tickets** | Implementar generación de recibo imprimible mediante estilos `@media print` optimizados para ancho de 80mm / 58mm térmico y botón directo de `window.print()`. Dejar la integración ESC/POS nativa desacoplada. | Impresión nativa del navegador con plantilla CSS térmica. | ¿El backend generará algún formato PDF o cadena de texto ESC/POS para impresión remota en servidor de impresión LAN? |
 | **J** | **Entrada Rápida con Prefijo en Lector (OPCIONAL y POSTERIOR)** | Función nueva (no existente en el legado, no es migración). Permitir que el cajero teclee un multiplicador con asterisco antes del código (ej. `5*78910001`) para añadir de una sola vez varias unidades de dicho producto al escanear. **Riesgo identificado:** existen estándares y códigos de barras/SKU comerciales que legítimamente contienen el carácter `*` (ej. simbología Code 39 o códigos alfanuméricos internos), lo que generaría falsos positivos, parseos truncados o errores de lectura si no se delimita estrictamente. | No incluida en la primera fase | N/A (Función exclusiva de frontend; validar si algún SKU de catálogo contiene o puede contener el carácter `*`). |
 | **K** | **Margen de Canje en Mostrador (Parámetro del Sistema)** | El margen de canje de divisas (fijado rígidamente en 10 CUP en el legado, [`posStore.ts:33`](../src/modules/pos/store/posStore.ts#L33)) debe ser un parámetro configurable del sistema administrable de forma dinámica, no una constante hardcodeada en el código fuente. | `10.00` CUP (configurable en parámetros generales de configuración de caja o negocio). | ¿Dónde se almacena y configura este parámetro en el backend Symfony (`/api/system/config` o configuración del terminal/tienda) y qué permiso RBAC se requiere para consultarlo y modificarlo (ej. `system.config` o `cash.manage`)? |
-| **L** | **Payload de Emisión de Venta (`POST /api/sales`)** | El cliente envía únicamente las referencias mínimas de la transacción: `{ items: [{ productCode, quantity }], paidCurrency, paymentMethod, cashReceived, transferGateway?, transferReference? }`. El servidor Symfony es el único responsable de fijar los precios unitarios vigentes, la tasa de cambio activa, calcular subtotales, aplicar margen de canje y determinar el vuelto exacto para evitar manipulación o desincronización en cliente. | Payload ligero y autoritativo en servidor. | ¿Acepta el backend este contrato de payload mínimo con `productCode` (o `productId`) y `quantity` por línea, encargándose el servidor de resolver existencias, precios, tasa diaria y totales? |
+| **L** | **Payload de Emisión de Venta e Idempotencia (`POST /api/sales`)** | El cliente envía únicamente las referencias mínimas de la transacción: `{ clientRequestId, shiftId, warehouseId, items: [{ productCode, quantity }], paidCurrency, paymentMethod, cashReceived, transferGateway?, transferReference? }`. Donde `shiftId` vincula la venta al turno activo, `warehouseId` imputa el stock al almacén correspondiente (Decisión F), y `clientRequestId` es un UUID v4 generado en el frontend para garantizar idempotencia estricta ante doble clic o reintentos de red. El servidor Symfony fija autoritativamente los precios vigentes, la tasa de cambio, calcula subtotales, margen de canje y vuelto exacto. | Payload ligero con idempotencia (`clientRequestId`), `shiftId` y `warehouseId`. | ¿Acepta el backend este contrato con `clientRequestId` (UUID) para garantizar idempotencia y devolver la venta ya registrada sin duplicar cobro ni movimientos de stock si se repite la petición? ¿Confirma además la recepción de `shiftId` y `warehouseId`? |
