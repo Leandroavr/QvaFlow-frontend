@@ -173,13 +173,13 @@ export interface IdleProduct {
 export interface IdleProductsQueryParams {
   days?: number
   page?: number
-  pageSize?: number
+  perPage?: number
   sort?: string
-  order?: 'asc' | 'desc'
   warehouseCode?: string
   categoryId?: string | number
   // Aliases de compatibilidad
-  perPage?: number
+  pageSize?: number
+  order?: 'asc' | 'desc'
 }
 
 /**
@@ -189,9 +189,11 @@ export interface IdleProductsResponse {
   items: IdleProduct[]
   total: number
   page?: number
-  pageSize?: number
+  perPage?: number
   /** Suma del capital retenido de todos los productos ociosos (opcional, requiere products.view_cost) */
   totalTiedUpCapital?: DecimalString
+  // Alias de compatibilidad
+  pageSize?: number
 }
 
 /**

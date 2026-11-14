@@ -853,9 +853,25 @@ export class MockReportsService implements ReportsService {
     }
 
     const page = Math.max(1, idleQuery.page ?? 1)
-    const pageSize = Math.max(1, idleQuery.pageSize ?? idleQuery.perPage ?? 10)
-    const sort = idleQuery.sort ?? 'daysWithoutSale'
-    const order = idleQuery.order ?? 'desc'
+    const perPage = Math.max(1, idleQuery.perPage ?? idleQuery.pageSize ?? 10)
+
+    let sortField = 'daysWithoutSale'
+    let order: 'asc' | 'desc' = 'desc'
+
+    if (idleQuery.sort) {
+      if (idleQuery.sort.includes(':')) {
+        const [field, dir] = idleQuery.sort.split(':')
+        sortField = field || 'daysWithoutSale'
+        order = dir === 'asc' ? 'asc' : 'desc'
+      } else {
+        sortField = idleQuery.sort
+        if (idleQuery.order) {
+          order = idleQuery.order
+        }
+      }
+    } else if (idleQuery.order) {
+      order = idleQuery.order
+    }
 
     const canViewCost = this.hasCostPermission()
     const nowTime = this.referenceDate.getTime()
@@ -944,22 +960,22 @@ export class MockReportsService implements ReportsService {
     // Ordenación
     idleList.sort((a, b) => {
       let cmp = 0
-      if (sort === 'daysWithoutSale') {
+      if (sortField === 'daysWithoutSale') {
         if (a.daysWithoutSale === null && b.daysWithoutSale === null) cmp = 0
         else if (a.daysWithoutSale === null) cmp = 1
         else if (b.daysWithoutSale === null) cmp = -1
         else cmp = a.daysWithoutSale - b.daysWithoutSale
-      } else if (sort === 'stockQuantity' || sort === 'stock') {
+      } else if (sortField === 'stockQuantity' || sortField === 'stock') {
         cmp = compareDecimals(a.stockQuantity, b.stockQuantity)
-      } else if (sort === 'tiedUpCapital' && canViewCost) {
+      } else if (sortField === 'tiedUpCapital' && canViewCost) {
         cmp = compareDecimals(a.tiedUpCapital || '0.00', b.tiedUpCapital || '0.00')
-      } else if (sort === 'code' || sort === 'productCode') {
+      } else if (sortField === 'code' || sortField === 'productCode') {
         cmp = a.code.localeCompare(b.code)
-      } else if (sort === 'name' || sort === 'productName') {
+      } else if (sortField === 'name' || sortField === 'productName') {
         cmp = a.name.localeCompare(b.name)
-      } else if (sort === 'category') {
+      } else if (sortField === 'category') {
         cmp = a.category.localeCompare(b.category)
-      } else if (sort === 'lastSaleDate') {
+      } else if (sortField === 'lastSaleDate') {
         if (!a.lastSaleDate && !b.lastSaleDate) cmp = 0
         else if (!a.lastSaleDate) cmp = -1
         else if (!b.lastSaleDate) cmp = 1
@@ -970,14 +986,15 @@ export class MockReportsService implements ReportsService {
     })
 
     const total = idleList.length
-    const startIndex = (page - 1) * pageSize
-    const pagedItems = idleList.slice(startIndex, startIndex + pageSize)
+    const startIndex = (page - 1) * perPage
+    const pagedItems = idleList.slice(startIndex, startIndex + perPage)
 
     const response = Object.assign([...pagedItems], {
       items: pagedItems,
       total,
       page,
-      pageSize,
+      perPage,
+      pageSize: perPage,
       ...(canViewCost ? { totalTiedUpCapital } : {}),
     })
 

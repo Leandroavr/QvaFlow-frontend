@@ -87,7 +87,7 @@ export class HttpReportsService implements ReportsService {
 
   /**
    * Endpoint GET /reports/idle-products
-   * Query params: { days?, page?, pageSize?, sort?, order?, warehouseCode?, categoryId? }
+   * Query params: { days?, page?, perPage?, sort?, warehouseCode?, categoryId? }
    * Response: IdleProductsResponse
    * Errors: 400 INVALID_DAYS, 403 FORBIDDEN
    */
@@ -110,11 +110,15 @@ export class HttpReportsService implements ReportsService {
         items,
         total: items.length,
         page: 1,
+        perPage: items.length,
         pageSize: items.length,
       }) as unknown as IdleProductsResponse & IdleProduct[]
     }
     const items = data.items || []
-    return Object.assign([...items], data) as unknown as IdleProductsResponse & IdleProduct[]
+    return Object.assign([...items], {
+      ...data,
+      perPage: data.perPage ?? data.pageSize,
+    }) as unknown as IdleProductsResponse & IdleProduct[]
   }
 
   /**

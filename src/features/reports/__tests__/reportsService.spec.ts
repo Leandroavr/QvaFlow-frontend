@@ -403,11 +403,16 @@ describe('Servicio Mock de Reportes (MockReportsService)', () => {
     await expect(service.getTopProducts({ limit: 3.5 })).rejects.toMatchObject({ statusCode: 400 })
   })
 
-  it('(18) mock ociosos filtra por days y ordena por daysWithoutSale desc', async () => {
-    const idle30 = await service.getIdleProducts({ days: 30 })
+  it('(18) mock ociosos filtra por days y ordena por daysWithoutSale desc con paginación estándar', async () => {
+    const idle30 = await service.getIdleProducts({
+      days: 30,
+      perPage: 2,
+      sort: 'daysWithoutSale:desc',
+    })
     const idle60 = await service.getIdleProducts({ days: 60 })
     expect(idle30.total).toBeGreaterThanOrEqual(idle60.total)
-    expect(idle30.items.length).toBeGreaterThanOrEqual(1)
+    expect(idle30.items.length).toBeLessThanOrEqual(2)
+    expect(idle30.perPage).toBe(2)
 
     for (let i = 0; i < idle30.items.length - 1; i++) {
       const a = idle30.items[i].daysWithoutSale

@@ -1274,15 +1274,14 @@ Productos con existencias en inventario que no han registrado ventas en un perí
 - **Parámetros de consulta (Query Params):**
   - `days` _(integer, opcional)_: Umbral mínimo de días de inactividad (por defecto `30`, rango permitido `1` a `365`).
   - `page` _(integer, opcional)_: Número de página (por defecto `1`).
-  - `pageSize` _(integer, opcional)_: Tamaño de página (por defecto `10`).
-  - `sort` _(string, opcional)_: Campo de ordenación (por defecto `daysWithoutSale`).
-  - `order` _(string, opcional)_: Dirección de ordenación (`asc` o `desc`, por defecto `desc`).
+  - `perPage` _(integer, opcional)_: Elementos por página (por defecto `10`).
+  - `sort` _(string, opcional)_: Campo y dirección de ordenación en formato estándar `campo:orden` (por defecto `daysWithoutSale:desc`).
   - `warehouseCode` _(string, opcional) [OPCIONAL]_: Filtrar por almacén.
   - `categoryId` _(string|number, opcional) [OPCIONAL]_: Filtrar por categoría.
 
 #### Ejemplo de Petición HTTP
 ```http
-GET /api/reports/idle-products?days=30&page=1&pageSize=10&sort=daysWithoutSale&order=desc HTTP/1.1
+GET /api/reports/idle-products?days=30&page=1&perPage=10&sort=daysWithoutSale:desc HTTP/1.1
 Host: localhost:8000
 Authorization: Bearer <accessToken>
 Accept: application/json
@@ -1325,7 +1324,7 @@ Accept: application/json
   ],
   "total": 3,
   "page": 1,
-  "pageSize": 10,
+  "perPage": 10,
   "totalTiedUpCapital": "24800.00"
 }
 ```
@@ -1355,12 +1354,12 @@ Accept: application/json
   ],
   "total": 2,
   "page": 1,
-  "pageSize": 10
+  "perPage": 10
 }
 ```
 
 #### Errores Posibles
-- `400 Bad Request` (`INVALID_DAYS`, `INVALID_PAGE`, `INVALID_PAGE_SIZE`):
+- `400 Bad Request` (`INVALID_DAYS`, `INVALID_PAGE`, `PAGINATION_OUT_OF_BOUNDS`):
   ```json
   {
     "code": "INVALID_DAYS",

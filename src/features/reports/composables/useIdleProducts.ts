@@ -125,15 +125,11 @@ export function useIdleProducts(options: UseIdleProductsOptions = {}) {
     error.value = null
 
     try {
-      const [sortField, sortOrder] = (sort.value || 'daysWithoutSale:desc').split(':')
-      const order = (sortOrder === 'asc' ? 'asc' : 'desc') as 'asc' | 'desc'
-
       const res = await service.getIdleProducts({
         days: days.value,
         page: page.value,
-        pageSize: perPage.value,
-        sort: sortField || 'daysWithoutSale',
-        order,
+        perPage: perPage.value,
+        sort: sort.value || 'daysWithoutSale:desc',
       })
 
       if (currentReq === reqId) {
