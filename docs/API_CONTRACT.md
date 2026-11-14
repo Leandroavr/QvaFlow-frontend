@@ -1447,3 +1447,784 @@ Accept: application/json
 - `403 Forbidden` (`FORBIDDEN`).
 - `500 Internal Server Error` (`SERVER_ERROR`).
 
+
+
+---
+
+## 10. Módulo de Ventas y Caja [PROPUESTA]
+
+Esta sección define el contrato de API para las operaciones del Punto de Venta (POS), control de turnos y arqueos de caja, canjes de divisas en mostrador, emisión de tickets y auditoría de ventas en QvaFlow.
+
+> [!IMPORTANT] CONVENCIONES DE PRECISIÓN Y MULTIMONEDA EN VENTAS
+> - **Precisión Monetaria y Decimales:** Todos los importes y cantidades se transmiten como **`DecimalString`** (string decimal exacto con 2 decimales, ej: `"1250.00"`, `"2.00"`), nunca como números flotantes.
+> - **Monedas Soportadas:** `USD` (moneda de referencia económica), `CUP` (moneda contable nacional en efectivo), `CUP_TRANSFER` (transferencia nacional EnZona / Transfermóvil) y `MLC` (tarjeta magnética nacional).
+> - **Regla de Redondeo en Efectivo:**
+>   - **En CUP efectivo:** Redondeo estricto al entero más cercano (`precision: 0`, sin centavos).
+>   - **En USD efectivo:** Redondeo forzado hacia arriba al entero superior (`Math.ceil`, solo billetes enteros sin centavos).
+>   - **Vuelto al Cliente:** Ante cobros en divisa extranjera (USD), el vuelto o cambio restante se calcula y **se entrega siempre en pesos cubanos (`CUP`)**.
+> - **Idempotencia (`clientRequestId`):** Para prevenir cobros duplicados por reintentos de red o doble clic en el terminal, la emisión de ventas exige un UUID v4 generado en el frontend (`clientRequestId`). Si el servidor recibe una solicitud con un `clientRequestId` ya registrado, retorna la venta existente con HTTP `200 OK` sin duplicar transacciones ni movimientos de stock.
+
+---
+
+### 10.1 GET /api/pos/products
+
+Catálogo de productos disponibles para venta en el terminal POS con existencias físicas en tiempo real y precios vigentes.
+
+- **Método:** `GET`
+- **Ruta:** `/api/pos/products`
+- **Autenticación requerida:** Sí (`sales.create`).
+- **Parámetros de consulta (Query params):**
+  - `search` _(opcional, string)_: Búsqueda por coincidencia parcial en nombre o código SKU.
+  - `category` _(opcional, string)_: Filtrar por categoría comercial.
+  - `warehouseId` _(opcional, string)_: Código del almacén asignado al terminal POS (ej: `"ALM-TIENDA-01"`).
+
+#### Response 200 OK
+
+```json
+[
+  {
+    "id": 101,
+    "code": "78910001",
+    "name": "Café Serrano Clásico 250g",
+    "category": "Alimentos",
+    "priceCUP": "650.00",
+    "priceUSD": "1.80",
+    "stock": "24.00",
+    "unit": "pqte"
+  },
+  {
+    "id": 104,
+    "code": "78910004",
+    "name": "Cerveza Cristal Lata 355ml",
+    "category": "Bebidas",
+    "priceCUP": "320.00",
+    "priceUSD": "0.89",
+    "stock": "72.00",
+    "unit": "lata"
+  }
+]
+```
+
+#### Errores Posibles
+- `401 Unauthorized`: Token ausente o expirado (`AUTH_TOKEN_EXPIRED`).
+- `403 Forbidden`: No posee el permiso `sales.create` (`FORBIDDEN`).
+
+---
+
+### 10.2 GET /api/pos/products/by-code/{code}
+
+Búsqueda rápida optimizada para lectores y pistolas de código de barras USB.
+
+- **Método:** `GET`
+- **Ruta:** `/api/pos/products/by-code/{code}`
+- **Autenticación requerida:** Sí (`sales.create`).
+- **Parámetros de ruta:**
+  - `code` _(string, requerido)_: Código de barras o SKU escaneado.
+- **Parámetros de consulta (Query params):**
+  - `warehouseId` _(opcional, string)_: Código del almacén de consulta.
+
+#### Response 200 OK
+
+```json
+{
+  "id": 101,
+  "code": "78910001",
+  "name": "Café Serrano Clásico 250g",
+  "category": "Alimentos",
+  "priceCUP": "650.00",
+  "priceUSD": "1.80",
+  "stock": "24.00",
+  "unit": "pqte"
+}
+```
+
+#### Errores Posibles
+- `404 Not Found`:
+  ```json
+  {
+    "code": "PRODUCT_NOT_FOUND",
+    "message": "No existe ningún producto con el código de barras especificado."
+  }
+  ```
+
+---
+
+### 10.3 GET /api/cash/rates y PUT /api/cash/rates
+
+Consulta y fijación de las tasas de cambio de referencia del día para las operaciones de cobro y canje en mostrador.
+
+#### GET /api/cash/rates
+- **Método:** `GET`
+- **Ruta:** `/api/cash/rates`
+- **Autenticación requerida:** Sí (`sales.create` o `cash.manage` o `cash.exchange`).
+
+##### Response 200 OK
+
+```json
+{
+  "CUP": "1.00",
+  "USD": "360.00",
+  "MLC": "275.00"
+}
+```
+
+#### PUT /api/cash/rates
+- **Método:** `PUT`
+- **Ruta:** `/api/cash/rates`
+- **Autenticación requerida:** Sí (`cash.exchange`).
+
+##### Request Body
+
+```json
+{
+  "USD": "365.00",
+  "MLC": "275.00"
+}
+```
+
+##### Response 200 OK
+
+```json
+{
+  "CUP": "1.00",
+  "USD": "365.00",
+  "MLC": "275.00",
+  "updatedAt": "2026-11-14T19:30:00Z"
+}
+```
+
+##### Errores Posibles
+- `400 Bad Request`: Tasas negativas o no válidas (`INVALID_EXCHANGE_RATE`).
+- `403 Forbidden`: No posee el permiso `cash.exchange` (`FORBIDDEN`).
+
+---
+
+### 10.4 GET /api/cash/settings y PUT /api/cash/settings
+
+Parámetros globales de configuración operativa de caja, incluyendo el margen de canje en mostrador.
+
+#### GET /api/cash/settings
+- **Método:** `GET`
+- **Ruta:** `/api/cash/settings`
+- **Autenticación requerida:** Sí (`cash.manage` o `system.config`).
+
+##### Response 200 OK
+
+```json
+{
+  "exchangeMargin": "10.00"
+}
+```
+
+#### PUT /api/cash/settings
+- **Método:** `PUT`
+- **Ruta:** `/api/cash/settings`
+- **Autenticación requerida:** Sí (`system.config`).
+
+##### Request Body
+
+```json
+{
+  "exchangeMargin": "12.00"
+}
+```
+
+##### Response 200 OK
+
+```json
+{
+  "exchangeMargin": "12.00",
+  "updatedAt": "2026-11-14T19:30:00Z"
+}
+```
+
+##### Errores Posibles
+- `400 Bad Request`: Valor menor a 0.00 (`INVALID_SETTINGS_VALUE`).
+- `403 Forbidden`: Exige permiso administrativo `system.config` (`FORBIDDEN`).
+
+---
+
+### 10.5 Control de Turnos de Caja (`/api/cash/shifts`)
+
+Endpoints para gestión de apertura, consulta de estado activo y cierre con arqueo de gaveta.
+
+#### 10.5.1 GET /api/cash/shifts/current
+Obtiene el turno de caja actualmente abierto para el usuario o la estación de trabajo.
+
+- **Método:** `GET`
+- **Ruta:** `/api/cash/shifts/current`
+- **Autenticación requerida:** Sí (`sales.create` o `cash.open_close`).
+
+##### Response 200 OK (Turno Abierto)
+
+```json
+{
+  "id": "TURNO-2026-001",
+  "cashierName": "Yadira Reyes",
+  "openedAt": "2026-11-14T08:00:00Z",
+  "status": "OPEN",
+  "dailyRateUSD": "360.00",
+  "initialFunds": {
+    "CUP": "10000.00",
+    "USD": "100.00"
+  },
+  "salesTotals": {
+    "cupCash": "25980.00",
+    "cupTransfer": "2520.00",
+    "USD": "40.00"
+  },
+  "exchangeAdjustments": {
+    "CUP": "-7200.00",
+    "USD": "20.00"
+  }
+}
+```
+
+##### Response 200 OK (Sin Turno Abierto)
+
+```json
+null
+```
+
+---
+
+#### 10.5.2 POST /api/cash/shifts/open
+Apertura de un nuevo turno de caja fijando fondo inicial dual y tasa diaria.
+
+- **Método:** `POST`
+- **Ruta:** `/api/cash/shifts/open`
+- **Autenticación requerida:** Sí (`cash.open_close`).
+
+##### Request Body
+
+```json
+{
+  "cashierName": "Yadira Reyes",
+  "initialCUP": "5000.00",
+  "initialUSD": "50.00",
+  "dailyRateUSD": "360.00"
+}
+```
+
+##### Response 201 Created
+
+```json
+{
+  "id": "TURNO-2026-002",
+  "cashierName": "Yadira Reyes",
+  "openedAt": "2026-11-14T19:35:00Z",
+  "status": "OPEN",
+  "dailyRateUSD": "360.00",
+  "initialFunds": {
+    "CUP": "5000.00",
+    "USD": "50.00"
+  },
+  "salesTotals": {
+    "cupCash": "0.00",
+    "cupTransfer": "0.00",
+    "USD": "0.00"
+  },
+  "exchangeAdjustments": {
+    "CUP": "0.00",
+    "USD": "0.00"
+  }
+}
+```
+
+##### Errores Posibles
+- `409 Conflict`: Ya existe un turno activo para la caja o usuario actual:
+  ```json
+  {
+    "code": "SHIFT_ALREADY_OPEN",
+    "message": "Ya existe un turno de caja abierto en este terminal. Debe cerrarlo antes de iniciar uno nuevo."
+  }
+  ```
+
+---
+
+#### 10.5.3 POST /api/cash/shifts/{id}/close
+Cierre definitivo y arqueo físico del turno comparando lo esperado contra el efectivo contado.
+
+- **Método:** `POST`
+- **Ruta:** `/api/cash/shifts/{id}/close`
+- **Autenticación requerida:** Sí (`cash.open_close`).
+- **Parámetros de ruta:**
+  - `id` _(string, requerido)_: Identificador del turno a cerrar.
+
+##### Request Body
+
+```json
+{
+  "countedCUP": "28780.00",
+  "countedUSD": "160.00",
+  "notes": "Arqueo exacto sin diferencias. Conteo físico cotejado con gaveta."
+}
+```
+
+##### Response 200 OK
+
+```json
+{
+  "id": "TURNO-2026-001",
+  "cashierName": "Yadira Reyes",
+  "openedAt": "2026-11-14T08:00:00Z",
+  "closedAt": "2026-11-14T19:40:00Z",
+  "status": "CLOSED",
+  "dailyRateUSD": "360.00",
+  "initialFunds": {
+    "CUP": "10000.00",
+    "USD": "100.00"
+  },
+  "salesTotals": {
+    "cupCash": "25980.00",
+    "cupTransfer": "2520.00",
+    "USD": "40.00"
+  },
+  "exchangeAdjustments": {
+    "CUP": "-7200.00",
+    "USD": "20.00"
+  },
+  "expectedFunds": {
+    "CUP": "28780.00",
+    "USD": "160.00"
+  },
+  "countedFunds": {
+    "CUP": "28780.00",
+    "USD": "160.00"
+  },
+  "differences": {
+    "CUP": "0.00",
+    "USD": "0.00"
+  },
+  "discrepancyReason": "Arqueo exacto sin diferencias. Conteo físico cotejado con gaveta.",
+  "notes": "Arqueo exacto sin diferencias. Conteo físico cotejado con gaveta."
+}
+```
+
+##### Errores Posibles
+- `404 Not Found`: El turno indicado no existe (`SHIFT_NOT_FOUND`).
+- `409 Conflict`: El turno ya se encuentra cerrado:
+  ```json
+  {
+    "code": "SHIFT_NOT_OPEN",
+    "message": "El turno de caja especificado ya se encuentra cerrado."
+  }
+  ```
+- `400 Bad Request` (Diferencia de dinero sin justificación válida):
+  ```json
+  {
+    "code": "REASON_REQUIRED",
+    "message": "Existe una diferencia en el arqueo físico de caja. Debe registrar obligatoriamente el motivo del descuadre con un mínimo de 10 caracteres.",
+    "details": {
+      "notes": ["La justificación de descuadre debe contener al menos 10 caracteres."]
+    }
+  }
+  ```
+
+---
+
+### 10.6 POST /api/cash/exchanges
+
+Registro de compra de divisas extranjeras entregadas por un cliente en mostrador con margen de canje.
+
+- **Método:** `POST`
+- **Ruta:** `/api/cash/exchanges`
+- **Autenticación requerida:** Sí (`cash.exchange`).
+
+#### Request Body
+
+```json
+{
+  "shiftId": "TURNO-2026-001",
+  "currencyFrom": "USD",
+  "amountFrom": "20.00",
+  "notes": "Billete de 20 USD en buen estado recibido para canje"
+}
+```
+
+#### Response 201 Created
+
+```json
+{
+  "id": "CNJ-9012",
+  "shiftId": "TURNO-2026-001",
+  "timestamp": "2026-11-14T19:42:00Z",
+  "currencyFrom": "USD",
+  "amountFrom": "20.00",
+  "currencyTo": "CUP",
+  "effectiveRate": "350.00",
+  "amountTo": "7000.00",
+  "notes": "Billete de 20 USD en buen estado recibido para canje"
+}
+```
+
+> **Regla de cálculo del servidor:**
+> `effectiveRate = max(1.00, dailyRateUSD - exchangeMargin)` (ej. `360.00 - 10.00 = 350.00`).
+> `amountTo = Math.round(amountFrom * effectiveRate)` (en CUP entero sin centavos).
+
+#### Errores Posibles
+- `409 Conflict`: No hay turno abierto para imputar el canje (`SHIFT_NOT_OPEN`).
+- `400 Bad Request`: Importe no positivo o moneda no soportada (`INVALID_EXCHANGE_DATA`).
+
+---
+
+### 10.7 POST /api/sales
+
+Emisión autoritativa de una venta completada en el terminal POS con soporte de idempotencia estricta.
+
+- **Método:** `POST`
+- **Ruta:** `/api/sales`
+- **Autenticación requerida:** Sí (`sales.create`).
+
+#### Request Body
+
+```json
+{
+  "clientRequestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+  "shiftId": "TURNO-2026-001",
+  "warehouseId": "ALM-TIENDA-01",
+  "items": [
+    {
+      "productCode": "78910001",
+      "quantity": "2.00"
+    },
+    {
+      "productCode": "78910004",
+      "quantity": "1.00"
+    }
+  ],
+  "paidCurrency": "USD",
+  "paymentMethod": "CASH",
+  "cashReceived": "10.00",
+  "transferGateway": null,
+  "transferReference": null
+}
+```
+
+#### Response 201 Created (o 200 OK en caso de reintento idempotente)
+
+```json
+{
+  "id": "TICK-908126",
+  "clientRequestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+  "shiftId": "TURNO-2026-001",
+  "warehouseId": "ALM-TIENDA-01",
+  "items": [
+    {
+      "productCode": "78910001",
+      "name": "Café Serrano Clásico 250g",
+      "quantity": "2.00",
+      "unitPriceCUP": "650.00",
+      "subtotalCUP": "1300.00"
+    },
+    {
+      "productCode": "78910004",
+      "name": "Cerveza Cristal Lata 355ml",
+      "quantity": "1.00",
+      "unitPriceCUP": "320.00",
+      "subtotalCUP": "320.00"
+    }
+  ],
+  "totalCUP": "1620.00",
+  "totalUSD": "5.00",
+  "paidCurrency": "USD",
+  "exchangeRateApplied": "350.00",
+  "totalInCurrency": "5.00",
+  "cashReceived": "10.00",
+  "changeGivenCUP": "1880.00",
+  "paymentMethod": "CASH",
+  "transferGateway": null,
+  "transferReference": null,
+  "cashierName": "Yadira Reyes",
+  "status": "COMPLETED",
+  "createdAt": "2026-11-14T19:45:00Z"
+}
+```
+
+> **Reglas aplicadas por el servidor:**
+> 1. `totalCUP = 1300.00 + 320.00 = 1620.00 CUP`.
+> 2. `effectiveRateUSD = 360.00 - 10.00 = 350.00 CUP`.
+> 3. `totalInCurrency (USD) = ceil(1620.00 / 350.00) = 5.00 USD` (redondeo hacia arriba estricto al entero superior).
+> 4. `changeGivenCUP = (10.00 * 350.00) - 1620.00 = 3500.00 - 1620.00 = 1880.00 CUP` (entregado en pesos cubanos).
+
+#### Errores Posibles
+- `400 Bad Request` (Efectivo insuficiente):
+  ```json
+  {
+    "code": "CASH_INSUFFICIENT",
+    "message": "El importe en efectivo entregado por el cliente es inferior al total adeudado de la venta."
+  }
+  ```
+- `400 Bad Request` (Transferencia sin número de comprobante):
+  ```json
+  {
+    "code": "TRANSFER_REFERENCE_REQUIRED",
+    "message": "Debe proporcionar obligatoriamente el número de referencia o ID de transacción de la transferencia bancaria."
+  }
+  ```
+- `409 Conflict` (Turno no abierto):
+  ```json
+  {
+    "code": "SHIFT_NOT_OPEN",
+    "message": "No es posible registrar ventas sin un turno de caja activo en el terminal."
+  }
+  ```
+- `409 Conflict` (Rotura o déficit de existencias):
+  ```json
+  {
+    "code": "STOCK_INSUFFICIENT",
+    "message": "Existencias insuficientes para uno o más artículos solicitados.",
+    "details": {
+      "78910001": ["Stock disponible: 1.00 pqte, solicitado: 2.00 pqte"]
+    }
+  }
+  ```
+
+---
+
+### 10.8 Endpoints de Consulta y Anulación de Ventas
+
+#### 10.8.1 GET /api/sales
+Listado paginado de ventas para auditoría comercial y consulta de comprobantes.
+
+- **Método:** `GET`
+- **Ruta:** `/api/sales`
+- **Autenticación requerida:** Sí (`sales.view`).
+- **Parámetros de consulta (Query params):**
+  - `page` _(opcional, entero, defecto 1)_: Número de página.
+  - `perPage` _(opcional, entero, defecto 10)_: Límite por página.
+  - `sort` _(opcional, string, defecto `"createdAt:desc"`)_.
+  - `shiftId` _(opcional, string)_: Filtrar por turno específico.
+  - `desde` _(opcional, fecha YYYY-MM-DD)_: Fecha inicial de facturación.
+  - `hasta` _(opcional, fecha YYYY-MM-DD)_: Fecha final de facturación.
+  - `currency` _(opcional, string)_: Filtrar por moneda cobrada (`CUP`, `USD`, `CUP_TRANSFER`, `MLC`).
+  - `search` _(opcional, string)_: Búsqueda por folio de ticket o nombre del cajero.
+
+##### Response 200 OK
+
+```json
+{
+  "items": [
+    {
+      "id": "TICK-908126",
+      "shiftId": "TURNO-2026-001",
+      "createdAt": "2026-11-14T19:45:00Z",
+      "cashierName": "Yadira Reyes",
+      "itemsCount": 2,
+      "totalCUP": "1620.00",
+      "totalUSD": "5.00",
+      "paidCurrency": "USD",
+      "paymentMethod": "CASH",
+      "status": "COMPLETED"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "perPage": 10
+}
+```
+
+---
+
+#### 10.8.2 GET /api/sales/{id}
+Detalle exhaustivo de una venta individual y líneas de comprobante para impresión térmica.
+
+- **Método:** `GET`
+- **Ruta:** `/api/sales/{id}`
+- **Autenticación requerida:** Sí (`sales.view`).
+- **Parámetros de ruta:**
+  - `id` _(string, requerido)_: Folio del ticket (ej: `"TICK-908126"`).
+
+##### Response 200 OK
+
+```json
+{
+  "id": "TICK-908126",
+  "clientRequestId": "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d",
+  "shiftId": "TURNO-2026-001",
+  "warehouseId": "ALM-TIENDA-01",
+  "items": [
+    {
+      "productCode": "78910001",
+      "name": "Café Serrano Clásico 250g",
+      "quantity": "2.00",
+      "unitPriceCUP": "650.00",
+      "subtotalCUP": "1300.00"
+    },
+    {
+      "productCode": "78910004",
+      "name": "Cerveza Cristal Lata 355ml",
+      "quantity": "1.00",
+      "unitPriceCUP": "320.00",
+      "subtotalCUP": "320.00"
+    }
+  ],
+  "totalCUP": "1620.00",
+  "totalUSD": "5.00",
+  "paidCurrency": "USD",
+  "exchangeRateApplied": "350.00",
+  "totalInCurrency": "5.00",
+  "cashReceived": "10.00",
+  "changeGivenCUP": "1880.00",
+  "paymentMethod": "CASH",
+  "transferGateway": null,
+  "transferReference": null,
+  "cashierName": "Yadira Reyes",
+  "status": "COMPLETED",
+  "createdAt": "2026-11-14T19:45:00Z"
+}
+```
+
+##### Errores Posibles
+- `404 Not Found`: El ticket indicado no existe (`SALE_NOT_FOUND`).
+
+---
+
+#### 10.8.3 POST /api/sales/{id}/cancel
+Anulación formal de una venta, reversión de existencias al almacén emisor y ajuste negativo en la recaudación del turno.
+
+- **Método:** `POST`
+- **Ruta:** `/api/sales/{id}/cancel`
+- **Autenticación requerida:** Sí (`sales.cancel`).
+- **Parámetros de ruta:**
+  - `id` _(string, requerido)_: Folio del ticket a anular.
+
+##### Request Body
+
+```json
+{
+  "reason": "Cliente solicitó devolución de la mercancía por empaque defectuoso."
+}
+```
+
+##### Response 200 OK
+
+```json
+{
+  "id": "TICK-908126",
+  "status": "CANCELLED",
+  "cancelledAt": "2026-11-14T20:00:00Z",
+  "cancellationReason": "Cliente solicitó devolución de la mercancía por empaque defectuoso.",
+  "stockReverted": true
+}
+```
+
+##### Errores Posibles
+- `404 Not Found`: Ticket no encontrado (`SALE_NOT_FOUND`).
+- `409 Conflict`: La venta ya se encuentra anulada previamente:
+  ```json
+  {
+    "code": "SALE_ALREADY_CANCELLED",
+    "message": "La venta indicada ya ha sido cancelada anteriormente."
+  }
+  ```
+
+---
+
+### 10.9 Endpoints de Historial de Cuadres de Caja
+
+#### 10.9.1 GET /api/cash/shifts
+Listado paginado de cierres de caja y arqueos históricos para control contable y supervisión administrativa.
+
+- **Método:** `GET`
+- **Ruta:** `/api/cash/shifts`
+- **Autenticación requerida:** Sí (`cash.view_history`).
+- **Parámetros de consulta (Query params):**
+  - `page` _(opcional, entero, defecto 1)_.
+  - `perPage` _(opcional, entero, defecto 10)_.
+  - `sort` _(opcional, string, defecto `"openedAt:desc"`)_.
+  - `status` _(opcional, string)_: `'OPEN'` o `'CLOSED'`.
+  - `desde` _(opcional, fecha YYYY-MM-DD)_.
+  - `hasta` _(opcional, fecha YYYY-MM-DD)_.
+
+##### Response 200 OK
+
+```json
+{
+  "items": [
+    {
+      "id": "TURNO-2026-001",
+      "cashierName": "Yadira Reyes",
+      "openedAt": "2026-11-14T08:00:00Z",
+      "closedAt": "2026-11-14T19:40:00Z",
+      "status": "CLOSED",
+      "dailyRateUSD": "360.00",
+      "initialFunds": {
+        "CUP": "10000.00",
+        "USD": "100.00"
+      },
+      "salesTotals": {
+        "cupCash": "25980.00",
+        "cupTransfer": "2520.00",
+        "USD": "40.00"
+      },
+      "exchangeAdjustments": {
+        "CUP": "-7200.00",
+        "USD": "20.00"
+      },
+      "differences": {
+        "CUP": "0.00",
+        "USD": "0.00"
+      },
+      "discrepancyReason": "Arqueo exacto sin diferencias. Conteo físico cotejado con gaveta."
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "perPage": 10
+}
+```
+
+---
+
+#### 10.9.2 GET /api/cash/shifts/{id}
+Detalle exhaustivo de un arqueo histórico con desglose de transacciones y conciliación bancaria.
+
+- **Método:** `GET`
+- **Ruta:** `/api/cash/shifts/{id}`
+- **Autenticación requerida:** Sí (`cash.view_history`).
+- **Parámetros de ruta:**
+  - `id` _(string, requerido)_: Identificador del turno.
+
+##### Response 200 OK
+
+```json
+{
+  "id": "TURNO-2026-001",
+  "cashierName": "Yadira Reyes",
+  "openedAt": "2026-11-14T08:00:00Z",
+  "closedAt": "2026-11-14T19:40:00Z",
+  "status": "CLOSED",
+  "dailyRateUSD": "360.00",
+  "initialFunds": {
+    "CUP": "10000.00",
+    "USD": "100.00"
+  },
+  "salesTotals": {
+    "cupCash": "25980.00",
+    "cupTransfer": "2520.00",
+    "USD": "40.00"
+  },
+  "exchangeAdjustments": {
+    "CUP": "-7200.00",
+    "USD": "20.00"
+  },
+  "expectedFunds": {
+    "CUP": "28780.00",
+    "USD": "160.00"
+  },
+  "countedFunds": {
+    "CUP": "28780.00",
+    "USD": "160.00"
+  },
+  "differences": {
+    "CUP": "0.00",
+    "USD": "0.00"
+  },
+  "discrepancyReason": "Arqueo exacto sin diferencias. Conteo físico cotejado con gaveta.",
+  "notes": "Arqueo exacto sin diferencias. Conteo físico cotejado con gaveta."
+}
+```
+
+##### Errores Posibles
+- `404 Not Found`: Turno no encontrado (`SHIFT_NOT_FOUND`).
