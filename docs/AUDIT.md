@@ -142,7 +142,7 @@ Se encontraron colores hardcodeados en lugar de variables de tokens:
   2. `src/modules/pos/components/PosProductCard.vue` (Línea 15): Color `#1E3E6B`.
   3. `src/modules/reports/views/ReportsDashboardView.vue` (Línea 286): Color `#1E3E6B`.
 * **Gravedad:** **Media**. Impide la adaptación limpia al modo oscuro y rompe la consistencia del design system.
-* **Acción recomendada:** Migrar a clases semánticas de Tailwind (`bg-primary`, `bg-surface-card`, `border-border-default`) cuando se refactoricen esos módulos.
+* **Acción recomendada:** Migrar a clases semánticas de Tailwind (`bg-primary`, `bg-surface-card`, `border-border`) cuando se refactoricen esos módulos.
 
 ### 2.4 Llamadas Directas a Fetch / Axios en Componentes
 * **Hallazgo:** Ningún componente `.vue` invoca directamente `fetch()` ni `axios`. Todos los componentes legados interactúan mediante sus respectivos stores o servicios de módulo.

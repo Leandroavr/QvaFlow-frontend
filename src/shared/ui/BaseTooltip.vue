@@ -8,10 +8,10 @@
         <TooltipContent
           :side="side"
           :side-offset="sideOffset"
-          class="border-border-default animate-in fade-in zoom-in-95 z-50 select-none rounded-md border bg-surface-card px-2.5 py-1 text-xs font-medium text-content-primary shadow-md duration-100"
+          class="animate-in fade-in zoom-in-95 z-50 select-none rounded-md border border-border bg-surface-card px-2.5 py-1 text-xs font-medium text-content-primary shadow-md duration-100"
         >
           {{ content }}
-          <TooltipArrow class="stroke-border-default fill-surface-card" />
+          <TooltipArrow class="fill-surface-card stroke-border" />
         </TooltipContent>
       </TooltipPortal>
     </TooltipRoot>

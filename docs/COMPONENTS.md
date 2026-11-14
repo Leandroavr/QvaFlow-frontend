@@ -481,3 +481,52 @@ Diálogo modal accesible para confirmaciones críticas o acciones destructivas (
   @cancel="isDeleteOpen = false"
 />
 ```
+
+---
+
+### BaseChart
+
+Componente gráfico universal basado en Apache ECharts con tree-shaking estricto (`BarChart`, `LineChart`, `GridComponent`, `TooltipComponent`, `LegendComponent`, `AriaComponent`, `SVGRenderer`), renderizado SVG accesible, carga diferida (dynamic import) en un chunk independiente y adaptación automática a los tokens CSS del tema activo.
+
+- **Props**:
+  - `option`: `Record<string, any>` (configuración y series de ECharts).
+  - `height?`: `string` (altura del contenedor, por defecto `'280px'`).
+  - `ariaLabel`: `string` (etiqueta descriptiva obligatoria para tecnologías de asistencia).
+  - `loading?`: `boolean` (activa esqueleto de carga mediante `BaseSkeleton`).
+  - `empty?`: `boolean` (muestra contenedor `EmptyState` cuando no existen datos para graficar).
+- **Slots**:
+  - `table`: Alternativa textual estructurada (tabla accesible con clase `sr-only`) recomendada para usuarios de lectores de pantalla.
+- **Características Técnicas**:
+  - **Tree-shaking estricto**: Importa únicamente los módulos registrados en `echartsCore.ts`, impidiendo importar el bundle completo de ECharts.
+  - **Renderizado SVG**: Utiliza exclusivamente `SVGRenderer` para nitidez vectorial óptima y menor consumo de memoria.
+  - **Redimensionamiento Reactivo**: Controlado con `ResizeObserver` para responder inmediatamente a cambios de ventana o colapso del sidebar de navegación.
+  - **Movimiento Reducido**: Detecta `prefers-reduced-motion` para anular o limitar animaciones a menos de 300 ms.
+  - **Valores y Formateo**: El componente no manipula ni convierte los importes monetarios o cantidades; el consumidor proporciona el formateo deseado (por ejemplo, mediante callbacks `valueFormatter` o `formatter`).
+  - **Paleta Categórica (`--chart-1` a `--chart-8`)**: El composable `useChartTheme` expone una paleta categórica de 8 colores derivada de los tokens CSS `--chart-1` a `--chart-8` (configurados en modo claro y oscuro garantizando contraste WCAG AA >= 4.5:1), utilizada automáticamente para series y categorías cuando no se especifiquen colores personalizados.
+- **Ejemplo**:
+
+```vue
+<BaseChart
+  :option="chartOption"
+  aria-label="Balance mensual de ventas y compras"
+  height="280px"
+  :loading="isLoading"
+  :empty="!hasData"
+>
+  <template #table>
+    <table>
+      <caption>Balance de Ventas y Compras</caption>
+      <thead>
+        <tr><th>Mes</th><th>Ventas</th><th>Compras</th></tr>
+      </thead>
+      <tbody>
+        <tr v-for="row in data" :key="row.month">
+          <td>{{ row.month }}</td>
+          <td>{{ row.sales }} CUP</td>
+          <td>{{ row.purchases }} CUP</td>
+        </tr>
+      </tbody>
+    </table>
+  </template>
+</BaseChart>
+```

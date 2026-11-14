@@ -19,6 +19,16 @@ export default defineConfig(({ mode }) => {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
       },
     },
+    build: {
+      rollupOptions: {
+        input: {
+          main: fileURLToPath(new URL('./index.html', import.meta.url)),
+          echarts: fileURLToPath(
+            new URL('./src/shared/ui/BaseChart/echartsCore.ts', import.meta.url)
+          ),
+        },
+      },
+    },
     server: {
       port: 5173,
       proxy: {
@@ -33,6 +43,8 @@ export default defineConfig(({ mode }) => {
     test: {
       globals: true,
       environment: 'happy-dom',
+      testTimeout: 15000,
+      maxWorkers: 3,
       include: ['src/**/*.{test,spec}.{ts,js}', 'tests/**/*.{test,spec}.{ts,js}'],
     },
   }

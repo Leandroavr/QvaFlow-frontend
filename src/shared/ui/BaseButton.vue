@@ -84,7 +84,7 @@ const variantClasses: Record<string, string> = {
   primary:
     'bg-primary hover:bg-primary-hover active:bg-primary-active text-white shadow-md shadow-primary/20 border border-transparent',
   secondary:
-    'bg-surface-subtle hover:bg-surface-muted active:bg-surface-elevated text-content-primary border border-border-default shadow-xs',
+    'bg-surface-subtle hover:bg-surface-muted active:bg-surface-elevated text-content-primary border border-border shadow-sm',
   ghost:
     'bg-transparent hover:bg-surface-subtle text-content-secondary hover:text-content-primary border border-transparent',
   danger:

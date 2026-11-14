@@ -19,7 +19,7 @@
           'focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-2',
           error
             ? 'border-state-error focus-visible:ring-state-error'
-            : 'border-border-default hover:border-border-strong focus-visible:ring-primary',
+            : 'border-border hover:border-border-strong focus-visible:ring-primary',
           disabled && 'cursor-not-allowed bg-surface-sunken opacity-60',
         ]"
         :title="title || displayLabel || placeholder"
@@ -38,7 +38,7 @@
         <SelectContent
           position="popper"
           :side-offset="4"
-          class="border-border-default animate-in fade-in-80 zoom-in-95 z-50 max-h-60 min-w-[var(--radix-select-trigger-width,12rem)] overflow-hidden rounded-xl border bg-surface-card p-1 text-content-primary shadow-lg ring-1 ring-black/5 duration-100"
+          class="animate-in fade-in-80 zoom-in-95 z-50 max-h-60 min-w-[var(--radix-select-trigger-width,12rem)] overflow-hidden rounded-xl border border-border bg-surface-card p-1 text-content-primary shadow-lg ring-1 ring-black/5 duration-100"
         >
           <!-- Buscador interno opcional -->
           <div v-if="searchable" class="border-b border-border-subtle p-1.5">

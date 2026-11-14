@@ -61,7 +61,7 @@
                 :checked="isAllSelected"
                 :indeterminate="isIndeterminate"
                 :disabled="loading || displayedRows.length === 0"
-                class="border-border-default h-4 w-4 rounded text-primary accent-primary focus:ring-primary focus-visible:outline-none"
+                class="h-4 w-4 rounded border-border text-primary accent-primary focus:ring-primary focus-visible:outline-none"
                 aria-label="Seleccionar todas las filas"
                 @change="toggleSelectAll"
               />
@@ -89,7 +89,7 @@
             >
               <div
                 :class="[
-                  'inline-flex items-center gap-1.5 whitespace-nowrap',
+                  'inline-flex items-center gap-1 whitespace-nowrap',
                   col.align === 'right'
                     ? 'justify-end'
                     : col.align === 'center'
@@ -97,10 +97,24 @@
                       : 'justify-start',
                 ]"
               >
-                <span>{{ col.title }}</span>
-                <span v-if="col.currency" class="font-normal normal-case text-content-muted">
-                  ({{ col.currency }})
-                </span>
+                <div
+                  :class="[
+                    'inline-flex flex-col',
+                    col.align === 'right'
+                      ? 'items-end'
+                      : col.align === 'center'
+                        ? 'items-center'
+                        : 'items-start',
+                  ]"
+                >
+                  <span>{{ col.title }}</span>
+                  <span
+                    v-if="col.currency"
+                    class="text-xs font-normal normal-case leading-tight text-content-muted"
+                  >
+                    {{ col.currency }}
+                  </span>
+                </div>
 
                 <!-- Indicador de ordenación: solo en columnas ordenables, atenuado hasta hover u ordenación activa -->
                 <span v-if="col.sortable" class="inline-flex shrink-0">
@@ -234,7 +248,7 @@
                 'group h-10 transition-colors',
                 isRowSelected(row, rIdx) ? 'bg-primary-subtle/40' : 'hover:bg-surface-sunken/40',
                 isRowActive(row, rIdx) &&
-                  'shadow-xs border-l-4 !border-l-primary !bg-surface-sunken font-medium',
+                  'border-l-4 !border-l-primary !bg-surface-sunken font-medium shadow-sm',
                 activeKeyboardRowIndex === rIdx &&
                   'ring-primary/60 bg-surface-sunken/60 ring-1 ring-inset',
               ]"
@@ -246,7 +260,7 @@
                 <input
                   type="checkbox"
                   :checked="isRowSelected(row, rIdx)"
-                  class="border-border-default h-4 w-4 rounded text-primary accent-primary focus:ring-primary focus-visible:outline-none"
+                  class="h-4 w-4 rounded border-border text-primary accent-primary focus:ring-primary focus-visible:outline-none"
                   :aria-label="`Seleccionar fila ${rIdx + 1}`"
                   @change="toggleRowSelection(row, rIdx)"
                 />
@@ -308,7 +322,7 @@
                     <template #trigger>
                       <button
                         type="button"
-                        class="hover:border-border-default flex h-7 w-7 items-center justify-center rounded-lg border border-transparent text-content-muted transition-colors hover:bg-surface-sunken hover:text-content-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        class="flex h-7 w-7 items-center justify-center rounded-lg border border-transparent text-content-muted transition-colors hover:border-border hover:bg-surface-sunken hover:text-content-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         aria-label="Acciones de fila"
                       >
                         <MoreHorizontal class="h-4 w-4" aria-hidden="true" />
@@ -329,6 +343,7 @@
       :page="currentPage"
       :per-page="currentPerPage"
       :total="totalRowsCount"
+      :page-size-options="pageSizeOptions"
       :disabled="loading"
       @update:page="handlePageChange"
       @update:per-page="handlePerPageChange"
@@ -386,6 +401,7 @@ interface Props<T = any> {
   showPagination?: boolean
   selectedId?: string | number | null
   fixedLayout?: boolean
+  pageSizeOptions?: number[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -409,6 +425,7 @@ const props = withDefaults(defineProps<Props>(), {
   showPagination: true,
   selectedId: null,
   fixedLayout: false,
+  pageSizeOptions: () => [10, 20, 50, 100],
 })
 
 const emit = defineEmits<{

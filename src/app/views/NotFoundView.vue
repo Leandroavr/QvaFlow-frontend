@@ -1,7 +1,7 @@
 <template>
   <div class="flex min-h-screen items-center justify-center bg-surface-app p-4">
     <div
-      class="border-border-default w-full max-w-md rounded-2xl border bg-surface-card p-8 text-center shadow-lg"
+      class="w-full max-w-md rounded-2xl border border-border bg-surface-card p-8 text-center shadow-lg"
     >
       <div
         class="bg-accent/10 border-accent/20 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border text-accent"

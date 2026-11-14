@@ -1,12 +1,17 @@
 <template>
-  <div class="shadow-xs rounded-xl border border-border-subtle bg-surface-card p-4 sm:p-5">
+  <div class="rounded-xl border border-border-subtle bg-surface-card p-4 shadow-sm sm:p-5">
     <!-- Encabezado: Etiqueta e Icono neutro opcional -->
     <div class="flex items-center justify-between gap-2">
-      <span class="truncate text-xs font-medium text-content-muted">
-        {{ label }}
-      </span>
-      <div v-if="icon" class="shrink-0 text-content-muted" aria-hidden="true">
-        <component :is="icon" class="h-4 w-4" />
+      <div class="flex min-w-0 items-center gap-2">
+        <span class="truncate text-xs font-medium text-content-muted">
+          {{ label }}
+        </span>
+        <slot name="badge" />
+      </div>
+      <div v-if="icon || $slots.icon" class="shrink-0 text-content-muted" aria-hidden="true">
+        <slot name="icon">
+          <component :is="icon" class="h-4 w-4" />
+        </slot>
       </div>
     </div>
 
@@ -21,13 +26,19 @@
     <!-- Estado Normal -->
     <template v-else>
       <!-- Valor destacado -->
-      <div class="mt-2 text-2xl font-bold tracking-tight text-content-primary">
-        {{ value }}
+      <div
+        :class="[
+          'mt-2 flex flex-wrap items-baseline gap-2 text-2xl font-bold tracking-tight',
+          valueClass || 'text-content-primary',
+        ]"
+      >
+        <slot name="value">{{ value }}</slot>
+        <slot name="value-extra" />
       </div>
 
       <!-- Texto secundario y/o tendencia -->
       <div
-        v-if="description || trend"
+        v-if="description || trend || $slots.footer"
         class="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-content-muted"
       >
         <!-- Tendencia opcional -->
@@ -56,9 +67,11 @@
         </div>
 
         <!-- Descripción secundaria -->
-        <span v-if="description" class="truncate">
+        <span v-if="description" class="line-clamp-2" :title="description">
           {{ description }}
         </span>
+
+        <slot name="footer" />
       </div>
     </template>
   </div>
@@ -82,10 +95,12 @@ interface Props {
   trend?: StatTrend
   loading?: boolean
   icon?: Component
+  valueClass?: string
 }
 
 withDefaults(defineProps<Props>(), {
   description: '',
   loading: false,
+  valueClass: '',
 })
 </script>

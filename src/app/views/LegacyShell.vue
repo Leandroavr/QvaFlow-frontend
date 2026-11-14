@@ -6,7 +6,7 @@
     >
       <div class="flex items-center gap-2.5">
         <span
-          class="shadow-xs rounded-md bg-amber-900 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-amber-100"
+          class="rounded-md bg-amber-900 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-amber-100 shadow-sm"
         >
           VISTA LEGADA (solo referencia)
         </span>
@@ -24,7 +24,7 @@
           class="rounded px-2.5 py-1 text-xs font-semibold transition-all"
           :class="
             route.path === link.path
-              ? 'shadow-xs bg-amber-800 text-white'
+              ? 'bg-amber-800 text-white shadow-sm'
               : 'text-amber-950 hover:bg-amber-400'
           "
         >

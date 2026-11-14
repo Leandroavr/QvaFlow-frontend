@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <PageHeader :title="pageTitle" :description="pageDescription" />
 
-    <div class="shadow-xs rounded-xl border border-border-subtle bg-surface-card p-10 text-center">
+    <div class="rounded-xl border border-border-subtle bg-surface-card p-10 text-center shadow-sm">
       <div
         class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400"
       >

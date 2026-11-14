@@ -91,7 +91,7 @@ describe('DataTable, MoneyCell y FilterBar (src/shared/ui/DataTable)', () => {
       expect(wrapper.text()).toContain('Código')
       expect(wrapper.text()).toContain('Producto')
       expect(wrapper.text()).toContain('Precio')
-      expect(wrapper.text()).toContain('(CUP)')
+      expect(wrapper.text()).toContain('CUP')
       expect(wrapper.text()).toContain('Refresco')
       expect(wrapper.text()).toContain('Cerveza')
     })

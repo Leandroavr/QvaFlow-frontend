@@ -198,7 +198,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'reports',
         name: 'reports-dashboard',
-        component: () => import('../views/ModulePlaceholderView.vue'),
+        component: () => import('../../features/reports/views/ReportsDashboardView.vue'),
         meta: {
           permission: 'reports.view',
           title: 'Reportes - QvaFlow',

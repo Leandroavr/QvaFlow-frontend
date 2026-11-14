@@ -1,6 +1,6 @@
 <template>
   <div
-    class="border-border-default bg-surface-card/50 flex flex-col items-center justify-center rounded-xl border border-dashed px-6 py-10 text-center sm:px-12 sm:py-14"
+    class="bg-surface-card/50 flex flex-col items-center justify-center rounded-xl border border-dashed border-border px-6 py-10 text-center sm:px-12 sm:py-14"
   >
     <!-- Icono neutral en superficie hundida -->
     <div

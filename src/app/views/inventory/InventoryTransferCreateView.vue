@@ -47,11 +47,11 @@
 
     <!-- Estado de carga esquelético -->
     <div v-if="isLoadingOptions" class="space-y-6">
-      <div class="border-border-default rounded-xl border bg-surface-card p-5">
+      <div class="rounded-xl border border-border bg-surface-card p-5">
         <BaseSkeleton height="1.5rem" width="12rem" class="mb-4" />
         <BaseSkeleton height="2.5rem" width="100%" />
       </div>
-      <div class="border-border-default rounded-xl border bg-surface-card p-5">
+      <div class="rounded-xl border border-border bg-surface-card p-5">
         <BaseSkeleton height="1.5rem" width="16rem" class="mb-4" />
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
           <BaseSkeleton height="2.5rem" />
@@ -96,7 +96,7 @@
       </div>
 
       <!-- Cabecera del documento: Motivo -->
-      <div class="border-border-default shadow-xs rounded-xl border bg-surface-card p-5">
+      <div class="rounded-xl border border-border bg-surface-card p-5 shadow-sm">
         <h2 class="text-sm font-semibold text-content-primary">Datos del Documento</h2>
         <p class="mt-0.5 text-xs text-content-muted">
           Indique la justificación u orden operativa de este traslado.
@@ -124,7 +124,7 @@
       </div>
 
       <!-- Editor de Líneas: Fila de captura -->
-      <div class="border-border-default shadow-xs rounded-xl border bg-surface-card p-5">
+      <div class="rounded-xl border border-border bg-surface-card p-5 shadow-sm">
         <div class="flex items-center justify-between">
           <div>
             <h2 class="text-sm font-semibold text-content-primary">Líneas de Mercancía</h2>
@@ -278,10 +278,10 @@
         </p>
 
         <!-- Tabla de líneas agregadas -->
-        <div class="border-border-default mt-4 overflow-hidden rounded-lg border">
+        <div class="mt-4 overflow-hidden rounded-lg border border-border">
           <table class="w-full text-left text-xs" data-test="lines-table">
             <thead
-              class="border-border-default border-b bg-surface-sunken font-semibold text-content-primary"
+              class="border-b border-border bg-surface-sunken font-semibold text-content-primary"
             >
               <tr>
                 <th class="px-3.5 py-2.5">#</th>

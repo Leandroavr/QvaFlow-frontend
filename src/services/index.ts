@@ -6,6 +6,10 @@ import type { InventoryService } from './interfaces/inventoryService'
 import { MockInventoryService } from './mock/mockInventoryService'
 import { HttpInventoryService } from './http/httpInventoryService'
 
+import type { ReportsService } from './interfaces/reportsService'
+import { MockReportsService } from './mock/mockReportsService'
+import { HttpReportsService } from './http/httpReportsService'
+
 const useMocks = import.meta.env.VITE_USE_MOCKS !== 'false'
 
 /**
@@ -26,6 +30,17 @@ export const inventoryService: InventoryService = useMocks
   ? new MockInventoryService()
   : new HttpInventoryService()
 
+/**
+ * Instancia singleton de ReportsService.
+ * Se alterna automáticamente según la variable de entorno VITE_USE_MOCKS:
+ * - VITE_USE_MOCKS=true  -> MockReportsService (datos mock en memoria)
+ * - VITE_USE_MOCKS=false -> HttpReportsService (llamadas HTTP a Symfony /api/reports)
+ */
+export const reportsService: ReportsService = useMocks
+  ? new MockReportsService()
+  : new HttpReportsService()
+
 export * from './interfaces/authService'
 export * from './interfaces/inventoryService'
+export * from './interfaces/reportsService'
 export * from './interfaces/baseService'
