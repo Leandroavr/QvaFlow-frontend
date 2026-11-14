@@ -16,10 +16,10 @@ Barra horizontal flexible (`flex-wrap items-center justify-between`) con borde y
     - Si el turno está cerrado: botón primario "Abrir Turno" (`PosTerminalView.vue:25-33`) que ejecuta `openShiftModal('OPEN')`.
     - Si el turno está abierto: botón secundario "Arqueo / Cerrar Turno" (`PosTerminalView.vue:35-42`) que ejecuta `openShiftModal('CLOSE')`.
 - **Extremo Derecho - Botones Operativos y Atajos** (`PosTerminalView.vue:46-132`):
-  1. **Tasa de Cambio del Día**: botón verde claro (`PosTerminalView.vue:48-54`) que muestra `💵 Tasa: 1 USD = {posStore.exchangeRates.USD} CUP` y abre el modal [`DailyExchangeRateModal.vue`](../src/modules/pos/components/DailyExchangeRateModal.vue).
-  2. **Ventas y Cuadres**: botón neutro (`PosTerminalView.vue:57-63`) que redirige a la vista de historial (`router.push('/sales-and-shifts')`).
-  3. **Canje en Mostrador (F6)**: botón azul (`PosTerminalView.vue:66-73`) con badge de atajo `F6` que abre el modal [`CurrencyExchangeModal.vue`](../src/modules/pos/components/CurrencyExchangeModal.vue).
-  4. **Suspender Venta (F4)**: botón ámbar (`PosTerminalView.vue:76-84`) con badge de atajo `F4`, deshabilitado si el carrito está vacío (`posStore.cart.length === 0`).
+  1. **Tasa de Cambio del Día**: botón verde claro (`PosTerminalView.vue:48-54`) que muestra `💵` (texto del legado, no migrar) `Tasa: 1 USD = {posStore.exchangeRates.USD} CUP` y abre el modal [`DailyExchangeRateModal.vue`](../src/modules/pos/components/DailyExchangeRateModal.vue).
+  2. **Ventas y Cuadres**: botón neutro (`PosTerminalView.vue:57-63`) que muestra `🧾` (texto del legado, no migrar) `Ventas y Cuadres` y redirige a la vista de historial (`router.push('/sales-and-shifts')`).
+  3. **Canje en Mostrador (F6)**: botón azul (`PosTerminalView.vue:66-73`) con badge de atajo `F6` que muestra `💱` (texto del legado, no migrar) `Canje Divisas` y abre el modal [`CurrencyExchangeModal.vue`](../src/modules/pos/components/CurrencyExchangeModal.vue).
+  4. **Suspender Venta (F4)**: botón ámbar (`PosTerminalView.vue:76-84`) con badge de atajo `F4` que muestra `⏸️` (texto del legado, no migrar) `Suspender`, deshabilitado si el carrito está vacío (`posStore.cart.length === 0`).
   5. **Tickets en Espera (Popover)**: botón con badge numérico (`a-badge`, `PosTerminalView.vue:87-131`) que despliega una lista emergente con los tickets suspendidos, su hora, monto en CUP y acciones individuales para "Restaurar" o descartar ("✕").
 
 ### 1.2 Cuerpo Principal: Catálogo (68%) y Carrito (32%) (`PosTerminalView.vue:135-447`)
@@ -55,7 +55,7 @@ Implementado en [`PosTerminalView.vue:145-168, 520-524, 556-564`](../src/modules
   - Si el stock es `<= 0`: bloquea la adición y notifica `message.warning('El producto "..." no tiene existencias disponibles.')` ([`posStore.ts:187-190`](../src/modules/pos/store/posStore.ts#L187-L190)).
   - Si la nueva cantidad acumulada supera las existencias: bloquea la adición y advierte `message.warning('Stock máximo disponible para "...": X unidad')` ([`posStore.ts:198-203`](../src/modules/pos/store/posStore.ts#L198-L203)).
 - **Prefijos de Cantidad en el Lector (ej. `3*78910001`)**:
-  - **No definido en el legado**. El lector siempre asume incremento de `1` unidad por escaneo ([`posStore.ts:233`](../src/modules/pos/store/posStore.ts#L233)).
+  - **No definido en el legado**. El lector siempre asume incremento de `1` unidad por escaneo ([`posStore.ts:233`](../src/modules/pos/store/posStore.ts#L233)). Cualquier soporte para prefijos de multiplicación en el lector se clasifica como funcionalidad nueva posterior y opcional (véase Decisión J en la Sección 15).
 
 ---
 
@@ -104,13 +104,13 @@ El backend y tipos definen:
 - Pasarelas bancarias QR (`TransferGateway`, [`pos.ts:7`](../src/modules/pos/types/pos.ts#L7)): `'TRANSFERMOVIL' | 'ENZONA'`.
 - Modalidades de cobro ágil (`PosPaymentMode`, [`pos.ts:8`](../src/modules/pos/types/pos.ts#L8)): `'CUP_CASH' | 'CUP_TRANSFER' | 'USD_CASH' | 'EUR_CASH' | 'MLC_TRANSFER'`.
 - En la botonera ágil de 1 clic del terminal ([`PosTerminalView.vue:320-362`](../src/modules/pos/views/PosTerminalView.vue#L320-L362)), se exponen directamente las 3 modalidades operativas más frecuentes:
-  1. `CUP_CASH` (Efectivo en Pesos Cubanos).
-  2. `CUP_TRANSFER` (Transferencia nacional electrónica por QR).
-  3. `USD_CASH` (Efectivo en Dólares con canje implícito).
+  1. `CUP_CASH` con icono `💵` (texto del legado, no migrar): Efectivo en Pesos Cubanos.
+  2. `CUP_TRANSFER` con icono `📱` (texto del legado, no migrar): Transferencia nacional electrónica por QR.
+  3. `USD_CASH` con icono `🇺🇸` (texto del legado, no migrar): Efectivo en Dólares con canje implícito.
 
 ### 4.2 Flujo del Drawer de Cobro (`PosPaymentDrawer.vue`)
 Se abre pulsando el botón "Cobrar (F8)" o mediante el atajo de teclado `F8`.
-- **Pestaña Efectivo (`key="CASH"`, `PosPaymentDrawer.vue:37-131`)**:
+- **Pestaña Efectivo (`key="CASH"`, `PosPaymentDrawer.vue:37-131`)**, identificada con `💵` (texto del legado, no migrar) `Efectivo y Vuelto`:
   - Entrada de efectivo recibido con precisión `0` para CUP y USD, o `2` para otras divisas ([`PosPaymentDrawer.vue:47`](../src/modules/pos/components/PosPaymentDrawer.vue#L47)).
   - Botón de importe exacto ("Exacto") ([`PosPaymentDrawer.vue:62-66`](../src/modules/pos/components/PosPaymentDrawer.vue#L62-L66)).
   - Botonera de billetes rápidos configurada según divisa ([`PosPaymentDrawer.vue:313-321`](../src/modules/pos/components/PosPaymentDrawer.vue#L313-L321)):
@@ -118,8 +118,8 @@ Se abre pulsando el botón "Cobrar (F8)" o mediante el atajo de teclado `F8`.
     - USD: `+1`, `+5`, `+10`, `+20`, `+50`, `+100`.
     - EUR: `+10`, `+20`, `+50`, `+100`.
   - Validación de suficiencia: `isCashSufficient = changeDue >= -0.001` ([`PosPaymentDrawer.vue:332-334`](../src/modules/pos/components/PosPaymentDrawer.vue#L332-L334)). Si el dinero entregado no cubre el monto adeudado, el botón "Confirmar Cobro e Imprimir" se deshabilita ([`PosPaymentDrawer.vue:229, 345`](../src/modules/pos/components/PosPaymentDrawer.vue#L229)).
-- **Pestaña Transferencia / QR (`key="TRANSFER_QR"`, `PosPaymentDrawer.vue:134-215`)**:
-  - Selector táctil de pasarela: `TRANSFERMOVIL` (BPA / BANDEC / BM) o `ENZONA` (XETID) ([`PosPaymentDrawer.vue:137-165`](../src/modules/pos/components/PosPaymentDrawer.vue#L137-L165)).
+- **Pestaña Transferencia / QR (`key="TRANSFER_QR"`, `PosPaymentDrawer.vue:134-215`)**, identificada con `📱` (texto del legado, no migrar) `Transferencia / QR`:
+  - Selector táctil de pasarela: `TRANSFERMOVIL` (con icono `📲`, texto del legado, no migrar) o `ENZONA` (con icono `💳`, texto del legado, no migrar) ([`PosPaymentDrawer.vue:137-165`](../src/modules/pos/components/PosPaymentDrawer.vue#L137-L165)).
   - Código QR visual estático con monto en CUP ([`PosPaymentDrawer.vue:168-196`](../src/modules/pos/components/PosPaymentDrawer.vue#L168-L196)).
   - Campo obligatorio: `transferReference` ("Número de Referencia / ID Transacción: *", placeholder "Ej. FT2629812450") ([`PosPaymentDrawer.vue:199-213`](../src/modules/pos/components/PosPaymentDrawer.vue#L199-L213)). El botón de confirmar se bloquea si el campo está vacío ([`PosPaymentDrawer.vue:349`](../src/modules/pos/components/PosPaymentDrawer.vue#L349)). No genera vuelto físico.
 
@@ -155,6 +155,9 @@ En el legado (`TASAS_CAMBIO_DEFAULT`, [`posService.ts:81-86`](../src/modules/pos
 - **Sincronización Automática con Mercados (ej. elTOQUE)**:
   - **No definido en el legado**. Todas las tasas son ingresadas y editadas manualmente por los usuarios en cliente/mock.
 
+### 5.3 Pregunta para el Backend Symfony (Tasas de CUP_TRANSFER y MLC)
+- **Pregunta**: ¿Cuál es la tasa de cambio oficial o factor de paridad de `CUP_TRANSFER` y de `MLC` respecto al `CUP`? En el legado, `MLC` contaba con una tasa estática por defecto de 275 CUP ([`posService.ts:85`](../src/modules/pos/services/posService.ts#L85)), mientras que `CUP_TRANSFER` operaba con paridad 1:1 respecto al CUP pero sin admitir vuelto físico ([`posStore.ts:112-114`](../src/modules/pos/store/posStore.ts#L112-L114)). ¿Se gestionan estas tasas como parámetros globales del negocio fijadas una vez por día en el backend, o se fijan de forma granular e independiente por cada turno de caja?
+
 ---
 
 ## 6. Turno y Caja: Apertura, Cierre, Arqueo, Canje
@@ -179,8 +182,8 @@ Implementado en [`src/modules/pos/types/pos.ts:59-102`](../src/modules/pos/types
 ### 6.2 Flujo de Apertura de Turno (`CashShiftModal.vue:13-75`)
 - Solicita:
   1. Nombre del cajero (`openForm.cashierName`, default `'Caja Principal'`).
-  2. Fondo inicial en CUP (`openForm.initialCUP`, default `5000`, entero sin centavos).
-  3. Fondo inicial en USD (`openForm.initialUSD`, default `50`, billetes).
+  2. Fondo inicial en CUP (etiquetado con `🇨🇺`, texto del legado, no migrar) (`openForm.initialCUP`, default `5000`, entero sin centavos).
+  3. Fondo inicial en USD (etiquetado con `🇺🇸`, texto del legado, no migrar) (`openForm.initialUSD`, default `50`, billetes).
   4. Tasa diaria CUP x USD (`openForm.dailyRateUSD`, default `360`).
 - Validaciones: cajero no vacío y tasa mayor a 0 ([`CashShiftModal.vue:308-315`](../src/modules/pos/components/CashShiftModal.vue#L308-L315)).
 - Llama a `posStore.openCashShift()` ([`posStore.ts:340-360`](../src/modules/pos/store/posStore.ts#L340-L360)) y actualiza `currentShift`.
@@ -198,8 +201,8 @@ Al operar ventas y canjes, el sistema calcula lo que debe haber físicamente en 
   - `diffUSD = closeForm.countedUSD - expectedUSD` ([`CashShiftModal.vue:292`](../src/modules/pos/components/CashShiftModal.vue#L292)).
 - **Regla Estricta de Faltantes/Sobrantes**:
   - Si `diffCUP === 0 && diffUSD === 0`: arqueo perfecto, justificación opcional.
-  - Si `diffCUP < 0 || diffUSD < 0` (Faltante): alerta roja visual ([`CashShiftModal.vue:176-189`](../src/modules/pos/components/CashShiftModal.vue#L176-L189)). **Es obligatorio registrar el motivo o justificación en `notes`** ([`CashShiftModal.vue:318-325`](../src/modules/pos/components/CashShiftModal.vue#L318-L325)). El sistema bloquea el cierre si el cajero no justifica el faltante.
-  - Si `diffCUP > 0 || diffUSD > 0` (Sobrante): alerta azul visual ([`CashShiftModal.vue:191-204`](../src/modules/pos/components/CashShiftModal.vue#L191-L204)). Es obligatorio justificar la procedencia del dinero extra.
+  - Si `diffCUP < 0 || diffUSD < 0` (Faltante): alerta visual con icono `⚠️` (texto del legado, no migrar) ([`CashShiftModal.vue:176-189`](../src/modules/pos/components/CashShiftModal.vue#L176-L189)). **Es obligatorio registrar el motivo o justificación en `notes`** ([`CashShiftModal.vue:318-325`](../src/modules/pos/components/CashShiftModal.vue#L318-L325)). El sistema bloquea el cierre si el cajero no justifica el faltante.
+  - Si `diffCUP > 0 || diffUSD > 0` (Sobrante): alerta visual con icono `ℹ️` (texto del legado, no migrar) ([`CashShiftModal.vue:191-204`](../src/modules/pos/components/CashShiftModal.vue#L191-L204)). Es obligatorio justificar la procedencia del dinero extra.
 
 ### 6.5 Operaciones de Canje de Divisas en Mostrador (`CurrencyExchangeModal.vue`)
 - Permite la compra de divisas extranjeras entregadas por clientes para fondear la caja ([`CurrencyExchangeModal.vue:14-22`](../src/modules/pos/components/CurrencyExchangeModal.vue#L14-L22)).
@@ -225,7 +228,7 @@ Implementado en [`src/modules/pos/types/pos.ts:104-111`](../src/modules/pos/type
 - `totalCUP: number` — Monto total acumulado de la orden ([`posStore.ts:306`](../src/modules/pos/store/posStore.ts#L306)).
 
 ### 7.2 Flujo de Suspensión (Hold)
-- Accionado mediante el botón "⏸️ Suspender (F4)" o con el atajo global de teclado `F4`.
+- Accionado mediante el botón con icono `⏸️` (texto del legado, no migrar) "Suspender (F4)" o con el atajo global de teclado `F4`.
 - Validación: si `posStore.cart.length === 0`, notifica `message.warning('No hay artículos en el carrito para poner en espera.')` y aborta ([`posStore.ts:296-299`](../src/modules/pos/store/posStore.ts#L296-L299)).
 - Inserta el ticket al inicio de la lista: `heldOrders.value.unshift(newHeld)` ([`posStore.ts:309`](../src/modules/pos/store/posStore.ts#L309)).
 - Vacía el carrito activo (`clearCart()`, [`posStore.ts:310`](../src/modules/pos/store/posStore.ts#L310)) para atender al siguiente cliente inmediatamente.
@@ -295,17 +298,33 @@ Implementado en [`src/modules/pos/views/SalesAndShiftsView.vue:497-567, 717-719`
 
 ---
 
-## 10. Historial de Ventas: Columnas, Filtros, Detalle, Anulación/Devolución
+## 10. Historial de Ventas: Columnas, Filtros, Detalle, Anulación/Devolución y Separación Modular
 
 Implementado en [`src/modules/pos/views/SalesAndShiftsView.vue:68-263, 623-764`](../src/modules/pos/views/SalesAndShiftsView.vue):
 
-### 10.1 Tarjetas de Métricas Superiores (KPIs)
-Ubicadas en [`SalesAndShiftsView.vue:4-63`](../src/modules/pos/views/SalesAndShiftsView.vue#L4-L63):
-1. **Ventas Registradas**: total de tickets en el filtro activo (`filteredSales.length`).
-2. **Cobrado en CUP (Caja / Transf.)**: total acumulado recaudado en pesos cubanos (`totalChargedCUP`, [`SalesAndShiftsView.vue:692-696`](../src/modules/pos/views/SalesAndShiftsView.vue#L692-L696)).
-3. **Cobrado en USD (Billetes)**: total acumulado recaudado en dólares enteros (`totalChargedUSD`, [`SalesAndShiftsView.vue:698-702`](../src/modules/pos/views/SalesAndShiftsView.vue#L698-L702)).
+### 10.1 Problema del Enfoque Legado: Mezcla de Ventas y Cuadres
+En la vista legada [`src/modules/pos/views/SalesAndShiftsView.vue`](../src/modules/pos/views/SalesAndShiftsView.vue), se agruparon en una misma pantalla mediante pestañas (`a-tabs`, [`SalesAndShiftsView.vue:69, 266`](../src/modules/pos/views/SalesAndShiftsView.vue#L69)) dos conceptos operativos y de seguridad completamente diferentes:
+1. Pestaña 1 (`key="sales"`): Historial de Ventas comerciales (tickets a clientes).
+2. Pestaña 2 (`key="shifts"`): Cuadres de Caja (arqueos físicos, turnos, fondos iniciales, diferencias de dinero).
 
-### 10.2 Filtros Disponibles en la Barra de Herramientas
+**Propuesta de Reparto para la Nueva Arquitectura**:
+Se establece la separación formal en **dos pantallas independientes**, cada una asignada a su respectiva ruta y con su permiso RBAC granular:
+- **Pantalla 1: Historial de Ventas** (Ruta: `/sales/history`):
+  - Permiso exigido: `sales.view`.
+  - Audiencia: Cajeros, dependientes y auditores de operaciones.
+  - Funcionalidad: Listado de tickets emitidos, búsqueda por folio/cajero, detalle del comprobante de venta e inicio de anulaciones/devoluciones (`sales.cancel`).
+- **Pantalla 2: Historial de Cuadres de Caja** (Ruta: `/cash/shifts` o `/cash/history`):
+  - Permiso exigido: `cash.view_history`.
+  - Audiencia: Administradores, encargados de negocio y supervisores de caja.
+  - Funcionalidad: Auditoría de aperturas y cierres de turno, fondos de cambio entregados, ingresos en efectivo vs banco (transferencias), canjes de mostrador, conteos físicos y justificación obligatoria de faltantes y sobrantes.
+
+### 10.2 Tarjetas de Métricas Superiores (KPIs en el Legado)
+Ubicadas en [`SalesAndShiftsView.vue:4-63`](../src/modules/pos/views/SalesAndShiftsView.vue#L4-L63):
+1. **Ventas Registradas**: con icono `🧾` (texto del legado, no migrar), total de tickets en el filtro activo (`filteredSales.length`).
+2. **Cobrado en CUP (Caja / Transf.)**: con icono `🇨🇺` (texto del legado, no migrar), total acumulado recaudado en pesos cubanos (`totalChargedCUP`, [`SalesAndShiftsView.vue:692-696`](../src/modules/pos/views/SalesAndShiftsView.vue#L692-L696)).
+3. **Cobrado en USD (Billetes)**: con icono `💵` (texto del legado, no migrar), total acumulado recaudado en dólares enteros (`totalChargedUSD`, [`SalesAndShiftsView.vue:698-702`](../src/modules/pos/views/SalesAndShiftsView.vue#L698-L702)).
+
+### 10.3 Filtros Disponibles en la Barra de Herramientas de Ventas
 En [`SalesAndShiftsView.vue:75-164`](../src/modules/pos/views/SalesAndShiftsView.vue#L75-L164):
 1. **Turno (`selectedShiftFilter`)**: `'ALL'` o ID del turno (`shiftId`, derivado dinámicamente de las ventas).
 2. **Fecha (`selectedDatePreset`)**: `'ALL'`, `'TODAY'` (fecha de hoy ISO), `'YESTERDAY'` (fecha de ayer ISO), o `'CUSTOM'` (despliega un `a-date-picker` en formato `YYYY-MM-DD`).
@@ -314,7 +333,7 @@ En [`SalesAndShiftsView.vue:75-164`](../src/modules/pos/views/SalesAndShiftsView
 5. **Botón "Limpiar filtros"**: visible condicionalmente si hay algún filtro o búsqueda activa ([`SalesAndShiftsView.vue:134-146`](../src/modules/pos/views/SalesAndShiftsView.vue#L134-L146)).
 6. **Botón "Actualizar"**: invoca `posStore.fetchSalesHistory()`.
 
-### 10.3 Columnas de la Tabla de Ventas (`salesColumns`, `SalesAndShiftsView.vue:722-764`)
+### 10.4 Columnas de la Tabla de Ventas (`salesColumns`, `SalesAndShiftsView.vue:722-764`)
 1. **Ticket (`id`)**: ancho 140px, muestra el código en monospace negrita (`TICK-908123`) y debajo la cantidad de productos (`N productos`).
 2. **Turno (`shiftId`)**: ancho 140px, badge gris en monospace con el ID del turno o `'Sin Turno'`.
 3. **Fecha / Hora (`createdAt`)**: ancho 150px, formateada con `formatearFechaHora` (`DD/MM/YYYY HH:mm`).
@@ -323,10 +342,10 @@ En [`SalesAndShiftsView.vue:75-164`](../src/modules/pos/views/SalesAndShiftsView
 6. **Cobro (`payment`)**: ancho 140px, badge con la divisa cobrada (`CUP` o `USD`) y texto con el método (`Efectivo` o `Transferencia`).
 7. **Acción (`actions`)**: ancho 100px, botón enlace "Ver Ticket" que abre el modal del recibo detallado.
 
-### 10.4 Paginación
+### 10.5 Paginación
 - Paginación local del cliente con `a-table`: `pageSize: 8` y texto de totalización `Total {t} tickets` ([`SalesAndShiftsView.vue:171`](../src/modules/pos/views/SalesAndShiftsView.vue#L171)).
 
-### 10.5 Anulación y Devolución de Ventas
+### 10.6 Anulación y Devolución de Ventas
 - **No definido en el legado**. En la tabla de ventas legada no existe ninguna acción para cancelar o anular tickets, reintegrar stock al almacén ni registrar devolución de dinero. La única acción permitida es "Ver Ticket" ([`SalesAndShiftsView.vue:251-258`](../src/modules/pos/views/SalesAndShiftsView.vue#L251-L258)).
 
 ---
@@ -343,9 +362,14 @@ El análisis revela una divergencia importante entre el router legado, el router
 ### 11.2 Permisos en el Router Moderno ([`src/app/router/index.ts`](../src/app/router/index.ts))
 - `sales.create`: asignado a la ruta `sales/pos` ([`src/app/router/index.ts:55`](../src/app/router/index.ts#L55)).
 - `sales.view`: asignado a la ruta `sales/history` ([`src/app/router/index.ts:66`](../src/app/router/index.ts#L66)).
-- `cash.shift_manage`: asignado a la ruta `cash/shift` ([`src/app/router/index.ts:77`](../src/app/router/index.ts#L77)).
+- `cash.shift_manage`: asignado a la ruta `cash/shift` en la **línea 77** ([`src/app/router/index.ts:77`](../src/app/router/index.ts#L77)):
+  ```ts
+  // src/app/router/index.ts:77
+  permission: 'cash.shift_manage',
+  ```
 
-### 11.3 Permisos en el Catálogo RBAC ([`src/shared/types/permissions.ts:14-22`](../src/shared/types/permissions.ts#L14-L22))
+### 11.3 Comparación con el Catálogo RBAC ([`src/shared/types/permissions.ts:13-22`](../src/shared/types/permissions.ts#L13-L22))
+En el catálogo canónico de permisos de QvaFlow (`KNOWN_PERMISSIONS`), los permisos definidos para Ventas y Caja son:
 - `sales.create` (Registrar ventas en terminal POS).
 - `sales.cancel` (Anular ventas y tickets).
 - `sales.view` (Consultar historial de ventas).
@@ -354,7 +378,19 @@ El análisis revela una divergencia importante entre el router legado, el router
 - `cash.exchange` (Modificar tasas de cambio y registrar canjes).
 - `cash.view_history` (Consultar historial de cuadres y turnos).
 
-### 11.4 Permisos Evaluados Dentro de los Componentes Legados
+> [!WARNING] INCOHERENCIA DE PERMISOS DETECTADA (PENDIENTE DE SUBSANAR)
+> El permiso `'cash.shift_manage'` presente en [`src/app/router/index.ts:77`](../src/app/router/index.ts#L77) **NO EXISTE** dentro de `KNOWN_PERMISSIONS` en [`src/shared/types/permissions.ts`](../src/shared/types/permissions.ts). Esta discrepancia impide la validación estricta de TypeScript y el chequeo en guards de navegación.
+
+### 11.4 Asignación Recomendada de Permisos por Ruta de Menú
+Para subsanar la incoherencia y alinear el router con `KNOWN_PERMISSIONS`, cada pantalla del menú debe exigir:
+1. **Punto de Venta / Terminal de Cobro** (`/sales/pos`): debe exigir **`sales.create`**.
+2. **Historial de Ventas** (`/sales/history`): debe exigir **`sales.view`** (y `sales.cancel` para la acción de anular).
+3. **Turno y Arqueo (Apertura y Cierre)** (`/cash/shift` o `/cash/turn`): debe exigir **`cash.open_close`** (en sustitución de `cash.shift_manage`).
+4. **Cambio y Canje (Tasa Diaria y Mostrador)** (`/cash/exchange`): debe exigir **`cash.exchange`**.
+5. **Cuadres (Historial de Turnos y Arqueos)** (`/cash/history`): debe exigir **`cash.view_history`**.
+6. **Gestión Administrativa Global de Caja** (`/cash/manage`): debe exigir **`cash.manage`**.
+
+### 11.5 Permisos Evaluados Dentro de los Componentes Legados
 - **Ninguno**. Dentro de [`PosTerminalView.vue`](../src/modules/pos/views/PosTerminalView.vue), [`PosPaymentDrawer.vue`](../src/modules/pos/components/PosPaymentDrawer.vue) y [`SalesAndShiftsView.vue`](../src/modules/pos/views/SalesAndShiftsView.vue) **no existe ninguna evaluación de permisos**.
 - Todo usuario que consiga entrar al POS puede:
   - Realizar cobros.
@@ -382,11 +418,11 @@ Implementado en [`src/modules/pos/store/posStore.ts`](../src/modules/pos/store/p
 
 ### 12.2 Estado Vacío (Empty State)
 - **Búsqueda sin resultados en Catálogo** ([`PosTerminalView.vue:214-226`](../src/modules/pos/views/PosTerminalView.vue#L214-L226)):
-  - Icono emoji `🔍`.
+  - Icono `🔍` (texto del legado, no migrar).
   - Mensaje: `No se encontraron productos para "{posStore.searchQuery}"`.
   - Botón de recuperación: "Limpiar búsqueda" (`posStore.searchQuery = ''`).
 - **Carrito Vacío** ([`PosTerminalView.vue:280-293`](../src/modules/pos/views/PosTerminalView.vue#L280-L293)):
-  - Círculo gris con emoji `🛒`.
+  - Círculo gris con icono `🛒` (texto del legado, no migrar).
   - Título: "Carrito Vacío".
   - Descripción: "Escanee con la pistola USB o seleccione productos del catálogo."
 - **Tickets en Espera Vacío** ([`PosTerminalView.vue:121-123`](../src/modules/pos/views/PosTerminalView.vue#L121-L123)):
@@ -409,7 +445,7 @@ Implementado en [`src/modules/pos/store/posStore.ts`](../src/modules/pos/store/p
 | :--- | :--- | :--- | :--- |
 | **Precisión Monetaria** | Primitivos `number` (punto flotante de JS) en precios, subtotales y totales ([`pos.ts:15-18, 28-30, 44-50`](../src/modules/pos/types/pos.ts#L15-L18)). Uso de `Math.round()` y `toFixed(2)`. | `DecimalString = string` (`"1250.00"`) con operaciones exactas mediante [`src/shared/utils/decimal.ts`](../src/shared/utils/decimal.ts). | Reemplazar toda la aritmética de punto flotante por `decimalAdd`, `decimalMultiply`, `decimalRound` para evitar imprecisiones de coma flotante. |
 | **Librería de Componentes** | Acoplamiento absoluto a `ant-design-vue` (`a-button`, `a-input`, `a-table`, `a-modal`, `a-drawer`, `a-select`, `a-tabs`, `a-popconfirm`). Mensajería con `message`. | Componentes compartidos propios basados en Tailwind CSS y tokens de diseño: `BaseButton`, `BaseInput`, `DataTable`, `FilterBar`, `BaseModal`, `BaseDrawer`, `useToast`. | Erradicar Ant Design y sus clases; usar únicamente el Design System de QvaFlow. |
-| **Iconografía y Estética** | Uso masivo de emojis Unicode como iconos en la UI (`☕`, `🍺`, `💵`, `🧾`, `💱`, `⏸️`, `🔍`, `🛒`, `📱`, `🇺🇸`, `🇨🇺`, `💳`, `🟢`, `⚠️`, `ℹ️`, `💡`). | Iconografía formal SVG consistente (Lucide Icons o iconos vectoriales limpios sin emojis decorativos). | Sustituir todos los emojis hardcodeados por componentes SVG semánticos. |
+| **Iconografía y Estética** | Uso masivo de emojis Unicode como iconos en la UI (`☕`, `🍺`, `💵`, `🧾`, `💱`, `⏸️`, `🔍`, `🛒`, `📱`, `🇺🇸`, `🇨🇺`, `💳`, `🟢`, `⚠️`, `ℹ️`, `💡`) (texto del legado, no migrar). | Iconografía formal SVG consistente (Lucide Icons o iconos vectoriales limpios sin emojis decorativos). | Sustituir todos los emojis hardcodeados por componentes SVG semánticos. |
 | **Esquema de Monedas** | `PaymentCurrency = 'CUP' \| 'USD' \| 'MLC' \| 'EUR'` ([`pos.ts:5`](../src/modules/pos/types/pos.ts#L5)). Incluye Euro (`EUR`). | `Currency = 'USD' \| 'CUP' \| 'CUP_TRANSFER' \| 'MLC'` ([`src/shared/types/currency.ts:9`](../src/shared/types/currency.ts#L9)). El Euro **no existe**. | Eliminar `EUR` y normalizar `CUP_TRANSFER` como tipo de moneda específico no efectivo. |
 | **Control de Permisos** | Roles en mayúsculas (`POS_ACCESS`, `VIEW_ALL_SALES`) y chequeo de rol hardcodeado `user?.role === 'CASHIER'`. Sin validaciones en componentes. | Permisos dinámicos en formato dot-notation (`sales.create`, `sales.view`, `cash.open_close`, `cash.exchange`). Directiva `v-permission` y composable `usePermissions()`. | Proteger acciones críticas de caja y POS con los permisos del nuevo modelo sin comprobar nombres de roles. |
 | **Contenedor y Pantalla** | Embebido dentro del layout tradicional con barra superior de navegación y menú lateral (`h-[calc(100vh-7rem)]`, [`PosTerminalView.vue:2`](../src/modules/pos/views/PosTerminalView.vue#L2)). | Pantalla completa nativa (Fullscreen / Kiosk Mode), ocultando menús del sistema para maximizar espacio táctil en mostrador. | Migrar a una vista dedicada a pantalla completa con atajo para salir o conmutar pantalla completa. |
@@ -441,17 +477,20 @@ Las siguientes definiciones son indispensables para coordinar la integración de
 
 ## 15. Decisiones Propuestas
 
-A continuación se consolidan las propuestas técnicas y operativas para el nuevo módulo de Ventas y POS, numeradas de la A a la J:
+A continuación se consolidan las propuestas técnicas y operativas para el nuevo módulo de Ventas y POS, numeradas de la A a la L:
 
 | Ref | Área | Propuesta Técnica / Funcional | Valor por Defecto | Pregunta / Requerimiento al Backend |
 | :---: | :--- | :--- | :--- | :--- |
-| **A** | **Precisión y Redondeo de Efectivo** | Migrar todos los importes a `DecimalString`. Mantener la regla del mercado cubano: en CUP efectivo redondeo exacto al entero más cercano (sin centavos); en USD efectivo redondeo forzado hacia arriba al entero superior (`ceil`) y entrega del vuelto restante en CUP. | CUP entero (`precision: 0`), USD entero (`ceil`). | ¿El backend Symfony validará y almacenará los totales en `DECIMAL(12, 2)` redondeados a enteros para CUP y USD efectivo? |
-| **B** | **Pantalla Completa POS** | Diseñar el terminal POS en modo Kiosk / Fullscreen real ocupando el 100% del viewport sin barra lateral ni cabecera de la SPA, con botón accesible de escape o retorno al menú principal. | Pantalla completa activa por defecto al ingresar a `/sales/pos`. | N/A (Decisión exclusiva de Frontend y Ergonomía de Mostrador). |
-| **C** | **Persistencia de Tickets Suspendidos** | Almacenar las órdenes en espera en `localStorage` del navegador para evitar su pérdida accidental por recarga o corte eléctrico local. Si el backend implementa endpoint, sincronizarlos. | Almacenamiento local en `localStorage` (`qvaflow_pos_held_orders`). | ¿Implementará el backend un endpoint `GET/POST /api/pos/held-orders` para compartir tickets en espera entre varios terminales LAN? |
+| **A1** | **Redondeo de Cobro en Efectivo (Multimoneda)** | Mantener la regla del mercado cubano implementada en el legado: en CUP efectivo redondeo exacto al entero más cercano (`Math.round`, sin centavos); en USD efectivo redondeo forzado hacia arriba al entero superior (`Math.ceil`) cobrando billetes enteros sin centavos de dólar y entregando el vuelto restante en CUP ([`posStore.ts:80, 121, 130-135`](../src/modules/pos/store/posStore.ts#L80)). | CUP entero (`precision: 0`), USD entero (`Math.ceil`), vuelto en CUP. | ¿El backend Symfony valida y almacena los importes en `DECIMAL(12, 2)` con montos redondeados a enteros para cobros en efectivo de CUP y USD, o almacena los decimales teóricos y registra el redondeo como ajuste contable? |
+| **A2** | **Cálculo de Totales, Tasas y Vuelto (Servidor vs Cliente)** | El servidor debe calcular de forma autoritativa el total de la orden, la tasa de cambio aplicable, el importe a cobrar y el vuelto correspondiente; el cliente solo actúa como interfaz de captura y visualización reactiva sin aplicar lógica financiera crítica unilateralmente. | Servidor autoritativo calcula y valida; cliente muestra estimación previa y renderiza el resultado final retornado por la API. | ¿El backend Symfony proporcionará un endpoint de cotización previa (`POST /api/sales/quote` o similar) para validar el cobro antes de confirmar la venta, o la validación y cálculo de vuelto y tasa se devuelven directamente en la respuesta del `POST /api/sales`? |
+| **B** | **Pantalla Completa POS (Kiosk Mode)** | Diseñar el terminal POS en modo Kiosk / Fullscreen real ocupando el 100% del viewport sin barra lateral ni cabecera de la SPA. La ruta exige el permiso `sales.create`. Para salir del modo pantalla completa, se proporciona un botón visible accesible en la cabecera ("Salir del POS" / icono de cierre) y atajos de teclado (`Escape` y `F11`) para conmutar pantalla completa o retornar al menú principal de la aplicación. | Pantalla completa activa por defecto al ingresar a `/sales/pos`. Exige permiso `sales.create`. Salida con botón visible o tecla `Escape`/`F11`. | N/A (Decisión exclusiva de Frontend y Ergonomía de Mostrador). |
+| **C** | **Persistencia de Tickets Suspendidos (Hold Tickets)** | Almacenar las órdenes en espera en `localStorage` del navegador para evitar su pérdida accidental por recarga o corte eléctrico local. Si el backend implementa endpoint, sincronizarlos. | Almacenamiento local en `localStorage` (`qvaflow_pos_held_orders`). | ¿Implementará el backend un endpoint `GET/POST /api/pos/held-orders` para compartir tickets en espera entre varios terminales LAN? |
 | **D** | **Pagos Mixtos (Split Payments)** | En la primera fase de migración, mantener cobro monomodal (un solo método y divisa por ticket) tal como en el legado. Diseñar el tipo TypeScript de forma extensible (`PaymentAllocation[]`) para soportar pagos combinados cuando el backend lo admita. | Pago único (1 divisa, 1 método). | ¿Se requiere soporte de pagos mixtos en el lanzamiento inicial o se pospone para una segunda fase? |
 | **E** | **Depuración de Divisa EUR** | Alinear el terminal POS estrictamente con [`src/shared/types/currency.ts`](../src/shared/types/currency.ts), suprimiendo la moneda `EUR` y conservando exclusivamente `USD`, `CUP`, `CUP_TRANSFER` y `MLC`. | `EUR` eliminado del POS. | ¿Confirmar si algún cliente o flujo requerirá cobro o canje de Euros en efectivo? |
-| **F** | **Almacén de Imputación** | Vincular cada venta al almacén asignado a la estación de trabajo local o al usuario autenticado. En el frontend, leer el `warehouseId` predeterminado desde la configuración o sesión. | Almacén asignado al usuario / Almacén Central. | ¿El backend deducirá el almacén automáticamente según la sesión o el frontend debe enviar `warehouseId` en el payload de la venta? |
+| **F** | **Almacén de Imputación de Stock** | Vincular cada venta al almacén asignado a la estación de trabajo local o al usuario autenticado. En el frontend, leer el `warehouseId` predeterminado desde la configuración o sesión. | Almacén asignado al usuario / Almacén Central. | ¿El backend deducirá el almacén automáticamente según la sesión o el frontend debe enviar `warehouseId` en el payload de la venta? |
 | **G** | **Descuentos Comerciales** | Mantener la ausencia de descuentos en la primera fase de migración para replicar con fidelidad el legado. Proponer controles de descuento por porcentaje o importe en una actualización posterior sujeta a permisos. | Sin descuentos (0%). | ¿Se requiere incorporar descuento manual con autorización de supervisor en esta versión? |
 | **H** | **Anulación de Ventas (`sales.cancel`)** | Incorporar en el Historial de Ventas la acción "Anular Ticket", visible solo para usuarios con permiso `sales.cancel`, solicitando confirmación y motivo de anulación. | Botón "Anular" protegido por `v-permission="'sales.cancel'"`. | ¿Cuál es la ruta y payload para la anulación (`POST /api/sales/{id}/cancel` con `{ reason }`)? |
 | **I** | **Impresión de Tickets** | Implementar generación de recibo imprimible mediante estilos `@media print` optimizados para ancho de 80mm / 58mm térmico y botón directo de `window.print()`. Dejar la integración ESC/POS nativa desacoplada. | Impresión nativa del navegador con plantilla CSS térmica. | ¿El backend generará algún formato PDF o cadena de texto ESC/POS para impresión remota en servidor de impresión LAN? |
-| **J** | **Entrada Rápida con Prefijo en Lector** | Permitir que el cajero teclee un multiplicador con asterisco antes del código (ej. `5*78910001`) para añadir de una sola vez 5 unidades de dicho producto al escanear. | Soportado en el nuevo parser de escaneo del input. | N/A (Mejora de ergonomía en Frontend). |
+| **J** | **Entrada Rápida con Prefijo en Lector (OPCIONAL y POSTERIOR)** | Función nueva (no existente en el legado, no es migración). Permitir que el cajero teclee un multiplicador con asterisco antes del código (ej. `5*78910001`) para añadir de una sola vez varias unidades de dicho producto al escanear. **Riesgo identificado:** existen estándares y códigos de barras/SKU comerciales que legítimamente contienen el carácter `*` (ej. simbología Code 39 o códigos alfanuméricos internos), lo que generaría falsos positivos, parseos truncados o errores de lectura si no se delimita estrictamente. | No incluida en la primera fase | N/A (Función exclusiva de frontend; validar si algún SKU de catálogo contiene o puede contener el carácter `*`). |
+| **K** | **Margen de Canje en Mostrador (Parámetro del Sistema)** | El margen de canje de divisas (fijado rígidamente en 10 CUP en el legado, [`posStore.ts:33`](../src/modules/pos/store/posStore.ts#L33)) debe ser un parámetro configurable del sistema administrable de forma dinámica, no una constante hardcodeada en el código fuente. | `10.00` CUP (configurable en parámetros generales de configuración de caja o negocio). | ¿Dónde se almacena y configura este parámetro en el backend Symfony (`/api/system/config` o configuración del terminal/tienda) y qué permiso RBAC se requiere para consultarlo y modificarlo (ej. `system.config` o `cash.manage`)? |
+| **L** | **Payload de Emisión de Venta (`POST /api/sales`)** | El cliente envía únicamente las referencias mínimas de la transacción: `{ items: [{ productCode, quantity }], paidCurrency, paymentMethod, cashReceived, transferGateway?, transferReference? }`. El servidor Symfony es el único responsable de fijar los precios unitarios vigentes, la tasa de cambio activa, calcular subtotales, aplicar margen de canje y determinar el vuelto exacto para evitar manipulación o desincronización en cliente. | Payload ligero y autoritativo en servidor. | ¿Acepta el backend este contrato de payload mínimo con `productCode` (o `productId`) y `quantity` por línea, encargándose el servidor de resolver existencias, precios, tasa diaria y totales? |
