@@ -6,7 +6,7 @@ Este documento extrae y consolida las especificaciones, fórmulas, indicadores, 
 
 ## 1. Pantalla: Estructura General
 
-La interfaz principal del módulo está implementada en [`src/modules/reports/views/ReportsDashboardView.vue`](file:///c:/Users/leandro.valdes/Desktop/Proyectos/qvaflow-frontend/src/modules/reports/views/ReportsDashboardView.vue). Los elementos visuales se organizan verticalmente en el siguiente orden estricto de aparición:
+La interfaz principal del módulo está implementada en [`src/modules/reports/views/ReportsDashboardView.vue`](../src/modules/reports/views/ReportsDashboardView.vue). Los elementos visuales se organizan verticalmente en el siguiente orden estricto de aparición:
 
 1. **Barra Superior de Control y Filtros** (`ReportsDashboardView.vue:4-77`):
    - Selector primario: período o mes de análisis (`ReportsDashboardView.vue:8-25`).
@@ -88,7 +88,7 @@ En `ReportsDashboardView.vue` y `reportsService.ts` se definen los siguientes in
 - **Observación analítica (a confirmar con backend):** La etiqueta "Saludable" se muestra siempre fija y no evalúa si el porcentaje cae por debajo de umbrales críticos (ej. < 15% o negativo).
 
 ### 3.5 Indicadores en Modelo pero no Mostrados en Vista (`MonthlyKpis`) (datos mock sin uso en la vista, no migrar)
-En [`src/modules/reports/types/reports.ts:27-33`](file:///c:/Users/leandro.valdes/Desktop/Proyectos/qvaflow-frontend/src/modules/reports/types/reports.ts#L27-L33) y en el mock (`reportsService.ts:11-17`), existen campos de un endpoint `/reports/kpis` (`reportsService.ts:327`) que **no se muestran** en las tarjetas de la vista legada (datos mock sin uso en la vista, no migrar):
+En [`src/modules/reports/types/reports.ts:27-33`](../src/modules/reports/types/reports.ts#L27-L33) y en el mock (`reportsService.ts:11-17`), existen campos de un endpoint `/reports/kpis` (`reportsService.ts:327`) que **no se muestran** en las tarjetas de la vista legada (datos mock sin uso en la vista, no migrar):
 - `totalRevenue: 145850`
 - `estimatedProfit: 48200`
 - `profitMarginPercent: 33.05`
@@ -106,7 +106,7 @@ En [`src/modules/reports/types/reports.ts:27-33`](file:///c:/Users/leandro.valde
 
 ## 4. Gráficos
 
-El análisis de dependencias de [`package.json`](file:///c:/Users/leandro.valdes/Desktop/Proyectos/qvaflow-frontend/package.json) y del código de la vista confirma que:
+El análisis de dependencias de [`package.json`](../package.json) y del código de la vista confirma que:
 - **Librería de Gráficos:** **No usa ninguna librería externa de gráficos** (no hay Chart.js, ApexCharts, ECharts ni Recharts instalados).
 - **Componentes Gráficos Implementados en el Legado:**
   1. **Barra de Flujo Proporcional Ventas vs Compras** (`ReportsDashboardView.vue:188-214`):

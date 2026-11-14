@@ -345,8 +345,6 @@ El frontend **NUNCA** hardcodea el catálogo de permisos disponibles en el siste
 
 ---
 
----
-
 ## 7. Módulo de Inventario y Almacenes [PROPUESTA]
 
 Esta sección define el contrato de API para la gestión de almacenes físicos, zonas/localizaciones y control de existencias de inventario.
@@ -1036,11 +1034,11 @@ Accept: application/json
     }
   }
   ```
-- `400 Bad Request` (Rango excede el límite máximo permitido de 365 días):
+- `400 Bad Request` (Rango excede el límite máximo permitido de 366 días):
   ```json
   {
     "code": "DATE_RANGE_EXCEEDED",
-    "message": "El intervalo de consulta no puede superar los 365 días."
+    "message": "El intervalo de consulta no puede superar los 366 días."
   }
   ```
 - `403 Forbidden`:
@@ -1088,35 +1086,36 @@ Accept: application/json
       "date": "2026-06",
       "salesTotal": "115400.00",
       "purchasesTotal": "72300.00",
-      "grossProfit": "43100.00"
+      "grossProfit": "42600.00"
     },
     {
       "date": "2026-07",
       "salesTotal": "132100.00",
       "purchasesTotal": "81500.00",
-      "grossProfit": "50600.00"
+      "grossProfit": "48700.00"
     },
     {
       "date": "2026-08",
       "salesTotal": "124000.00",
       "purchasesTotal": "69000.00",
-      "grossProfit": "55000.00"
+      "grossProfit": "45800.00"
     },
     {
       "date": "2026-09",
       "salesTotal": "141800.00",
       "purchasesTotal": "89400.00",
-      "grossProfit": "52400.00"
+      "grossProfit": "52250.00"
     },
     {
       "date": "2026-10",
       "salesTotal": "145850.00",
       "purchasesTotal": "84200.00",
-      "grossProfit": "61650.00"
+      "grossProfit": "53750.00"
     }
   ]
 }
 ```
+> **Nota de cálculo de ganancia:** El campo `grossProfit` se calcula contablemente como `salesTotal - cogsTotal` (margen sobre el costo de la mercancía efectivamente vendida), siguiendo la misma fórmula del resumen financiero (`getSummary`). No representa `salesTotal - purchasesTotal` (el cual corresponde al balance de caja `cashBalance`). En 2026-10, con un `cogsTotal` de 92,100.00 USD, `grossProfit` resulta en 53,750.00 USD, consistente con la sección 9.2.
 
 #### Errores Posibles
 - `400 Bad Request` (Granularidad inválida o fechas incoherentes):
@@ -1126,6 +1125,14 @@ Accept: application/json
     "message": "Parámetro 'granularity' no válido. Valores admitidos: 'day', 'week', 'month'."
   }
   ```
+- `400 Bad Request` (Rango excede el límite máximo permitido de 366 días):
+  ```json
+  {
+    "code": "DATE_RANGE_EXCEEDED",
+    "message": "El intervalo de consulta no puede superar los 366 días."
+  }
+  ```
+- `400 Bad Request` (`INVALID_DATE_RANGE`).
 - `403 Forbidden` (`FORBIDDEN`).
 - `500 Internal Server Error` (`SERVER_ERROR`).
 
@@ -1187,10 +1194,10 @@ Ranking de productos con mayor rotación comercial en unidades o recaudación.
 - **Permiso requerido:** `reports.view`.
 - **Parámetros de consulta (Query Params):**
   - `limit` _(integer, opcional)_: Límite de registros a retornar (por defecto `5`, rango permitido `1` a `50`).
-  - `desde` / `from` _(string, opcional)_: Fecha de inicio (`YYYY-MM-DD`).
-  - `hasta` / `to` _(string, opcional)_: Fecha de fin (`YYYY-MM-DD`).
-  - `categoryId` _(string|number, opcional)_: Filtro por categoría.
-  - `warehouseCode` _(string, opcional)_: Filtro por almacén.
+  - `desde` _(string, opcional)_: Fecha de inicio (`YYYY-MM-DD`).
+  - `hasta` _(string, opcional)_: Fecha de fin (`YYYY-MM-DD`).
+  - `categoryId` _(string|number, opcional) [OPCIONAL]_: Filtro por categoría.
+  - `warehouseCode` _(string, opcional) [OPCIONAL]_: Filtro por almacén.
 
 #### Ejemplo de Petición HTTP
 ```http
@@ -1270,8 +1277,8 @@ Productos con existencias en inventario que no han registrado ventas en un perí
   - `pageSize` _(integer, opcional)_: Tamaño de página (por defecto `10`).
   - `sort` _(string, opcional)_: Campo de ordenación (por defecto `daysWithoutSale`).
   - `order` _(string, opcional)_: Dirección de ordenación (`asc` o `desc`, por defecto `desc`).
-  - `warehouseCode` _(string, opcional)_: Filtrar por almacén.
-  - `categoryId` _(string|number, opcional)_: Filtrar por categoría.
+  - `warehouseCode` _(string, opcional) [OPCIONAL]_: Filtrar por almacén.
+  - `categoryId` _(string|number, opcional) [OPCIONAL]_: Filtrar por categoría.
 
 #### Ejemplo de Petición HTTP
 ```http
@@ -1403,7 +1410,8 @@ Accept: application/json
       "warehouseName": "Punto de Venta Playa",
       "amount": "1450.00",
       "currency": "CUP",
-      "paymentMethod": "CUP Efectivo"
+      "amountBase": "4.03",
+      "paymentMethod": "CASH"
     },
     {
       "id": 1044,
@@ -1415,7 +1423,8 @@ Accept: application/json
       "warehouseName": "Almacén Central",
       "amount": "28400.00",
       "currency": "CUP",
-      "paymentMethod": "Transferencia Bancaria"
+      "amountBase": "78.89",
+      "paymentMethod": "TRANSFER"
     }
   ],
   "total": 384,
@@ -1423,9 +1432,19 @@ Accept: application/json
   "perPage": 10
 }
 ```
+> **Campos de movimiento:**
+> - `paymentMethod` _(string)_: Código del método de pago (`'CASH'`, `'CARD'`, `'TRANSFER'`), el cual se traduce en la interfaz según el diccionario de presentación (`CASH` -> "Efectivo", `CARD` -> "Tarjeta", `TRANSFER` -> "Transferencia").
+> - `amountBase` _(string)_: Importe equivalente expresado en la moneda contable base (`USD`) como `DecimalString`.
 
 #### Errores Posibles
 - `400 Bad Request` (`INVALID_DATE_RANGE`, `PAGINATION_OUT_OF_BOUNDS`).
+- `400 Bad Request` (Rango excede el límite máximo permitido de 366 días):
+  ```json
+  {
+    "code": "DATE_RANGE_EXCEEDED",
+    "message": "El intervalo de consulta no puede superar los 366 días."
+  }
+  ```
 - `403 Forbidden` (`FORBIDDEN`).
 - `500 Internal Server Error` (`SERVER_ERROR`).
 
