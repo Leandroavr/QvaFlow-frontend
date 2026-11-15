@@ -42,17 +42,42 @@
       @update:open="handleShiftModalUpdate"
       @success="handleShiftSuccess"
     />
+
+    <!-- Drawer de Cobro de Venta -->
+    <PosCheckoutDrawer
+      :open="isCheckoutDrawerOpen"
+      :items="cart.items.value"
+      :total-c-u-p="cart.totalCUP.value"
+      :shift-id="currentShift?.id || ''"
+      :daily-rate-u-s-d="dailyRateUSD"
+      :exchange-margin="exchangeMargin"
+      :effective-rate-u-s-d="effectiveRateUSD"
+      @update:open="isCheckoutDrawerOpen = $event"
+      @close="handleCheckoutClose"
+      @success="handleCheckoutSuccess"
+    />
+
+    <!-- Modal Resumen de Venta con Vuelto Entregado -->
+    <SaleSummaryModal
+      :open="isSummaryModalOpen"
+      :sale="completedSale"
+      @update:open="isSummaryModalOpen = $event"
+      @close="handleSummaryClose"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { toast } from 'vue-sonner'
 import PosHeader from '../components/PosHeader.vue'
 import PosCatalog from '../components/PosCatalog.vue'
 import PosCart from '../components/PosCart.vue'
 import OpenShiftModal from '../components/OpenShiftModal.vue'
-import type { PosProduct } from '../types'
+import PosCheckoutDrawer from '../components/PosCheckoutDrawer.vue'
+import SaleSummaryModal from '../components/SaleSummaryModal.vue'
+import type { PosProduct, Sale } from '../types'
 import { usePosCart } from '../composables/usePosCart'
 import { usePosShift } from '../composables/usePosShift'
 
@@ -60,13 +85,21 @@ const router = useRouter()
 const catalogRef = ref<InstanceType<typeof PosCatalog> | null>(null)
 const cart = usePosCart()
 const {
+  currentShift,
   rates,
   isShiftOpen,
+  dailyRateUSD,
+  exchangeMargin,
+  effectiveRateUSD,
   isOpenShiftModalOpen,
   loadShiftData,
   openModal,
   closeModal,
 } = usePosShift()
+
+const isCheckoutDrawerOpen = ref<boolean>(false)
+const completedSale = ref<Sale | null>(null)
+const isSummaryModalOpen = ref<boolean>(false)
 
 const handleShiftSuccess = () => {
   catalogRef.value?.focusSearch()
@@ -112,7 +145,24 @@ const handleClear = () => {
 
 const handleCheckout = () => {
   if (cart.isEmpty.value || !isShiftOpen.value) return
-  // Listo para integración del modal/drawer de cobro en la siguiente fase
+  isCheckoutDrawerOpen.value = true
+}
+
+const handleCheckoutSuccess = (sale: Sale) => {
+  completedSale.value = sale
+  cart.clearCart()
+  toast.success(`Venta completada exitosamente. Vuelto: ${sale.changeGivenCUP} CUP`)
+  isSummaryModalOpen.value = true
+}
+
+const handleCheckoutClose = () => {
+  isCheckoutDrawerOpen.value = false
+  catalogRef.value?.focusSearch()
+}
+
+const handleSummaryClose = () => {
+  isSummaryModalOpen.value = false
+  catalogRef.value?.focusSearch()
 }
 
 const handleGlobalKeyDown = (e: KeyboardEvent) => {

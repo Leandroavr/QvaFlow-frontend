@@ -9,8 +9,10 @@ import {
   normalizeDecimal,
 } from '@/shared/utils/decimal'
 
+// Estado del carrito a nivel de módulo para consistencia en todo el terminal POS
+const items = ref<CartItem[]>([])
+
 export function usePosCart() {
-  const items = ref<CartItem[]>([])
 
   const isEmpty = computed<boolean>(() => items.value.length === 0)
 
