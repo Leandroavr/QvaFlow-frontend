@@ -76,8 +76,26 @@
       </div>
     </div>
 
-    <!-- Zona Derecha: Botón Pantalla Completa (Fullscreen API) -->
+    <!-- Zona Derecha: Acciones rápidas y Pantalla Completa (Fullscreen API) -->
     <div class="flex items-center gap-2">
+      <!-- Botón Canje de Divisas (F6) -->
+      <button
+        v-if="isShiftOpen"
+        type="button"
+        class="shadow-xs hover:bg-surface-hover inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface-app px-2.5 py-1 text-xs font-semibold text-content-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+        title="Canje de divisas extranjeras en mostrador (F6)"
+        data-testid="header-exchange-btn"
+        @click="emit('open-exchange')"
+      >
+        <ArrowLeftRight class="size-3.5 text-primary" aria-hidden="true" />
+        <span class="hidden sm:inline">Canje</span>
+        <kbd
+          class="hidden rounded border border-border-strong bg-surface-card px-1 py-0.5 font-mono text-[9px] font-medium text-content-muted md:inline-block"
+        >
+          F6
+        </kbd>
+      </button>
+
       <button
         type="button"
         class="shadow-xs hover:bg-surface-hover inline-flex items-center justify-center rounded-lg border border-border-subtle bg-surface-app p-1.5 text-content-secondary transition-colors hover:text-content-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
@@ -95,7 +113,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, Maximize, Minimize, User, Store } from 'lucide-vue-next'
+import { ArrowLeft, Maximize, Minimize, User, Store, ArrowLeftRight } from 'lucide-vue-next'
 import { useAuthStore } from '@/features/auth/stores/authStore'
 import { usePosShift } from '../composables/usePosShift'
 
@@ -113,6 +131,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: 'exit'): void
   (e: 'open-shift'): void
+  (e: 'open-exchange'): void
 }>()
 
 const isFullscreen = ref<boolean>(false)

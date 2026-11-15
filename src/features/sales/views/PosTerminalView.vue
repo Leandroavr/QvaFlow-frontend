@@ -1,7 +1,11 @@
 <template>
   <div class="flex h-dvh w-full flex-col overflow-hidden bg-surface-app text-content-primary">
     <!-- Cabecera Kiosco del POS -->
-    <PosHeader @exit="handleExit" @open-shift="openModal" />
+    <PosHeader
+      @exit="handleExit"
+      @open-shift="openModal"
+      @open-exchange="handleOpenExchange"
+    />
 
     <!-- Cuerpo Principal del POS: 2 columnas sin scroll de página -->
     <main class="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-3 lg:flex-row">
@@ -44,6 +48,18 @@
       @success="handleShiftSuccess"
     />
 
+    <!-- Modal de Canje de Divisas (F6) -->
+    <CurrencyExchangeModal
+      :open="isExchangeModalOpen"
+      :shift-id="currentShift?.id || ''"
+      :daily-rate-u-s-d="dailyRateUSD"
+      :rate-m-l-c="rates?.MLC || '275.00'"
+      :exchange-margin="exchangeMargin"
+      @update:open="isExchangeModalOpen = $event"
+      @close="handleExchangeClose"
+      @success="handleExchangeSuccess"
+    />
+
     <!-- Drawer de Cobro de Venta -->
     <PosCheckoutDrawer
       :open="isCheckoutDrawerOpen"
@@ -76,6 +92,7 @@ import PosHeader from '../components/PosHeader.vue'
 import PosCatalog from '../components/PosCatalog.vue'
 import PosCart from '../components/PosCart.vue'
 import OpenShiftModal from '../components/OpenShiftModal.vue'
+import CurrencyExchangeModal from '../components/CurrencyExchangeModal.vue'
 import PosCheckoutDrawer from '../components/PosCheckoutDrawer.vue'
 import SaleSummaryModal from '../components/SaleSummaryModal.vue'
 import type { PosProduct, Sale } from '../types'
@@ -99,8 +116,25 @@ const {
 } = usePosShift()
 
 const isCheckoutDrawerOpen = ref<boolean>(false)
+const isExchangeModalOpen = ref<boolean>(false)
 const completedSale = ref<Sale | null>(null)
 const isSummaryModalOpen = ref<boolean>(false)
+
+const handleOpenExchange = () => {
+  if (!isShiftOpen.value) return
+  isExchangeModalOpen.value = true
+}
+
+const handleExchangeSuccess = (res: any) => {
+  loadShiftData()
+  toast.success(`Canje ${res.id} completado. Entregado: ${res.amountTo} CUP`)
+  catalogRef.value?.focusSearch()
+}
+
+const handleExchangeClose = () => {
+  isExchangeModalOpen.value = false
+  catalogRef.value?.focusSearch()
+}
 
 const handleShiftSuccess = () => {
   catalogRef.value?.focusSearch()
@@ -182,7 +216,9 @@ const handleGlobalKeyDown = (e: KeyboardEvent) => {
     if (!isShiftOpen.value) {
       return
     }
-    if (e.key === 'F8') {
+    if (e.key === 'F6') {
+      handleOpenExchange()
+    } else if (e.key === 'F8') {
       handleCheckout()
     }
   }
