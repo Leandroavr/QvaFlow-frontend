@@ -96,11 +96,13 @@ const INITIAL_POS_PRODUCTS: PosProduct[] = [
 export class MockSalesService implements SalesService {
   private products: PosProduct[] = JSON.parse(JSON.stringify(INITIAL_POS_PRODUCTS))
   private sales: Sale[] = []
+  private inventoryService?: InventoryService
+  private cashService?: MockCashService
 
-  constructor(
-    private inventoryService?: InventoryService,
-    private cashService?: MockCashService
-  ) {}
+  constructor(inventoryService?: InventoryService, cashService?: MockCashService) {
+    this.inventoryService = inventoryService
+    this.cashService = cashService
+  }
 
   public setDependencies(inventoryService: InventoryService, cashService: MockCashService): void {
     this.inventoryService = inventoryService
@@ -137,12 +139,12 @@ export class MockSalesService implements SalesService {
       const token = localStorage.getItem('qvaflow_token')
       if (token) {
         const match = Object.values(MOCK_USERS).find((u) => u.token === token)
-        if (match) return match.user.name || match.user.username
+        if (match) return match.user.fullName || match.user.username
       }
       const rawUser = localStorage.getItem('qvaflow_user')
       if (rawUser) {
         const user = JSON.parse(rawUser)
-        return user.name || user.username
+        return user.fullName || user.name || user.username
       }
     } catch {
       // Ignorar fallo de lectura local
@@ -152,7 +154,13 @@ export class MockSalesService implements SalesService {
 
   async getPosProducts(query: PosProductQueryParams = {}): Promise<PosProduct[]> {
     if (!this.checkHasPermission('sales.create')) {
-      throw new ApiError(403, 'FORBIDDEN', 'Requiere permiso sales.create para consultar el catálogo del POS.')
+      throw new ApiError(
+        {
+          code: 'FORBIDDEN',
+          message: 'Requiere permiso sales.create para consultar el catálogo del POS.',
+        },
+        403
+      )
     }
 
     // Si hay inventario disponible, sincronizamos el stock en tiempo real
@@ -190,7 +198,13 @@ export class MockSalesService implements SalesService {
 
   async getPosProductByCode(code: string, warehouseId?: string): Promise<PosProduct> {
     if (!this.checkHasPermission('sales.create')) {
-      throw new ApiError(403, 'FORBIDDEN', 'Requiere permiso sales.create para buscar productos en el POS.')
+      throw new ApiError(
+        {
+          code: 'FORBIDDEN',
+          message: 'Requiere permiso sales.create para buscar productos en el POS.',
+        },
+        403
+      )
     }
 
     let prod = this.products.find((p) => p.code === code)
@@ -227,9 +241,11 @@ export class MockSalesService implements SalesService {
 
     if (!prod) {
       throw new ApiError(
-        404,
-        'PRODUCT_NOT_FOUND',
-        'No existe ningún producto con el código de barras especificado.'
+        {
+          code: 'PRODUCT_NOT_FOUND',
+          message: 'No existe ningún producto con el código de barras especificado.',
+        },
+        404
       )
     }
 
@@ -238,7 +254,10 @@ export class MockSalesService implements SalesService {
 
   async createSale(request: CreateSaleRequest): Promise<Sale> {
     if (!this.checkHasPermission('sales.create')) {
-      throw new ApiError(403, 'FORBIDDEN', 'Requiere permiso sales.create para registrar ventas.')
+      throw new ApiError(
+        { code: 'FORBIDDEN', message: 'Requiere permiso sales.create para registrar ventas.' },
+        403
+      )
     }
 
     // 1. Idempotencia estricta por clientRequestId
@@ -252,28 +271,36 @@ export class MockSalesService implements SalesService {
       const currentShift = await this.cashService.getCurrentShift()
       if (!currentShift || currentShift.status !== 'OPEN') {
         throw new ApiError(
-          409,
-          'SHIFT_NOT_OPEN',
-          'No es posible registrar ventas sin un turno de caja activo en el terminal.'
+          {
+            code: 'SHIFT_NOT_OPEN',
+            message: 'No es posible registrar ventas sin un turno de caja activo en el terminal.',
+          },
+          409
         )
       }
     }
 
     // 3. Validación de ítems
     if (!request.items || request.items.length === 0) {
-      throw new ApiError(400, 'INVALID_SALE_DATA', 'Debe incluir al menos un artículo para registrar la venta.')
+      throw new ApiError(
+        {
+          code: 'INVALID_SALE_DATA',
+          message: 'Debe incluir al menos un artículo para registrar la venta.',
+        },
+        400
+      )
     }
 
     // 4. Comprobante de transferencia bancaria obligatorio
-    if (
-      request.paidCurrency === 'CUP_TRANSFER' ||
-      request.paymentMethod === 'TRANSFER'
-    ) {
+    if (request.paidCurrency === 'CUP_TRANSFER' || request.paymentMethod === 'TRANSFER') {
       if (!request.transferReference || !request.transferReference.trim()) {
         throw new ApiError(
-          400,
-          'TRANSFER_REFERENCE_REQUIRED',
-          'Debe proporcionar obligatoriamente el número de referencia o ID de transacción de la transferencia bancaria.'
+          {
+            code: 'TRANSFER_REFERENCE_REQUIRED',
+            message:
+              'Debe proporcionar obligatoriamente el número de referencia o ID de transacción de la transferencia bancaria.',
+          },
+          400
         )
       }
     }
@@ -303,10 +330,12 @@ export class MockSalesService implements SalesService {
 
     if (Object.keys(stockErrors).length > 0) {
       throw new ApiError(
-        409,
-        'STOCK_INSUFFICIENT',
-        'Existencias insuficientes para uno o más artículos solicitados.',
-        stockErrors
+        {
+          code: 'STOCK_INSUFFICIENT',
+          message: 'Existencias insuficientes para uno o más artículos solicitados.',
+          details: stockErrors,
+        },
+        409
       )
     }
 
@@ -338,9 +367,12 @@ export class MockSalesService implements SalesService {
       totalInCurrency = totalToCharge
       if (compareDecimals(request.cashReceived, totalToCharge) < 0) {
         throw new ApiError(
-          400,
-          'CASH_INSUFFICIENT',
-          'El importe en efectivo entregado por el cliente es inferior al total adeudado de la venta.'
+          {
+            code: 'CASH_INSUFFICIENT',
+            message:
+              'El importe en efectivo entregado por el cliente es inferior al total adeudado de la venta.',
+          },
+          400
         )
       }
       changeGivenCUP = subtractDecimals(request.cashReceived, totalToCharge)
@@ -351,18 +383,18 @@ export class MockSalesService implements SalesService {
       totalUSD = totalToCharge
       if (compareDecimals(request.cashReceived, totalToCharge) < 0) {
         throw new ApiError(
-          400,
-          'CASH_INSUFFICIENT',
-          'El importe en efectivo entregado por el cliente es inferior al total adeudado de la venta.'
+          {
+            code: 'CASH_INSUFFICIENT',
+            message:
+              'El importe en efectivo entregado por el cliente es inferior al total adeudado de la venta.',
+          },
+          400
         )
       }
       // Vuelto siempre en CUP: (cashReceived * effectiveRateUSD) - totalCUP
       const equivCUP = multiplyDecimals(request.cashReceived, effectiveRateUSD)
       changeGivenCUP = roundToInteger(subtractDecimals(equivCUP, totalCUP))
-    } else if (
-      request.paidCurrency === 'CUP_TRANSFER' ||
-      request.paymentMethod === 'TRANSFER'
-    ) {
+    } else if (request.paidCurrency === 'CUP_TRANSFER' || request.paymentMethod === 'TRANSFER') {
       exchangeRateApplied = '1.00'
       totalInCurrency = totalCUP
       totalToCharge = totalCUP
@@ -377,7 +409,11 @@ export class MockSalesService implements SalesService {
     // 7. Descontar existencias físicas en el mock de inventario
     for (const item of saleItems) {
       if (this.inventoryService) {
-        await this.inventoryService.deductStock(item.productCode, item.quantity, request.warehouseId)
+        await this.inventoryService.deductStock(
+          item.productCode,
+          item.quantity,
+          request.warehouseId
+        )
       }
       const p = this.products.find((prod) => prod.code === item.productCode)
       if (p) {
@@ -422,7 +458,13 @@ export class MockSalesService implements SalesService {
 
   async getSales(query: SalesQuery = {}): Promise<PaginatedResponse<SaleListItem>> {
     if (!this.checkHasPermission('sales.view')) {
-      throw new ApiError(403, 'FORBIDDEN', 'Requiere permiso sales.view para consultar el historial de ventas.')
+      throw new ApiError(
+        {
+          code: 'FORBIDDEN',
+          message: 'Requiere permiso sales.view para consultar el historial de ventas.',
+        },
+        403
+      )
     }
 
     let filtered = [...this.sales]
@@ -473,25 +515,46 @@ export class MockSalesService implements SalesService {
 
   async getSaleById(id: string): Promise<Sale> {
     if (!this.checkHasPermission('sales.view')) {
-      throw new ApiError(403, 'FORBIDDEN', 'Requiere permiso sales.view para consultar el detalle de venta.')
+      throw new ApiError(
+        {
+          code: 'FORBIDDEN',
+          message: 'Requiere permiso sales.view para consultar el detalle de venta.',
+        },
+        403
+      )
     }
     const sale = this.sales.find((s) => s.id === id)
     if (!sale) {
-      throw new ApiError(404, 'SALE_NOT_FOUND', 'El ticket de venta especificado no existe.')
+      throw new ApiError(
+        { code: 'SALE_NOT_FOUND', message: 'El ticket de venta especificado no existe.' },
+        404
+      )
     }
     return JSON.parse(JSON.stringify(sale))
   }
 
   async cancelSale(id: string, dto: CancelSaleDto): Promise<CancelSaleResult> {
     if (!this.checkHasPermission('sales.cancel')) {
-      throw new ApiError(403, 'FORBIDDEN', 'Requiere permiso sales.cancel para anular ventas.')
+      throw new ApiError(
+        { code: 'FORBIDDEN', message: 'Requiere permiso sales.cancel para anular ventas.' },
+        403
+      )
     }
     const sale = this.sales.find((s) => s.id === id)
     if (!sale) {
-      throw new ApiError(404, 'SALE_NOT_FOUND', 'El ticket de venta especificado no existe.')
+      throw new ApiError(
+        { code: 'SALE_NOT_FOUND', message: 'El ticket de venta especificado no existe.' },
+        404
+      )
     }
     if (sale.status === 'CANCELLED') {
-      throw new ApiError(409, 'SALE_ALREADY_CANCELLED', 'La venta indicada ya ha sido cancelada anteriormente.')
+      throw new ApiError(
+        {
+          code: 'SALE_ALREADY_CANCELLED',
+          message: 'La venta indicada ya ha sido cancelada anteriormente.',
+        },
+        409
+      )
     }
 
     // Reponer existencias al inventario

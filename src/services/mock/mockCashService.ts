@@ -123,12 +123,12 @@ export class MockCashService implements CashService {
       const token = localStorage.getItem('qvaflow_token')
       if (token) {
         const match = Object.values(MOCK_USERS).find((u) => u.token === token)
-        if (match) return match.user.name || match.user.username
+        if (match) return match.user.fullName || match.user.username
       }
       const rawUser = localStorage.getItem('qvaflow_user')
       if (rawUser) {
         const user = JSON.parse(rawUser)
-        return user.name || user.username
+        return user.fullName || user.name || user.username
       }
     } catch {
       // Ignorar fallo de lectura local
@@ -138,24 +138,36 @@ export class MockCashService implements CashService {
 
   async getRates(): Promise<ExchangeRates> {
     if (!this.checkAnyPermission(['sales.create', 'cash.manage', 'cash.exchange'])) {
-      throw new ApiError(403, 'FORBIDDEN', 'No posee permisos para consultar las tasas de cambio.')
+      throw new ApiError(
+        { code: 'FORBIDDEN', message: 'No posee permisos para consultar las tasas de cambio.' },
+        403
+      )
     }
     return JSON.parse(JSON.stringify(this.rates))
   }
 
   async updateRates(dto: UpdateExchangeRatesDto): Promise<ExchangeRates> {
     if (!this.checkHasPermission('cash.exchange')) {
-      throw new ApiError(403, 'FORBIDDEN', 'Requiere permiso cash.exchange para actualizar tasas.')
+      throw new ApiError(
+        { code: 'FORBIDDEN', message: 'Requiere permiso cash.exchange para actualizar tasas.' },
+        403
+      )
     }
     if (dto.USD !== undefined) {
       if (!isPositiveDecimal(dto.USD)) {
-        throw new ApiError(400, 'INVALID_EXCHANGE_RATE', 'La tasa USD debe ser un importe positivo.')
+        throw new ApiError(
+          { code: 'INVALID_EXCHANGE_RATE', message: 'La tasa USD debe ser un importe positivo.' },
+          400
+        )
       }
       this.rates.USD = normalizeDecimal(dto.USD)
     }
     if (dto.MLC !== undefined) {
       if (!isPositiveDecimal(dto.MLC)) {
-        throw new ApiError(400, 'INVALID_EXCHANGE_RATE', 'La tasa MLC debe ser un importe positivo.')
+        throw new ApiError(
+          { code: 'INVALID_EXCHANGE_RATE', message: 'La tasa MLC debe ser un importe positivo.' },
+          400
+        )
       }
       this.rates.MLC = normalizeDecimal(dto.MLC)
     }
@@ -165,17 +177,29 @@ export class MockCashService implements CashService {
 
   async getSettings(): Promise<CashSettings> {
     if (!this.checkAnyPermission(['cash.manage', 'system.config'])) {
-      throw new ApiError(403, 'FORBIDDEN', 'No posee permisos para consultar configuración de caja.')
+      throw new ApiError(
+        { code: 'FORBIDDEN', message: 'No posee permisos para consultar configuración de caja.' },
+        403
+      )
     }
     return JSON.parse(JSON.stringify(this.settings))
   }
 
   async updateSettings(dto: UpdateCashSettingsDto): Promise<CashSettings> {
     if (!this.checkHasPermission('system.config')) {
-      throw new ApiError(403, 'FORBIDDEN', 'Requiere permiso system.config para modificar la configuración de caja.')
+      throw new ApiError(
+        {
+          code: 'FORBIDDEN',
+          message: 'Requiere permiso system.config para modificar la configuración de caja.',
+        },
+        403
+      )
     }
     if (compareDecimals(dto.exchangeMargin, '0.00') < 0) {
-      throw new ApiError(400, 'INVALID_SETTINGS_VALUE', 'El margen de canje no puede ser negativo.')
+      throw new ApiError(
+        { code: 'INVALID_SETTINGS_VALUE', message: 'El margen de canje no puede ser negativo.' },
+        400
+      )
     }
     this.settings.exchangeMargin = normalizeDecimal(dto.exchangeMargin)
     this.settings.updatedAt = new Date().toISOString()
@@ -184,7 +208,10 @@ export class MockCashService implements CashService {
 
   async getCurrentShift(): Promise<CashShift | null> {
     if (!this.checkAnyPermission(['sales.create', 'cash.open_close'])) {
-      throw new ApiError(403, 'FORBIDDEN', 'No posee permisos para consultar el turno actual.')
+      throw new ApiError(
+        { code: 'FORBIDDEN', message: 'No posee permisos para consultar el turno actual.' },
+        403
+      )
     }
     const current = this.shifts.find((s) => s.status === 'OPEN')
     return current ? JSON.parse(JSON.stringify(current)) : null
@@ -192,14 +219,23 @@ export class MockCashService implements CashService {
 
   async openShift(dto: OpenShiftDto): Promise<CashShift> {
     if (!this.checkHasPermission('cash.open_close')) {
-      throw new ApiError(403, 'FORBIDDEN', 'Requiere permiso cash.open_close para abrir un turno de caja.')
+      throw new ApiError(
+        {
+          code: 'FORBIDDEN',
+          message: 'Requiere permiso cash.open_close para abrir un turno de caja.',
+        },
+        403
+      )
     }
     const current = this.shifts.find((s) => s.status === 'OPEN')
     if (current) {
       throw new ApiError(
-        409,
-        'SHIFT_ALREADY_OPEN',
-        'Ya existe un turno de caja abierto en este terminal. Debe cerrarlo antes de iniciar uno nuevo.'
+        {
+          code: 'SHIFT_ALREADY_OPEN',
+          message:
+            'Ya existe un turno de caja abierto en este terminal. Debe cerrarlo antes de iniciar uno nuevo.',
+        },
+        409
       )
     }
     const now = new Date().toISOString()
@@ -229,14 +265,26 @@ export class MockCashService implements CashService {
 
   async closeShift(id: string, dto: CloseShiftDto): Promise<ShiftCloseResult> {
     if (!this.checkHasPermission('cash.open_close')) {
-      throw new ApiError(403, 'FORBIDDEN', 'Requiere permiso cash.open_close para cerrar el turno.')
+      throw new ApiError(
+        { code: 'FORBIDDEN', message: 'Requiere permiso cash.open_close para cerrar el turno.' },
+        403
+      )
     }
     const shift = this.shifts.find((s) => s.id === id)
     if (!shift) {
-      throw new ApiError(404, 'SHIFT_NOT_FOUND', 'El turno de caja especificado no existe.')
+      throw new ApiError(
+        { code: 'SHIFT_NOT_FOUND', message: 'El turno de caja especificado no existe.' },
+        404
+      )
     }
     if (shift.status !== 'OPEN') {
-      throw new ApiError(409, 'SHIFT_NOT_OPEN', 'El turno de caja especificado ya se encuentra cerrado.')
+      throw new ApiError(
+        {
+          code: 'SHIFT_NOT_OPEN',
+          message: 'El turno de caja especificado ya se encuentra cerrado.',
+        },
+        409
+      )
     }
 
     const expectedCUP = addDecimals(
@@ -259,12 +307,15 @@ export class MockCashService implements CashService {
       const notes = dto.notes?.trim() || ''
       if (notes.length < 10) {
         throw new ApiError(
-          400,
-          'REASON_REQUIRED',
-          'Existe una diferencia en el arqueo físico de caja. Debe registrar obligatoriamente el motivo del descuadre con un mínimo de 10 caracteres.',
           {
-            notes: ['La justificación de descuadre debe contener al menos 10 caracteres.'],
-          }
+            code: 'REASON_REQUIRED',
+            message:
+              'Existe una diferencia en el arqueo físico de caja. Debe registrar obligatoriamente el motivo del descuadre con un mínimo de 10 caracteres.',
+            details: {
+              notes: ['La justificación de descuadre debe contener al menos 10 caracteres.'],
+            },
+          },
+          400
         )
       }
     }
@@ -282,17 +333,32 @@ export class MockCashService implements CashService {
 
   async createExchange(dto: CreateCurrencyExchangeDto): Promise<CurrencyExchange> {
     if (!this.checkHasPermission('cash.exchange')) {
-      throw new ApiError(403, 'FORBIDDEN', 'Requiere permiso cash.exchange para registrar canje de divisas.')
+      throw new ApiError(
+        {
+          code: 'FORBIDDEN',
+          message: 'Requiere permiso cash.exchange para registrar canje de divisas.',
+        },
+        403
+      )
     }
     const shift = this.shifts.find((s) => s.id === dto.shiftId && s.status === 'OPEN')
     if (!shift) {
-      throw new ApiError(409, 'SHIFT_NOT_OPEN', 'No es posible registrar canjes sin un turno de caja activo.')
+      throw new ApiError(
+        {
+          code: 'SHIFT_NOT_OPEN',
+          message: 'No es posible registrar canjes sin un turno de caja activo.',
+        },
+        409
+      )
     }
     if (!isPositiveDecimal(dto.amountFrom) || dto.currencyFrom !== 'USD') {
       throw new ApiError(
-        400,
-        'INVALID_EXCHANGE_DATA',
-        'El importe a canjear debe ser positivo y en moneda divisa extranjera válida (USD).'
+        {
+          code: 'INVALID_EXCHANGE_DATA',
+          message:
+            'El importe a canjear debe ser positivo y en moneda divisa extranjera válida (USD).',
+        },
+        400
       )
     }
 
@@ -323,7 +389,13 @@ export class MockCashService implements CashService {
 
   async getShifts(query: CashShiftsQuery = {}): Promise<PaginatedResponse<CashShift>> {
     if (!this.checkHasPermission('cash.view_history')) {
-      throw new ApiError(403, 'FORBIDDEN', 'Requiere permiso cash.view_history para consultar el historial de turnos.')
+      throw new ApiError(
+        {
+          code: 'FORBIDDEN',
+          message: 'Requiere permiso cash.view_history para consultar el historial de turnos.',
+        },
+        403
+      )
     }
     let filtered = [...this.shifts]
     if (query.status) {
@@ -351,11 +423,20 @@ export class MockCashService implements CashService {
 
   async getShiftById(id: string): Promise<CashShift> {
     if (!this.checkHasPermission('cash.view_history')) {
-      throw new ApiError(403, 'FORBIDDEN', 'Requiere permiso cash.view_history para consultar el turno.')
+      throw new ApiError(
+        {
+          code: 'FORBIDDEN',
+          message: 'Requiere permiso cash.view_history para consultar el turno.',
+        },
+        403
+      )
     }
     const shift = this.shifts.find((s) => s.id === id)
     if (!shift) {
-      throw new ApiError(404, 'SHIFT_NOT_FOUND', 'El turno de caja especificado no existe.')
+      throw new ApiError(
+        { code: 'SHIFT_NOT_FOUND', message: 'El turno de caja especificado no existe.' },
+        404
+      )
     }
     return JSON.parse(JSON.stringify(shift))
   }

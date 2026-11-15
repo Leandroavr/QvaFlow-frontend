@@ -1640,17 +1640,36 @@ export class MockInventoryService implements InventoryService {
   /**
    * Descuenta stock físico de un producto tras completarse una venta.
    */
-  async deductStock(productCode: string, quantity: DecimalString, warehouseCode?: string): Promise<void> {
-    const item = this.stock.find(
+  async deductStock(
+    productCode: string,
+    quantity: DecimalString,
+    warehouseCode?: string
+  ): Promise<void> {
+    let item = this.stock.find(
       (s) => s.productCode === productCode && (!warehouseCode || s.warehouseCode === warehouseCode)
     )
+    if (!item && warehouseCode) {
+      item = this.stock.find((s) => s.productCode === productCode)
+    }
     if (!item) {
-      throw new ApiError(404, 'PRODUCT_NOT_FOUND', `Producto ${productCode} no encontrado en stock.`)
+      throw new ApiError(
+        { code: 'PRODUCT_NOT_FOUND', message: `Producto ${productCode} no encontrado en stock.` },
+        404
+      )
     }
     if (compareDecimals(quantity, item.quantity) > 0) {
-      throw new ApiError(409, 'STOCK_INSUFFICIENT', `Existencias insuficientes para ${item.productName}.`, {
-        [productCode]: [`Stock disponible: ${item.quantity} ${item.unit}, solicitado: ${quantity} ${item.unit}`],
-      })
+      throw new ApiError(
+        {
+          code: 'STOCK_INSUFFICIENT',
+          message: `Existencias insuficientes para ${item.productName}.`,
+          details: {
+            [productCode]: [
+              `Stock disponible: ${item.quantity} ${item.unit}, solicitado: ${quantity} ${item.unit}`,
+            ],
+          },
+        },
+        409
+      )
     }
     item.quantity = subtractDecimals(item.quantity, quantity)
   }
@@ -1658,10 +1677,17 @@ export class MockInventoryService implements InventoryService {
   /**
    * Repone existencias de un producto al almacén tras la anulación de una venta.
    */
-  async restoreStock(productCode: string, quantity: DecimalString, warehouseCode?: string): Promise<void> {
-    const item = this.stock.find(
+  async restoreStock(
+    productCode: string,
+    quantity: DecimalString,
+    warehouseCode?: string
+  ): Promise<void> {
+    let item = this.stock.find(
       (s) => s.productCode === productCode && (!warehouseCode || s.warehouseCode === warehouseCode)
     )
+    if (!item && warehouseCode) {
+      item = this.stock.find((s) => s.productCode === productCode)
+    }
     if (item) {
       item.quantity = addDecimals(item.quantity, quantity)
     }

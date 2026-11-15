@@ -198,4 +198,3 @@ export function maxDecimal(
   }
   return formatFromHundredths(maxH)
 }
-

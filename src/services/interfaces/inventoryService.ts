@@ -1,4 +1,5 @@
 import type { Id, PaginatedResponse } from '@/shared/types/api'
+import type { DecimalString } from '@/shared/types/currency'
 import type {
   Warehouse,
   Location,
