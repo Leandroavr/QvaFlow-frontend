@@ -128,13 +128,21 @@
     <!-- Panel de Totales y Botón de Cobro -->
     <div class="border-t border-border-subtle bg-surface-app p-3 sm:p-4">
       <div class="space-y-1.5 text-xs text-content-secondary">
+        <!-- Dos filas separadas: Líneas y Unidades -->
         <div class="flex items-center justify-between">
-          <span>Líneas / Artículos</span>
-          <span class="font-medium text-content-primary"
-            >{{ totalLinesCount }} / {{ totalUnitsCount }}</span
-          >
+          <span>Líneas</span>
+          <span class="font-medium text-content-primary" data-testid="cart-total-lines">
+            {{ totalLinesCount }}
+          </span>
         </div>
-        <div class="border-border-subtle/60 flex items-baseline justify-between border-t pt-1">
+        <div class="flex items-center justify-between">
+          <span>Unidades</span>
+          <span class="font-medium text-content-primary" data-testid="cart-total-units">
+            {{ totalUnitsCount }}
+          </span>
+        </div>
+
+        <div class="border-border-subtle/60 flex items-baseline justify-between border-t pt-1.5">
           <span class="text-sm font-bold text-content-primary">Total a Cobrar</span>
           <div class="text-right">
             <span class="font-mono text-xl font-extrabold text-primary sm:text-2xl">
@@ -143,13 +151,24 @@
             <span class="ml-1 text-xs font-semibold text-content-muted">CUP</span>
           </div>
         </div>
+
+        <!-- Equivalente en USD con tasa efectiva (ceil), solo si hay tasas disponibles -->
+        <div
+          v-if="equivalentUSD"
+          class="flex items-center justify-end gap-1.5 text-[11px] text-content-muted"
+          data-testid="cart-equivalent-usd"
+        >
+          <span>Equivalente:</span>
+          <span class="font-mono font-bold text-content-secondary">{{ equivalentUSD }} USD</span>
+          <span class="text-[10px] text-content-tertiary">(1 USD = {{ effectiveRateUSD }} CUP)</span>
+        </div>
       </div>
 
-      <!-- Botón de Cobro (F8) -->
+      <!-- Botón de Cobro (F8) con contraste de texto suficiente mediante opacidad en el botón -->
       <button
         type="button"
         :disabled="isEmpty || !isShiftOpen"
-        class="shadow-xs disabled:bg-surface-hover mt-3 flex h-11 w-full items-center justify-between rounded-xl bg-primary px-4 text-sm font-bold text-white transition-colors hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:text-content-muted"
+        class="shadow-xs mt-3 flex h-11 w-full items-center justify-between rounded-xl bg-primary px-4 text-sm font-bold text-white transition-all hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
         title="Proceder al cobro de la venta (F8)"
         @click="emit('checkout')"
       >
@@ -158,7 +177,7 @@
           <span>Cobrar Venta</span>
         </span>
         <kbd
-          class="rounded bg-black/20 px-1.5 py-0.5 font-mono text-[10px] font-medium text-white/90"
+          class="rounded bg-black/25 px-1.5 py-0.5 font-mono text-[10px] font-medium text-white"
         >
           F8
         </kbd>
@@ -205,11 +224,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ShoppingCart, Trash2, X, Plus, Minus, Banknote, AlertCircle } from 'lucide-vue-next'
 import type { CartItem } from '../types'
 import type { DecimalString } from '@/shared/types/currency'
-import { compareDecimals } from '@/shared/utils/decimal'
+import { compareDecimals, divideDecimals, ceilToInteger } from '@/shared/utils/decimal'
 import ConfirmDialog from '@/shared/ui/ConfirmDialog.vue'
 import BaseButton from '@/shared/ui/BaseButton.vue'
 
@@ -221,9 +240,11 @@ const props = withDefaults(
     totalUnitsCount: DecimalString
     isEmpty: boolean
     isShiftOpen?: boolean
+    effectiveRateUSD?: string
   }>(),
   {
     isShiftOpen: true,
+    effectiveRateUSD: undefined,
   }
 )
 
@@ -237,6 +258,13 @@ const emit = defineEmits<{
 }>()
 
 const showClearConfirm = ref<boolean>(false)
+
+const equivalentUSD = computed<string | null>(() => {
+  if (!props.effectiveRateUSD || compareDecimals(props.effectiveRateUSD, '0.00') <= 0) {
+    return null
+  }
+  return ceilToInteger(divideDecimals(props.totalCUP, props.effectiveRateUSD))
+})
 
 const isMaxStockReached = (item: CartItem): boolean => {
   return compareDecimals(item.quantity, item.product.stock) >= 0

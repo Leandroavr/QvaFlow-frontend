@@ -25,6 +25,7 @@
           :total-units-count="cart.totalUnitsCount.value"
           :is-empty="cart.isEmpty.value"
           :is-shift-open="isShiftOpen"
+          :effective-rate-u-s-d="effectiveRateUSD"
           @increment="handleIncrement"
           @decrement="handleDecrement"
           @remove="handleRemove"
