@@ -2,9 +2,11 @@
   <div class="flex h-dvh w-full flex-col overflow-hidden bg-surface-app text-content-primary">
     <!-- Cabecera Kiosco del POS -->
     <PosHeader
+      :held-count="heldOrdersComposable.heldOrdersCount.value"
       @exit="handleExit"
       @open-shift="openModal"
       @open-exchange="handleOpenExchange"
+      @open-held="isHeldModalOpen = true"
     />
 
     <!-- Cuerpo Principal del POS: 2 columnas sin scroll de página -->
@@ -60,6 +62,16 @@
       @success="handleExchangeSuccess"
     />
 
+    <!-- Modal de Órdenes en Espera (F4) -->
+    <HeldOrdersModal
+      :open="isHeldModalOpen"
+      :orders="heldOrdersComposable.heldOrders.value"
+      @update:open="isHeldModalOpen = $event"
+      @restore="handleRestoreHeld"
+      @discard="handleDiscardHeld"
+      @close="handleHeldClose"
+    />
+
     <!-- Drawer de Cobro de Venta -->
     <PosCheckoutDrawer
       :open="isCheckoutDrawerOpen"
@@ -93,15 +105,18 @@ import PosCatalog from '../components/PosCatalog.vue'
 import PosCart from '../components/PosCart.vue'
 import OpenShiftModal from '../components/OpenShiftModal.vue'
 import CurrencyExchangeModal from '../components/CurrencyExchangeModal.vue'
+import HeldOrdersModal from '../components/HeldOrdersModal.vue'
 import PosCheckoutDrawer from '../components/PosCheckoutDrawer.vue'
 import SaleSummaryModal from '../components/SaleSummaryModal.vue'
 import type { PosProduct, Sale } from '../types'
 import { usePosCart } from '../composables/usePosCart'
 import { usePosShift } from '../composables/usePosShift'
+import { usePosHeldOrders } from '../composables/usePosHeldOrders'
 
 const router = useRouter()
 const catalogRef = ref<InstanceType<typeof PosCatalog> | null>(null)
 const cart = usePosCart()
+const heldOrdersComposable = usePosHeldOrders()
 const {
   currentShift,
   rates,
@@ -117,8 +132,43 @@ const {
 
 const isCheckoutDrawerOpen = ref<boolean>(false)
 const isExchangeModalOpen = ref<boolean>(false)
+const isHeldModalOpen = ref<boolean>(false)
 const completedSale = ref<Sale | null>(null)
 const isSummaryModalOpen = ref<boolean>(false)
+
+const handleRestoreHeld = (orderId: string) => {
+  const res = heldOrdersComposable.restoreHeldOrder(
+    orderId,
+    {
+      items: cart.items.value,
+      totalCUP: cart.totalCUP.value,
+      totalLinesCount: cart.totalLinesCount.value,
+      totalUnitsCount: cart.totalUnitsCount.value,
+    },
+    catalogRef.value?.products
+  )
+
+  if (res) {
+    cart.setItems(res.restoredOrder.items)
+    if (res.stockWarnings.length > 0) {
+      toast.warning(res.stockWarnings.join('. '))
+    } else {
+      toast.success(`Orden "${res.restoredOrder.label}" restaurada al carrito`)
+    }
+    isHeldModalOpen.value = false
+    catalogRef.value?.focusSearch()
+  }
+}
+
+const handleDiscardHeld = (orderId: string) => {
+  heldOrdersComposable.discardHeldOrder(orderId)
+  toast.info('Orden en espera descartada')
+}
+
+const handleHeldClose = () => {
+  isHeldModalOpen.value = false
+  catalogRef.value?.focusSearch()
+}
 
 const handleOpenExchange = () => {
   if (!isShiftOpen.value) return
@@ -207,6 +257,24 @@ const handleGlobalKeyDown = (e: KeyboardEvent) => {
     if (!openDialog) {
       e.preventDefault()
       handleExit()
+    }
+  }
+
+  // Atajo F4: suspender venta activa si el carrito tiene productos, o abrir modal si está vacío
+  if (e.key === 'F4') {
+    e.preventDefault()
+    if (!cart.isEmpty.value) {
+      heldOrdersComposable.suspendCart(
+        cart.items.value,
+        cart.totalCUP.value,
+        cart.totalLinesCount.value,
+        cart.totalUnitsCount.value
+      )
+      cart.clearCart()
+      toast.info('Venta activa suspendida en espera (F4)')
+      catalogRef.value?.focusSearch()
+    } else {
+      isHeldModalOpen.value = true
     }
   }
 

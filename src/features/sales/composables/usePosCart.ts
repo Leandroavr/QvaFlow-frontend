@@ -125,6 +125,10 @@ export function usePosCart() {
     items.value = []
   }
 
+  const setItems = (newItems: CartItem[]): void => {
+    items.value = JSON.parse(JSON.stringify(newItems))
+  }
+
   return {
     items,
     isEmpty,
@@ -137,5 +141,6 @@ export function usePosCart() {
     decrement,
     removeItem,
     clearCart,
+    setItems,
   }
 }

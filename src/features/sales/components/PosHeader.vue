@@ -78,6 +78,30 @@
 
     <!-- Zona Derecha: Acciones rápidas y Pantalla Completa (Fullscreen API) -->
     <div class="flex items-center gap-2">
+      <!-- Botón Tickets en Espera (F4) -->
+      <button
+        type="button"
+        class="shadow-xs hover:bg-surface-hover relative inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface-app px-2.5 py-1 text-xs font-semibold text-content-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+        title="Tickets en espera (F4)"
+        data-testid="header-held-orders-btn"
+        @click="emit('open-held')"
+      >
+        <Clock class="size-3.5 text-content-secondary" aria-hidden="true" />
+        <span class="hidden sm:inline">En espera</span>
+        <span
+          v-if="heldCount > 0"
+          class="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white"
+          data-testid="header-held-badge"
+        >
+          {{ heldCount }}
+        </span>
+        <kbd
+          class="hidden rounded border border-border-strong bg-surface-card px-1 py-0.5 font-mono text-[9px] font-medium text-content-muted md:inline-block"
+        >
+          F4
+        </kbd>
+      </button>
+
       <!-- Botón Canje de Divisas (F6) -->
       <button
         v-if="isShiftOpen"
@@ -113,7 +137,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, Maximize, Minimize, User, Store, ArrowLeftRight } from 'lucide-vue-next'
+import { ArrowLeft, Maximize, Minimize, User, Store, ArrowLeftRight, Clock } from 'lucide-vue-next'
 import { useAuthStore } from '@/features/auth/stores/authStore'
 import { usePosShift } from '../composables/usePosShift'
 
@@ -124,14 +148,18 @@ const { currentShift, isShiftOpen, loadShiftData } = usePosShift()
 const props = withDefaults(
   defineProps<{
     customCashierName?: string
+    heldCount?: number
   }>(),
-  {}
+  {
+    heldCount: 0,
+  }
 )
 
 const emit = defineEmits<{
   (e: 'exit'): void
   (e: 'open-shift'): void
   (e: 'open-exchange'): void
+  (e: 'open-held'): void
 }>()
 
 const isFullscreen = ref<boolean>(false)
