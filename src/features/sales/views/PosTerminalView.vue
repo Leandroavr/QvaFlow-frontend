@@ -1,7 +1,7 @@
 <template>
   <div class="flex h-dvh w-full flex-col overflow-hidden bg-surface-app text-content-primary">
     <!-- Cabecera Kiosco del POS -->
-    <PosHeader @exit="handleExit" />
+    <PosHeader @exit="handleExit" @open-shift="openModal" />
 
     <!-- Cuerpo Principal del POS: 2 columnas sin scroll de página -->
     <main class="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-3 lg:flex-row">
@@ -30,9 +30,18 @@
           @remove="handleRemove"
           @clear="handleClear"
           @checkout="handleCheckout"
+          @open-shift="openModal"
         />
       </aside>
     </main>
+
+    <!-- Modal de Apertura de Turno de Caja -->
+    <OpenShiftModal
+      :open="isOpenShiftModalOpen"
+      :default-rate-u-s-d="rates?.USD || '360.00'"
+      @update:open="handleShiftModalUpdate"
+      @success="handleShiftSuccess"
+    />
   </div>
 </template>
 
@@ -42,21 +51,33 @@ import { useRouter } from 'vue-router'
 import PosHeader from '../components/PosHeader.vue'
 import PosCatalog from '../components/PosCatalog.vue'
 import PosCart from '../components/PosCart.vue'
+import OpenShiftModal from '../components/OpenShiftModal.vue'
 import type { PosProduct } from '../types'
 import { usePosCart } from '../composables/usePosCart'
-import { cashService } from '@/services'
+import { usePosShift } from '../composables/usePosShift'
 
 const router = useRouter()
 const catalogRef = ref<InstanceType<typeof PosCatalog> | null>(null)
 const cart = usePosCart()
-const isShiftOpen = ref<boolean>(true)
+const {
+  rates,
+  isShiftOpen,
+  isOpenShiftModalOpen,
+  loadShiftData,
+  openModal,
+  closeModal,
+} = usePosShift()
 
-const checkShiftStatus = async () => {
-  try {
-    const shift = await cashService.getCurrentShift()
-    isShiftOpen.value = Boolean(shift && shift.status === 'OPEN')
-  } catch {
-    isShiftOpen.value = false
+const handleShiftSuccess = () => {
+  catalogRef.value?.focusSearch()
+}
+
+const handleShiftModalUpdate = (val: boolean) => {
+  if (!val) {
+    closeModal()
+    catalogRef.value?.focusSearch()
+  } else {
+    openModal()
   }
 }
 
@@ -104,15 +125,20 @@ const handleGlobalKeyDown = (e: KeyboardEvent) => {
     }
   }
 
-  // Atajo F8: cobrar
-  if (e.key === 'F8') {
+  // Atajos F6 y F8: deshabilitados si el turno está cerrado
+  if (e.key === 'F6' || e.key === 'F8') {
     e.preventDefault()
-    handleCheckout()
+    if (!isShiftOpen.value) {
+      return
+    }
+    if (e.key === 'F8') {
+      handleCheckout()
+    }
   }
 }
 
 onMounted(() => {
-  checkShiftStatus()
+  loadShiftData()
   window.addEventListener('keydown', handleGlobalKeyDown)
 })
 

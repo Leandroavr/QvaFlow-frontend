@@ -52,9 +52,17 @@
         <span class="text-xs font-medium" :class="isShiftOpen ? 'text-success' : 'text-danger'">
           {{ isShiftOpen ? 'Turno Abierto' : 'Turno Cerrado' }}
         </span>
-        <span v-if="shiftId" class="hidden text-xs text-content-muted lg:inline">
-          ({{ shiftId }})
+        <span v-if="currentShift?.id" class="hidden text-xs text-content-muted lg:inline">
+          ({{ currentShift.id }})
         </span>
+        <button
+          v-if="!isShiftOpen"
+          type="button"
+          class="ml-1 text-xs font-semibold text-primary hover:underline focus:outline-none"
+          @click="emit('open-shift')"
+        >
+          Abrir turno
+        </button>
       </div>
 
       <!-- Nombre del Cajero -->
@@ -89,10 +97,11 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowLeft, Maximize, Minimize, User, Store } from 'lucide-vue-next'
 import { useAuthStore } from '@/features/auth/stores/authStore'
-import { cashService } from '@/services'
+import { usePosShift } from '../composables/usePosShift'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { currentShift, isShiftOpen, loadShiftData } = usePosShift()
 
 const props = withDefaults(
   defineProps<{
@@ -103,33 +112,16 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (e: 'exit'): void
+  (e: 'open-shift'): void
 }>()
 
 const isFullscreen = ref<boolean>(false)
-const isShiftOpen = ref<boolean>(false)
-const shiftId = ref<string>('')
 
 const cashierName = computed(() => {
   if (props.customCashierName) return props.customCashierName
   const u = authStore.user
   return u?.fullName || u?.username || 'Cajero'
 })
-
-const checkShiftStatus = async () => {
-  try {
-    const shift = await cashService.getCurrentShift()
-    if (shift && shift.status === 'OPEN') {
-      isShiftOpen.value = true
-      shiftId.value = shift.id
-    } else {
-      isShiftOpen.value = false
-      shiftId.value = ''
-    }
-  } catch {
-    isShiftOpen.value = false
-    shiftId.value = ''
-  }
-}
 
 const updateFullscreenState = () => {
   isFullscreen.value = Boolean(
@@ -174,7 +166,7 @@ const handleExit = () => {
 }
 
 onMounted(() => {
-  checkShiftStatus()
+  loadShiftData()
   updateFullscreenState()
   document.addEventListener('fullscreenchange', updateFullscreenState)
 })

@@ -164,9 +164,29 @@
         </kbd>
       </button>
 
-      <p v-if="!isShiftOpen" class="text-danger mt-1.5 text-center text-[11px] font-medium">
-        Turno de caja cerrado. No es posible cobrar.
-      </p>
+      <!-- Aviso con botón Abrir Turno si la caja está cerrada -->
+      <div
+        v-if="!isShiftOpen"
+        class="mt-2.5 flex flex-col gap-2 rounded-lg border border-state-warning-border bg-state-warning-bg p-2.5 text-xs text-state-warning"
+        data-testid="pos-shift-closed-notice"
+      >
+        <div class="flex items-center gap-1.5 font-semibold">
+          <AlertCircle class="h-4 w-4 shrink-0" />
+          <span>Turno de caja cerrado</span>
+        </div>
+        <p class="text-[11px] text-content-secondary">
+          No es posible realizar cobros sin un turno abierto.
+        </p>
+        <BaseButton
+          variant="secondary"
+          density="compact"
+          size="sm"
+          block
+          @click="emit('open-shift')"
+        >
+          Abrir turno
+        </BaseButton>
+      </div>
     </div>
 
     <!-- Diálogo de Confirmación para Vaciar Carrito -->
@@ -186,11 +206,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { ShoppingCart, Trash2, X, Plus, Minus, Banknote } from 'lucide-vue-next'
+import { ShoppingCart, Trash2, X, Plus, Minus, Banknote, AlertCircle } from 'lucide-vue-next'
 import type { CartItem } from '../types'
 import type { DecimalString } from '@/shared/types/currency'
 import { compareDecimals } from '@/shared/utils/decimal'
 import ConfirmDialog from '@/shared/ui/ConfirmDialog.vue'
+import BaseButton from '@/shared/ui/BaseButton.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -212,6 +233,7 @@ const emit = defineEmits<{
   (e: 'remove', productCode: string): void
   (e: 'clear'): void
   (e: 'checkout'): void
+  (e: 'open-shift'): void
 }>()
 
 const showClearConfirm = ref<boolean>(false)
