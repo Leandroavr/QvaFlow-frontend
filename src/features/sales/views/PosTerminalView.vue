@@ -10,9 +10,7 @@
         class="shadow-xs flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border-subtle bg-surface-card"
         aria-label="Catálogo de productos"
       >
-        <div class="flex flex-1 items-center justify-center p-6 text-content-secondary">
-          <span class="text-sm">Catálogo de productos (cargando...)</span>
-        </div>
+        <PosCatalog ref="catalogRef" @add-to-cart="handleAddToCart" />
       </section>
 
       <!-- Columna Derecha: Carrito de Venta y Totales (32%) -->
@@ -29,14 +27,22 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import PosHeader from '../components/PosHeader.vue'
+import PosCatalog from '../components/PosCatalog.vue'
+import type { PosProduct } from '../types'
 
 const router = useRouter()
+const catalogRef = ref<InstanceType<typeof PosCatalog> | null>(null)
 
 const handleExit = () => {
   router.push('/')
+}
+
+const handleAddToCart = (_product: PosProduct) => {
+  // Conectado al carrito
+  catalogRef.value?.focusSearch()
 }
 
 const handleGlobalKeyDown = (e: KeyboardEvent) => {
