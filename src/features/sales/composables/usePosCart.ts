@@ -13,7 +13,6 @@ import {
 const items = ref<CartItem[]>([])
 
 export function usePosCart() {
-
   const isEmpty = computed<boolean>(() => items.value.length === 0)
 
   const totalLinesCount = computed<number>(() => items.value.length)

@@ -46,7 +46,7 @@
             :has-error="Boolean(formErrors.initialCUP)"
           >
             <template #prefix>
-              <span class="text-xs font-semibold text-content-tertiary">CUP</span>
+              <span class="text-content-tertiary text-xs font-semibold">CUP</span>
             </template>
           </BaseInput>
         </BaseFormField>
@@ -64,7 +64,7 @@
             :has-error="Boolean(formErrors.initialUSD)"
           >
             <template #prefix>
-              <span class="text-xs font-semibold text-content-tertiary">USD</span>
+              <span class="text-content-tertiary text-xs font-semibold">USD</span>
             </template>
           </BaseInput>
         </BaseFormField>
@@ -83,10 +83,10 @@
           :has-error="Boolean(formErrors.dailyRateUSD)"
         >
           <template #prefix>
-            <span class="text-xs font-semibold text-content-tertiary">1 USD =</span>
+            <span class="text-content-tertiary text-xs font-semibold">1 USD =</span>
           </template>
           <template #suffix>
-            <span class="text-xs font-semibold text-content-tertiary">CUP</span>
+            <span class="text-content-tertiary text-xs font-semibold">CUP</span>
           </template>
         </BaseInput>
       </BaseFormField>

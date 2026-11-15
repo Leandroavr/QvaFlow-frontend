@@ -19,7 +19,7 @@
         </div>
       </div>
 
-      <div class="rounded-lg border border-border-subtle bg-surface-sunken p-3 space-y-2 text-xs">
+      <div class="space-y-2 rounded-lg border border-border-subtle bg-surface-sunken p-3 text-xs">
         <div class="flex justify-between">
           <span class="text-content-secondary">Total Pagado:</span>
           <span class="font-mono font-bold text-content-primary">
@@ -29,7 +29,9 @@
 
         <div v-if="sale.paidCurrency === 'USD'" class="flex justify-between">
           <span class="text-content-secondary">Tasa Aplicada:</span>
-          <span class="font-mono text-content-primary">1 USD = {{ sale.exchangeRateApplied }} CUP</span>
+          <span class="font-mono text-content-primary"
+            >1 USD = {{ sale.exchangeRateApplied }} CUP</span
+          >
         </div>
 
         <div class="flex justify-between">
@@ -39,7 +41,7 @@
           </span>
         </div>
 
-        <div class="border-t border-border-subtle/80 pt-2 flex items-baseline justify-between">
+        <div class="border-border-subtle/80 flex items-baseline justify-between border-t pt-2">
           <span class="font-bold text-content-primary">Vuelto Entregado:</span>
           <div class="text-right">
             <span
@@ -48,7 +50,7 @@
             >
               {{ sale.changeGivenCUP }}
             </span>
-            <span class="ml-1 text-xs font-semibold text-content-tertiary">CUP</span>
+            <span class="text-content-tertiary ml-1 text-xs font-semibold">CUP</span>
           </div>
         </div>
       </div>

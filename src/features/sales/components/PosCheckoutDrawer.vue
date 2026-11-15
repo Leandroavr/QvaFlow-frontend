@@ -40,7 +40,7 @@
         class="flex-1 rounded-md py-1.5 text-center text-xs font-semibold transition-all"
         :class="
           activeTab === 'CUP_CASH'
-            ? 'bg-surface-card text-primary shadow-xs'
+            ? 'shadow-xs bg-surface-card text-primary'
             : 'text-content-secondary hover:text-content-primary'
         "
         data-testid="tab-cup-cash"
@@ -54,7 +54,7 @@
         class="flex-1 rounded-md py-1.5 text-center text-xs font-semibold transition-all"
         :class="
           activeTab === 'CUP_TRANSFER'
-            ? 'bg-surface-card text-primary shadow-xs'
+            ? 'shadow-xs bg-surface-card text-primary'
             : 'text-content-secondary hover:text-content-primary'
         "
         data-testid="tab-cup-transfer"
@@ -68,7 +68,7 @@
         class="flex-1 rounded-md py-1.5 text-center text-xs font-semibold transition-all"
         :class="
           activeTab === 'USD_CASH'
-            ? 'bg-surface-card text-primary shadow-xs'
+            ? 'shadow-xs bg-surface-card text-primary'
             : 'text-content-secondary hover:text-content-primary'
         "
         data-testid="tab-usd-cash"
@@ -82,7 +82,7 @@
     <div class="mt-5 space-y-5">
       <!-- 1. Cuadro de Resumen de Total a Cobrar -->
       <div
-        class="flex flex-col items-center justify-center rounded-xl border border-border-subtle bg-surface-sunken/40 p-4 text-center"
+        class="bg-surface-sunken/40 flex flex-col items-center justify-center rounded-xl border border-border-subtle p-4 text-center"
       >
         <span class="text-xs font-medium uppercase tracking-wider text-content-secondary">
           Total a Cobrar
@@ -96,7 +96,7 @@
           >
             {{ totalCUP }}
           </span>
-          <span class="text-sm font-bold text-content-tertiary">CUP</span>
+          <span class="text-content-tertiary text-sm font-bold">CUP</span>
         </div>
 
         <!-- Total en USD (con ceil) -->
@@ -108,7 +108,7 @@
             >
               {{ totalUSD }}
             </span>
-            <span class="text-sm font-bold text-content-tertiary">USD</span>
+            <span class="text-content-tertiary text-sm font-bold">USD</span>
           </div>
 
           <div class="mt-1 flex items-center gap-2 text-[11px] text-content-muted">
@@ -138,18 +138,18 @@
             @keydown.enter.prevent="handleEnterConfirm"
           >
             <template #prefix>
-              <span class="text-xs font-semibold text-content-tertiary">CUP</span>
+              <span class="text-content-tertiary text-xs font-semibold">CUP</span>
             </template>
           </BaseInput>
         </BaseFormField>
 
         <!-- Botones de Billetes Rápidos y Exacto en CUP -->
         <div>
-          <span class="text-[11px] font-medium text-content-tertiary">Billetes sugeridos:</span>
+          <span class="text-content-tertiary text-[11px] font-medium">Billetes sugeridos:</span>
           <div class="mt-1.5 flex flex-wrap gap-2">
             <button
               type="button"
-              class="rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary hover:bg-primary/20 active:scale-95"
+              class="border-primary/30 bg-primary/10 hover:bg-primary/20 rounded-lg border px-2.5 py-1 text-xs font-bold text-primary active:scale-95"
               data-testid="btn-exact-cup"
               @click="setExactCash"
             >
@@ -159,7 +159,7 @@
               v-for="bill in ['100.00', '200.00', '500.00', '1000.00']"
               :key="bill"
               type="button"
-              class="rounded-lg border border-border-subtle bg-surface-card px-2.5 py-1 text-xs font-semibold text-content-primary hover:bg-surface-hover active:scale-95"
+              class="hover:bg-surface-hover rounded-lg border border-border-subtle bg-surface-card px-2.5 py-1 text-xs font-semibold text-content-primary active:scale-95"
               @click="setBill(bill)"
             >
               ${{ bill.split('.')[0] }}
@@ -172,8 +172,8 @@
           class="rounded-lg border p-3"
           :class="
             isSufficient
-              ? 'border-state-success-border bg-state-success-bg/30 text-state-success'
-              : 'border-state-warning-border bg-state-warning-bg/30 text-state-warning'
+              ? 'bg-state-success-bg/30 border-state-success-border text-state-success'
+              : 'bg-state-warning-bg/30 border-state-warning-border text-state-warning'
           "
         >
           <div class="flex items-center justify-between">
@@ -245,18 +245,18 @@
             @keydown.enter.prevent="handleEnterConfirm"
           >
             <template #prefix>
-              <span class="text-xs font-semibold text-content-tertiary">USD</span>
+              <span class="text-content-tertiary text-xs font-semibold">USD</span>
             </template>
           </BaseInput>
         </BaseFormField>
 
         <!-- Botones de Billetes Rápidos y Exacto en USD -->
         <div>
-          <span class="text-[11px] font-medium text-content-tertiary">Billetes sugeridos:</span>
+          <span class="text-content-tertiary text-[11px] font-medium">Billetes sugeridos:</span>
           <div class="mt-1.5 flex flex-wrap gap-2">
             <button
               type="button"
-              class="rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary hover:bg-primary/20 active:scale-95"
+              class="border-primary/30 bg-primary/10 hover:bg-primary/20 rounded-lg border px-2.5 py-1 text-xs font-bold text-primary active:scale-95"
               data-testid="btn-exact-usd"
               @click="setExactCash"
             >
@@ -266,7 +266,7 @@
               v-for="bill in ['5.00', '10.00', '20.00', '50.00', '100.00']"
               :key="bill"
               type="button"
-              class="rounded-lg border border-border-subtle bg-surface-card px-2.5 py-1 text-xs font-semibold text-content-primary hover:bg-surface-hover active:scale-95"
+              class="hover:bg-surface-hover rounded-lg border border-border-subtle bg-surface-card px-2.5 py-1 text-xs font-semibold text-content-primary active:scale-95"
               @click="setBill(bill)"
             >
               ${{ bill.split('.')[0] }}
@@ -279,8 +279,8 @@
           class="rounded-lg border p-3"
           :class="
             isSufficient
-              ? 'border-state-success-border bg-state-success-bg/30 text-state-success'
-              : 'border-state-warning-border bg-state-warning-bg/30 text-state-warning'
+              ? 'bg-state-success-bg/30 border-state-success-border text-state-success'
+              : 'bg-state-warning-bg/30 border-state-warning-border text-state-warning'
           "
         >
           <div class="flex items-center justify-between">

@@ -19,6 +19,7 @@ describe('Punto de Venta (POS) - Estructura, Catálogo y Carrito', () => {
     pinia = createPinia()
     setActivePinia(pinia)
     localStorage.clear()
+    usePosCart().clearCart()
 
     // Autenticar por defecto con permiso sales.create
     localStorage.setItem(
