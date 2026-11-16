@@ -1,7 +1,7 @@
 import type { DecimalString, Currency } from '@/shared/types/currency'
 import type { Id, PaginationParams, PaginatedResponse } from '@/shared/types/api'
 
-export type { PaginatedResponse, PaginationParams }
+export type { PaginatedResponse, PaginationParams, Currency, DecimalString }
 
 /**
  * Producto disponible en el catálogo del terminal de ventas (POS).

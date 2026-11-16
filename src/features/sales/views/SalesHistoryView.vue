@@ -32,7 +32,7 @@
         <!-- Filtro por Moneda -->
         <div class="w-36">
           <BaseSelect
-            :model-value="currency"
+            :model-value="currency || 'ALL'"
             :options="currencyOptions"
             placeholder="Moneda"
             @update:model-value="handleCurrencyChange"
@@ -77,8 +77,8 @@
     <DataTable
       mode="server"
       :columns="columns"
-      :items="sales"
-      :total-items="total"
+      :data="sales"
+      :total="total"
       :loading="isLoading"
       :error="error"
       empty-title="No se encontraron ventas"
@@ -191,7 +191,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { Store } from 'lucide-vue-next'
 import PageHeader from '@/shared/ui/PageHeader.vue'
 import BaseButton from '@/shared/ui/BaseButton.vue'
@@ -209,6 +209,7 @@ import { formatDate } from '@/shared/utils/formatDate'
 import type { PaymentMethod, Currency } from '../types'
 
 const router = useRouter()
+const route = useRoute()
 const { can } = usePermissions()
 
 const {
@@ -271,7 +272,7 @@ const hasActiveFilters = computed<boolean>(() => {
 })
 
 const currencyOptions: SelectOption[] = [
-  { label: 'Todas las monedas', value: '' },
+  { label: 'Todas las monedas', value: 'ALL' },
   { label: 'CUP', value: 'CUP' },
   { label: 'USD', value: 'USD' },
   { label: 'CUP_TRANSFER', value: 'CUP_TRANSFER' },
@@ -295,50 +296,50 @@ const formatPaymentMethod = (method: PaymentMethod): string => {
 const columns: DataTableColumn[] = [
   {
     key: 'id',
-    label: 'Ticket',
+    title: 'Ticket',
     width: '110px',
     sortable: true,
   },
   {
     key: 'createdAt',
-    label: 'Fecha',
+    title: 'Fecha',
     width: '140px',
     sortable: true,
   },
   {
     key: 'shiftId',
-    label: 'Turno',
+    title: 'Turno',
     width: '120px',
     sortable: false,
   },
   {
     key: 'cashierName',
-    label: 'Cajero',
+    title: 'Cajero',
     sortable: false,
     cellClass: 'min-w-[120px]',
   },
   {
     key: 'total',
-    label: 'Total',
+    title: 'Total',
     width: '110px',
     align: 'right',
     sortable: false,
   },
   {
     key: 'payment',
-    label: 'Cobro',
+    title: 'Cobro',
     width: '130px',
     sortable: false,
   },
   {
     key: 'status',
-    label: 'Estado',
+    title: 'Estado',
     width: '100px',
     sortable: false,
   },
   {
     key: 'actions',
-    label: '',
+    title: '',
     width: '60px',
     align: 'center',
     sortable: false,
@@ -364,22 +365,23 @@ const loadSales = async () => {
   }
 }
 
-const handleCurrencyChange = (val: string | number) => {
-  setFilter('currency', String(val || ''))
+const handleCurrencyChange = (val: string | number | null) => {
+  const str = String(val || '')
+  setFilter('currency', str === 'ALL' ? '' : str)
   setPage(1)
 }
 
-const handleShiftChange = (val: string | number) => {
+const handleShiftChange = (val: string | number | null) => {
   setFilter('shiftId', String(val || ''))
   setPage(1)
 }
 
-const handleDesdeChange = (val: string | number) => {
+const handleDesdeChange = (val: string | number | null) => {
   setFilter('desde', String(val || ''))
   setPage(1)
 }
 
-const handleHastaChange = (val: string | number) => {
+const handleHastaChange = (val: string | number | null) => {
   setFilter('hasta', String(val || ''))
   setPage(1)
 }
@@ -408,10 +410,51 @@ const handleCancelSale = async (reason: string) => {
   }
 }
 
+// Sincronizar cambios externos de la URL hacia el estado local
+watch(
+  () => route.query,
+  (q) => {
+    if (q.page && Number(q.page) !== page.value) {
+      page.value = Number(q.page)
+    }
+    if (q.sort && String(q.sort) !== sort.value) {
+      sort.value = String(q.sort)
+    }
+    if (q.search !== undefined && String(q.search) !== search.value) {
+      search.value = String(q.search)
+    }
+    if (q.shiftId !== undefined && String(q.shiftId) !== filters.value.shiftId) {
+      filters.value.shiftId = String(q.shiftId)
+    }
+    if (q.desde !== undefined && String(q.desde) !== filters.value.desde) {
+      filters.value.desde = String(q.desde)
+    }
+    if (q.hasta !== undefined && String(q.hasta) !== filters.value.hasta) {
+      filters.value.hasta = String(q.hasta)
+    }
+    if (q.currency !== undefined && String(q.currency) !== filters.value.currency) {
+      filters.value.currency = String(q.currency)
+    }
+  },
+  { deep: true }
+)
+
 // Carga inicial y reactividad a cambios de parámetros en URL
-watch([page, perPage, sort, search, shiftId, desde, hasta, currency], () => {
-  loadSales()
-})
+watch(
+  [
+    () => page.value,
+    () => perPage.value,
+    () => sort.value,
+    () => search.value,
+    () => filters.value.shiftId,
+    () => filters.value.desde,
+    () => filters.value.hasta,
+    () => filters.value.currency,
+  ],
+  () => {
+    loadSales()
+  }
+)
 
 onMounted(() => {
   loadSales()
