@@ -45,7 +45,7 @@
             placeholder="0.00"
             :has-error="Boolean(formErrors.initialCUP)"
           >
-            <template #prefix>
+            <template #suffix>
               <span class="text-content-tertiary text-xs font-semibold">CUP</span>
             </template>
           </BaseInput>
@@ -63,7 +63,7 @@
             placeholder="0.00"
             :has-error="Boolean(formErrors.initialUSD)"
           >
-            <template #prefix>
+            <template #suffix>
               <span class="text-content-tertiary text-xs font-semibold">USD</span>
             </template>
           </BaseInput>
@@ -72,7 +72,7 @@
 
       <!-- Tasa del Día USD -->
       <BaseFormField
-        label="Tasa del día USD"
+        label="Tasa del día USD (1 USD =)"
         required
         :error="formErrors.dailyRateUSD"
         description="Tasa de cambio de referencia para cobro y canje en mostrador."
@@ -82,9 +82,6 @@
           placeholder="360.00"
           :has-error="Boolean(formErrors.dailyRateUSD)"
         >
-          <template #prefix>
-            <span class="text-content-tertiary text-xs font-semibold">1 USD =</span>
-          </template>
           <template #suffix>
             <span class="text-content-tertiary text-xs font-semibold">CUP</span>
           </template>
