@@ -179,6 +179,7 @@ const isFullscreen = ref<boolean>(false)
 
 const cashierName = computed(() => {
   if (props.customCashierName) return props.customCashierName
+  if (currentShift.value?.cashierName) return currentShift.value.cashierName
   const u = authStore.user
   return u?.fullName || u?.username || 'Cajero'
 })

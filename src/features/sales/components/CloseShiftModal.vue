@@ -37,7 +37,7 @@
               {{ shift.initialFunds.CUP }} CUP
             </span>
             <span class="block font-mono text-[11px] text-content-secondary">
-              ${{ shift.initialFunds.USD }} USD
+              {{ shift.initialFunds.USD }} USD
             </span>
           </div>
 
@@ -49,7 +49,7 @@
               +{{ shift.salesTotals.cupCash }} CUP
             </span>
             <span class="block font-mono text-[11px] text-state-success">
-              +${{ shift.salesTotals.USD }} USD
+              +{{ shift.salesTotals.USD }} USD
             </span>
           </div>
 
@@ -61,7 +61,7 @@
               {{ shift.exchangeAdjustments.CUP }} CUP
             </span>
             <span class="block font-mono text-[11px] text-content-secondary">
-              +${{ shift.exchangeAdjustments.USD }} USD
+              +{{ shift.exchangeAdjustments.USD }} USD
             </span>
           </div>
         </div>
@@ -74,7 +74,7 @@
               {{ localExpectedCUP }} CUP
             </span>
             <span class="font-mono font-bold text-primary" data-testid="expected-funds-usd">
-              ${{ localExpectedUSD }} USD
+              {{ localExpectedUSD }} USD
             </span>
           </div>
         </div>
@@ -202,14 +202,14 @@
             class="font-mono font-bold text-content-primary"
             data-testid="result-expected-funds"
           >
-            {{ closeResult.expectedFunds.CUP }} CUP / ${{ closeResult.expectedFunds.USD }} USD
+            {{ closeResult.expectedFunds.CUP }} CUP / {{ closeResult.expectedFunds.USD }} USD
           </span>
         </div>
 
         <div class="flex justify-between">
           <span class="text-content-secondary">Fondos Contados (CUP / USD):</span>
           <span class="font-mono font-bold text-content-primary" data-testid="result-counted-funds">
-            {{ closeResult.countedFunds.CUP }} CUP / ${{ closeResult.countedFunds.USD }} USD
+            {{ closeResult.countedFunds.CUP }} CUP / {{ closeResult.countedFunds.USD }} USD
           </span>
         </div>
 
@@ -225,7 +225,7 @@
               "
               data-testid="result-differences"
             >
-              {{ closeResult.differences.CUP }} CUP &bull; ${{ closeResult.differences.USD }} USD
+              {{ closeResult.differences.CUP }} CUP &bull; {{ closeResult.differences.USD }} USD
             </span>
           </div>
         </div>

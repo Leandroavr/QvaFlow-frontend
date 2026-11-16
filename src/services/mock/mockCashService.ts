@@ -241,7 +241,7 @@ export class MockCashService implements CashService {
     const now = new Date().toISOString()
     const newShift: CashShift = {
       id: `TURNO-${new Date().getFullYear()}-${String(this.shifts.length + 1).padStart(3, '0')}`,
-      cashierName: dto.cashierName || this.getCurrentUsername(),
+      cashierName: dto.cashierName?.trim() || this.getCurrentUsername(),
       openedAt: now,
       status: 'OPEN',
       dailyRateUSD: normalizeDecimal(dto.dailyRateUSD),
