@@ -50,25 +50,39 @@
         </div>
 
         <!-- Filtro Fecha Desde -->
-        <div class="w-36">
-          <BaseInput
-            :model-value="desde"
-            type="date"
-            placeholder="Desde"
-            density="compact"
-            @update:model-value="handleDesdeChange"
-          />
+        <div class="flex items-center gap-1.5">
+          <label for="filter-desde" class="shrink-0 text-xs font-medium text-content-secondary">
+            Desde:
+          </label>
+          <div class="w-36">
+            <BaseInput
+              id="filter-desde"
+              :model-value="desde"
+              type="date"
+              density="compact"
+              title="Fecha inicial de venta (Desde)"
+              aria-label="Fecha inicial de venta (Desde)"
+              @update:model-value="handleDesdeChange"
+            />
+          </div>
         </div>
 
         <!-- Filtro Fecha Hasta -->
-        <div class="w-36">
-          <BaseInput
-            :model-value="hasta"
-            type="date"
-            placeholder="Hasta"
-            density="compact"
-            @update:model-value="handleHastaChange"
-          />
+        <div class="flex items-center gap-1.5">
+          <label for="filter-hasta" class="shrink-0 text-xs font-medium text-content-secondary">
+            Hasta:
+          </label>
+          <div class="w-36">
+            <BaseInput
+              id="filter-hasta"
+              :model-value="hasta"
+              type="date"
+              density="compact"
+              title="Fecha final de venta (Hasta)"
+              aria-label="Fecha final de venta (Hasta)"
+              @update:model-value="handleHastaChange"
+            />
+          </div>
         </div>
       </template>
     </FilterBar>

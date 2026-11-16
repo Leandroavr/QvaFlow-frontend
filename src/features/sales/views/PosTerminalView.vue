@@ -256,9 +256,10 @@ const handleCheckout = () => {
   isCheckoutDrawerOpen.value = true
 }
 
-const handleCheckoutSuccess = (sale: Sale) => {
+const handleCheckoutSuccess = async (sale: Sale) => {
   completedSale.value = sale
   cart.clearCart()
+  await catalogRef.value?.loadProducts(true)
   toast.success(`Venta completada exitosamente. Vuelto: ${sale.changeGivenCUP} CUP`)
   isSummaryModalOpen.value = true
 }

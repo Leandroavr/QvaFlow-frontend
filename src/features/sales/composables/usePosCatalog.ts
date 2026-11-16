@@ -9,15 +9,19 @@ export function usePosCatalog() {
   const searchQuery = ref<string>('')
   const selectedCategory = ref<string>('ALL')
 
-  const loadProducts = async (warehouseId?: string): Promise<void> => {
-    loading.value = true
+  const loadProducts = async (warehouseId?: string, silent = false): Promise<void> => {
+    if (!silent) {
+      loading.value = true
+    }
     error.value = null
     try {
       products.value = await salesService.getPosProducts({ warehouseId })
     } catch (err: unknown) {
       error.value = (err as Error).message || 'Error al cargar el catálogo de productos.'
     } finally {
-      loading.value = false
+      if (!silent) {
+        loading.value = false
+      }
     }
   }
 

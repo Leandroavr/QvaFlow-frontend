@@ -257,7 +257,7 @@ onUnmounted(() => {
 defineExpose({
   focusSearch,
   searchInputRef,
-  loadProducts,
+  loadProducts: (silent = false) => loadProducts(props.warehouseId, silent),
   products,
 })
 </script>
