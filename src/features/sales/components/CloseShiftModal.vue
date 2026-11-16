@@ -96,6 +96,7 @@
               placeholder="0.00"
               :has-error="Boolean(formErrors.countedCUP)"
               data-testid="close-counted-cup-input"
+              @keydown.enter.prevent="handleCountEnter"
             >
               <template #prefix>
                 <span class="text-content-tertiary text-xs font-semibold">CUP</span>
@@ -115,6 +116,7 @@
               placeholder="0.00"
               :has-error="Boolean(formErrors.countedUSD)"
               data-testid="close-counted-usd-input"
+              @keydown.enter.prevent="handleCountEnter"
             >
               <template #prefix>
                 <span class="text-content-tertiary text-xs font-semibold">USD</span>
@@ -174,6 +176,7 @@
             "
             :has-error="Boolean(formErrors.notes)"
             data-testid="close-notes-input"
+            @keydown.enter.prevent.stop
           />
         </BaseFormField>
       </form>
@@ -289,7 +292,12 @@ import BaseInput from '@/shared/ui/BaseInput.vue'
 import BaseButton from '@/shared/ui/BaseButton.vue'
 import type { CashShift, ShiftCloseResult } from '../types'
 import { usePosShift } from '../composables/usePosShift'
-import { addDecimals, subtractDecimals, normalizeDecimal } from '@/shared/utils/decimal'
+import {
+  addDecimals,
+  subtractDecimals,
+  compareDecimals,
+  normalizeDecimal,
+} from '@/shared/utils/decimal'
 import { ApiError } from '@/shared/types/api'
 
 interface Props {
@@ -315,6 +323,34 @@ const countedCUP = ref<string>('0.00')
 const countedUSD = ref<string>('0.00')
 const notes = ref<string>('')
 const countedCupInputRef = ref<any>(null)
+
+const isNotesFocused = (): boolean => {
+  const el = document.activeElement
+  if (!el) return false
+  return Boolean(
+    el.closest('[data-testid="close-notes-input"]') ||
+    el.getAttribute('data-testid') === 'close-notes-input'
+  )
+}
+
+const isAmountZeroOrEmpty = (): boolean => {
+  const cup = countedCUP.value?.trim()
+  const usd = countedUSD.value?.trim()
+  if (!cup || !usd) return true
+  try {
+    const isCupZero = compareDecimals(cup, '0.00') <= 0
+    const isUsdZero = compareDecimals(usd, '0.00') <= 0
+    if (isCupZero || isUsdZero) return true
+  } catch {
+    return true
+  }
+  return false
+}
+
+const handleCountEnter = () => {
+  if (isAmountZeroOrEmpty() || isNotesFocused()) return
+  handleSubmit()
+}
 
 const formErrors = reactive<Record<string, string>>({
   countedCUP: '',
@@ -393,7 +429,13 @@ const handleFinish = () => {
   emit('close')
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (e?: Event) => {
+  if (e) {
+    e.preventDefault()
+  }
+  if (isNotesFocused()) return
+  if (isAmountZeroOrEmpty()) return
+
   serverError.value = null
   formErrors.countedCUP = ''
   formErrors.countedUSD = ''

@@ -67,7 +67,7 @@
           placeholder="0.00"
           :has-error="Boolean(amountError)"
           data-testid="exchange-amount-input"
-          @keydown.enter.prevent="handleSubmit"
+          @keydown.enter.prevent="handleAmountEnter"
         >
           <template #prefix>
             <span class="text-content-tertiary text-xs font-semibold">{{ currencyFrom }}</span>
@@ -121,6 +121,7 @@
           v-model="notes"
           placeholder="Ej. Billete de 20 USD en buen estado"
           data-testid="exchange-notes-input"
+          @keydown.enter.prevent.stop
         />
       </BaseFormField>
     </form>
@@ -160,7 +161,7 @@ import BaseButton from '@/shared/ui/BaseButton.vue'
 import type { Currency } from '@/shared/types/currency'
 import type { CurrencyExchange } from '../types'
 import { usePosExchange } from '../composables/usePosExchange'
-import { isPositiveDecimal } from '@/shared/utils/decimal'
+import { isPositiveDecimal, compareDecimals } from '@/shared/utils/decimal'
 
 interface Props {
   open: boolean
@@ -188,6 +189,30 @@ const notes = ref<string>('')
 const amountError = ref<string>('')
 const amountInputRef = ref<any>(null)
 
+const isNotesFocused = (): boolean => {
+  const el = document.activeElement
+  if (!el) return false
+  return Boolean(
+    el.closest('[data-testid="exchange-notes-input"]') ||
+    el.getAttribute('data-testid') === 'exchange-notes-input'
+  )
+}
+
+const isAmountZeroOrEmpty = (): boolean => {
+  const val = amountFrom.value?.trim()
+  if (!val) return true
+  try {
+    return !isPositiveDecimal(val) || compareDecimals(val, '0.00') <= 0
+  } catch {
+    return true
+  }
+}
+
+const handleAmountEnter = () => {
+  if (isAmountZeroOrEmpty() || isNotesFocused()) return
+  handleSubmit()
+}
+
 const baseRate = computed<string>(() => {
   return currencyFrom.value === 'USD' ? props.dailyRateUSD : props.rateMLC
 })
@@ -201,7 +226,7 @@ const amountToDeliver = computed<string>(() => {
 })
 
 const isValid = computed<boolean>(() => {
-  return isPositiveDecimal(amountFrom.value)
+  return !isAmountZeroOrEmpty()
 })
 
 const resetForm = () => {
@@ -237,7 +262,12 @@ const handleOpenUpdate = (val: boolean) => {
   }
 }
 
-const handleSubmit = async () => {
+const handleSubmit = async (e?: Event) => {
+  if (e) {
+    e.preventDefault()
+  }
+  if (isNotesFocused()) return
+  if (isAmountZeroOrEmpty()) return
   if (!isValid.value || exchange.isSubmitting.value) return
 
   try {

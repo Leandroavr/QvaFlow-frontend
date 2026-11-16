@@ -420,4 +420,158 @@ describe('Punto de Venta (POS) - Canje, Espera y Cierre de Turno', () => {
 
     wrapper.unmount()
   })
+
+  it('(9) Enter seguro en CurrencyExchangeModal: Enter no confirma si el monto es 0 o vacío, ni si el foco está en notas', async () => {
+    const createExchangeSpy = vi.spyOn(cashService, 'createExchange')
+
+    const wrapper = mount(CurrencyExchangeModal, {
+      props: {
+        open: true,
+        shiftId: 'TURNO-2026-001',
+        dailyRateUSD: '360.00',
+        exchangeMargin: '10.00',
+      },
+      global: {
+        plugins: [pinia],
+      },
+      attachTo: document.body,
+    })
+
+    await flushPromises()
+
+    const amountInput = document.querySelector(
+      '[data-testid="exchange-amount-input"] input'
+    ) as HTMLInputElement
+    const notesInput = document.querySelector(
+      '[data-testid="exchange-notes-input"] input'
+    ) as HTMLInputElement
+
+    expect(amountInput).not.toBeNull()
+    expect(notesInput).not.toBeNull()
+
+    // Caso 1: Monto vacío
+    amountInput.value = ''
+    amountInput.dispatchEvent(new Event('input'))
+    amountInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await flushPromises()
+    expect(createExchangeSpy).not.toHaveBeenCalled()
+
+    // Caso 2: Monto 0
+    amountInput.value = '0.00'
+    amountInput.dispatchEvent(new Event('input'))
+    amountInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await flushPromises()
+    expect(createExchangeSpy).not.toHaveBeenCalled()
+
+    // Caso 3: Monto válido pero foco en notas
+    amountInput.value = '20.00'
+    amountInput.dispatchEvent(new Event('input'))
+    notesInput.focus()
+    expect(document.activeElement).toBe(notesInput)
+
+    notesInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await flushPromises()
+    expect(createExchangeSpy).not.toHaveBeenCalled()
+
+    // Caso 4: Monto válido con foco en el input de monto confirma el canje
+    amountInput.focus()
+    expect(document.activeElement).toBe(amountInput)
+
+    amountInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await flushPromises()
+    expect(createExchangeSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amountFrom: '20.00',
+        currencyFrom: 'USD',
+      })
+    )
+
+    wrapper.unmount()
+  })
+
+  it('(10) Enter seguro en CloseShiftModal: Enter no confirma si el monto es 0 o vacío, ni si el foco está en notas', async () => {
+    const shiftMock: CashShift = {
+      id: 'TURNO-2026-001',
+      cashierName: 'Yadira Reyes',
+      openedAt: new Date().toISOString(),
+      status: 'OPEN',
+      dailyRateUSD: '360.00',
+      initialFunds: { CUP: '10000.00', USD: '100.00' },
+      salesTotals: { cupCash: '5000.00', cupTransfer: '0.00', USD: '50.00' },
+      exchangeAdjustments: { CUP: '0.00', USD: '0.00' },
+    }
+
+    const closeShiftSpy = vi.spyOn(cashService, 'closeShift')
+
+    const wrapper = mount(CloseShiftModal, {
+      props: {
+        open: true,
+        shift: shiftMock,
+      },
+      global: {
+        plugins: [pinia],
+      },
+      attachTo: document.body,
+    })
+
+    await flushPromises()
+
+    const cupInput = document.querySelector(
+      '[data-testid="close-counted-cup-input"] input'
+    ) as HTMLInputElement
+    const usdInput = document.querySelector(
+      '[data-testid="close-counted-usd-input"] input'
+    ) as HTMLInputElement
+    const notesInput = document.querySelector(
+      '[data-testid="close-notes-input"] input'
+    ) as HTMLInputElement
+
+    expect(cupInput).not.toBeNull()
+    expect(usdInput).not.toBeNull()
+    expect(notesInput).not.toBeNull()
+
+    // Caso 1: Monto vacío en CUP
+    cupInput.value = ''
+    cupInput.dispatchEvent(new Event('input'))
+    cupInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await flushPromises()
+    expect(closeShiftSpy).not.toHaveBeenCalled()
+
+    // Caso 2: Montos en 0.00
+    cupInput.value = '0.00'
+    cupInput.dispatchEvent(new Event('input'))
+    usdInput.value = '0.00'
+    usdInput.dispatchEvent(new Event('input'))
+    cupInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await flushPromises()
+    expect(closeShiftSpy).not.toHaveBeenCalled()
+
+    // Caso 3: Montos válidos pero foco en notas
+    cupInput.value = '15000.00'
+    cupInput.dispatchEvent(new Event('input'))
+    usdInput.value = '150.00'
+    usdInput.dispatchEvent(new Event('input'))
+    notesInput.focus()
+    expect(document.activeElement).toBe(notesInput)
+
+    notesInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await flushPromises()
+    expect(closeShiftSpy).not.toHaveBeenCalled()
+
+    // Caso 4: Montos válidos con foco en input de conteo confirma el cierre exacto
+    cupInput.focus()
+    expect(document.activeElement).toBe(cupInput)
+
+    cupInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    await flushPromises()
+    expect(closeShiftSpy).toHaveBeenCalledWith(
+      'TURNO-2026-001',
+      expect.objectContaining({
+        countedCUP: '15000.00',
+        countedUSD: '150.00',
+      })
+    )
+
+    wrapper.unmount()
+  })
 })
