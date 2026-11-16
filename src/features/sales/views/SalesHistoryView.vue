@@ -30,7 +30,7 @@
     >
       <template #filters>
         <!-- Filtro por Moneda -->
-        <div class="w-36">
+        <div class="w-44">
           <BaseSelect
             :model-value="currency || 'ALL'"
             :options="currencyOptions"
@@ -40,10 +40,10 @@
         </div>
 
         <!-- Filtro por Turno -->
-        <div class="w-40">
+        <div class="w-44">
           <BaseInput
             :model-value="shiftId"
-            placeholder="Turno (ej. 001)..."
+            placeholder="TURNO-2026-001"
             density="compact"
             @update:model-value="handleShiftChange"
           />
@@ -272,7 +272,7 @@ const hasActiveFilters = computed<boolean>(() => {
 })
 
 const currencyOptions: SelectOption[] = [
-  { label: 'Todas las monedas', value: 'ALL' },
+  { label: 'Moneda: Todas', value: 'ALL' },
   { label: 'CUP', value: 'CUP' },
   { label: 'USD', value: 'USD' },
   { label: 'CUP_TRANSFER', value: 'CUP_TRANSFER' },
@@ -330,6 +330,8 @@ const columns: DataTableColumn[] = [
     title: 'Cobro',
     width: '130px',
     sortable: false,
+    headerClass: 'pl-6',
+    cellClass: 'pl-6',
   },
   {
     key: 'status',
