@@ -62,7 +62,7 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'sales/history',
         name: 'sales-history',
-        component: () => import('../views/ModulePlaceholderView.vue'),
+        component: () => import('../../features/sales/views/SalesHistoryView.vue'),
         meta: {
           permission: 'sales.view',
           title: 'Historial de Ventas - QvaFlow',
