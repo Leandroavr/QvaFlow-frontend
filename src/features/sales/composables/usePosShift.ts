@@ -1,6 +1,13 @@
 import { ref, computed } from 'vue'
 import { cashService } from '@/services'
-import type { CashShift, ExchangeRates, CashSettings, OpenShiftDto } from '../types'
+import type {
+  CashShift,
+  ExchangeRates,
+  CashSettings,
+  OpenShiftDto,
+  CloseShiftDto,
+  ShiftCloseResult,
+} from '../types'
 import { subtractDecimals, maxDecimal } from '@/shared/utils/decimal'
 
 // Estado reactivo singleton a nivel de módulo para mantener consistencia en todo el terminal POS
@@ -79,6 +86,21 @@ export function usePosShift() {
     }
   }
 
+  const closeShift = async (shiftId: string, dto: CloseShiftDto): Promise<ShiftCloseResult> => {
+    isLoading.value = true
+    error.value = null
+    try {
+      const result = await cashService.closeShift(shiftId, dto)
+      currentShift.value = null
+      return result
+    } catch (err: any) {
+      error.value = err?.message || 'Error al cerrar turno de caja'
+      throw err
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   const openModal = () => {
     isOpenShiftModalOpen.value = true
   }
@@ -100,6 +122,7 @@ export function usePosShift() {
     effectiveRateUSD,
     loadShiftData,
     openShift,
+    closeShift,
     openModal,
     closeModal,
   }

@@ -63,6 +63,16 @@
         >
           Abrir turno
         </button>
+        <button
+          v-else-if="can('cash.open_close')"
+          type="button"
+          class="ml-1 text-xs font-semibold text-content-secondary hover:text-state-error hover:underline focus:outline-none"
+          title="Cierre definitivo y arqueo físico del turno de caja"
+          data-testid="header-close-shift-btn"
+          @click="emit('open-close-shift')"
+        >
+          Cerrar turno
+        </button>
       </div>
 
       <!-- Nombre del Cajero -->
@@ -139,10 +149,12 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowLeft, Maximize, Minimize, User, Store, ArrowLeftRight, Clock } from 'lucide-vue-next'
 import { useAuthStore } from '@/features/auth/stores/authStore'
+import { usePermissions } from '@/shared/composables/usePermissions'
 import { usePosShift } from '../composables/usePosShift'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { can } = usePermissions()
 const { currentShift, isShiftOpen, loadShiftData } = usePosShift()
 
 const props = withDefaults(
@@ -158,6 +170,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: 'exit'): void
   (e: 'open-shift'): void
+  (e: 'open-close-shift'): void
   (e: 'open-exchange'): void
   (e: 'open-held'): void
 }>()
