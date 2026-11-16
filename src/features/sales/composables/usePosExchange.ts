@@ -1,7 +1,6 @@
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { cashService } from '@/services'
 import type { CreateCurrencyExchangeDto, CurrencyExchange } from '../types'
-import type { Currency } from '@/shared/types/currency'
 import {
   subtractDecimals,
   maxDecimal,

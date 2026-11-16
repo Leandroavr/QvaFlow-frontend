@@ -19,14 +19,18 @@
 
     <form id="currency-exchange-form" class="space-y-4 py-1" @submit.prevent="handleSubmit">
       <!-- Selección de Moneda Origen (USD, MLC) -->
-      <BaseFormField label="Moneda a recibir" required description="Divisa extranjera que entrega el cliente.">
+      <BaseFormField
+        label="Moneda a recibir"
+        required
+        description="Divisa extranjera que entrega el cliente."
+      >
         <div class="flex gap-2">
           <button
             type="button"
             class="flex-1 rounded-lg border py-2 text-xs font-bold transition-all"
             :class="
               currencyFrom === 'USD'
-                ? 'border-primary bg-primary/10 text-primary shadow-xs'
+                ? 'bg-primary/10 shadow-xs border-primary text-primary'
                 : 'border-border-subtle bg-surface-card text-content-secondary hover:text-content-primary'
             "
             data-testid="exchange-currency-usd"
@@ -39,7 +43,7 @@
             class="flex-1 rounded-lg border py-2 text-xs font-bold transition-all"
             :class="
               currencyFrom === 'MLC'
-                ? 'border-primary bg-primary/10 text-primary shadow-xs'
+                ? 'bg-primary/10 shadow-xs border-primary text-primary'
                 : 'border-border-subtle bg-surface-card text-content-secondary hover:text-content-primary'
             "
             data-testid="exchange-currency-mlc"
@@ -66,16 +70,19 @@
           @keydown.enter.prevent="handleSubmit"
         >
           <template #prefix>
-            <span class="text-xs font-semibold text-content-tertiary">{{ currencyFrom }}</span>
+            <span class="text-content-tertiary text-xs font-semibold">{{ currencyFrom }}</span>
           </template>
         </BaseInput>
       </BaseFormField>
 
       <!-- Tasa Efectiva (Solo Lectura) -->
-      <div class="rounded-lg border border-border-subtle bg-surface-sunken/40 p-3">
+      <div class="bg-surface-sunken/40 rounded-lg border border-border-subtle p-3">
         <div class="flex items-center justify-between text-xs">
           <span class="text-content-secondary">Tasa efectiva aplicada:</span>
-          <span class="font-mono font-bold text-content-primary" data-testid="exchange-effective-rate">
+          <span
+            class="font-mono font-bold text-content-primary"
+            data-testid="exchange-effective-rate"
+          >
             1 {{ currencyFrom }} = {{ effectiveRate }} CUP
           </span>
         </div>
@@ -86,7 +93,7 @@
 
       <!-- CUP a Entregar Calculado (Solo Lectura) -->
       <div
-        class="flex flex-col items-center justify-center rounded-xl border border-state-success-border bg-state-success-bg/30 p-4 text-center"
+        class="bg-state-success-bg/30 flex flex-col items-center justify-center rounded-xl border border-state-success-border p-4 text-center"
       >
         <span class="text-xs font-semibold uppercase tracking-wider text-state-success">
           Efectivo CUP a entregar
@@ -98,13 +105,18 @@
           >
             {{ amountToDeliver }}
           </span>
-          <span class="text-sm font-bold text-content-tertiary">CUP</span>
+          <span class="text-content-tertiary text-sm font-bold">CUP</span>
         </div>
-        <span class="mt-0.5 text-[10px] text-content-muted">Redondeo exacto al entero más cercano</span>
+        <span class="mt-0.5 text-[10px] text-content-muted"
+          >Redondeo exacto al entero más cercano</span
+        >
       </div>
 
       <!-- Notas o Justificación Opcional -->
-      <BaseFormField label="Notas / Observaciones" description="Detalles del billete o registro (opcional).">
+      <BaseFormField
+        label="Notas / Observaciones"
+        description="Detalles del billete o registro (opcional)."
+      >
         <BaseInput
           v-model="notes"
           placeholder="Ej. Billete de 20 USD en buen estado"

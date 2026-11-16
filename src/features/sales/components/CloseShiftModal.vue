@@ -20,49 +20,57 @@
     <!-- PANTALLA 1: FORMULARIO DE CONTEO Y ARQUEO -->
     <div v-if="!closeResult && shift" class="space-y-4 py-1">
       <!-- 1. Cuadro de Valores Operativos Registrados por el Servidor -->
-      <div class="rounded-xl border border-border-subtle bg-surface-sunken/40 p-3 space-y-2.5 text-xs">
+      <div
+        class="bg-surface-sunken/40 space-y-2.5 rounded-xl border border-border-subtle p-3 text-xs"
+      >
         <div class="flex items-center justify-between border-b border-border-subtle pb-2">
           <span class="font-semibold text-content-primary">Turno: {{ shift.id }}</span>
           <span class="text-content-secondary">Cajero: {{ shift.cashierName }}</span>
         </div>
 
-        <div class="grid grid-cols-3 gap-2 text-center pt-1">
-          <div class="rounded-lg bg-surface-card p-2 border border-border-subtle/60">
-            <span class="text-[10px] uppercase tracking-wider text-content-tertiary block">Fondo Inicial</span>
-            <span class="font-mono font-semibold text-content-primary text-xs block mt-0.5">
+        <div class="grid grid-cols-3 gap-2 pt-1 text-center">
+          <div class="border-border-subtle/60 rounded-lg border bg-surface-card p-2">
+            <span class="text-content-tertiary block text-[10px] uppercase tracking-wider"
+              >Fondo Inicial</span
+            >
+            <span class="mt-0.5 block font-mono text-xs font-semibold text-content-primary">
               {{ shift.initialFunds.CUP }} CUP
             </span>
-            <span class="font-mono text-[11px] text-content-secondary block">
+            <span class="block font-mono text-[11px] text-content-secondary">
               ${{ shift.initialFunds.USD }} USD
             </span>
           </div>
 
-          <div class="rounded-lg bg-surface-card p-2 border border-border-subtle/60">
-            <span class="text-[10px] uppercase tracking-wider text-content-tertiary block">Ventas Efectivo</span>
-            <span class="font-mono font-semibold text-state-success text-xs block mt-0.5">
+          <div class="border-border-subtle/60 rounded-lg border bg-surface-card p-2">
+            <span class="text-content-tertiary block text-[10px] uppercase tracking-wider"
+              >Ventas Efectivo</span
+            >
+            <span class="mt-0.5 block font-mono text-xs font-semibold text-state-success">
               +{{ shift.salesTotals.cupCash }} CUP
             </span>
-            <span class="font-mono text-[11px] text-state-success block">
+            <span class="block font-mono text-[11px] text-state-success">
               +${{ shift.salesTotals.USD }} USD
             </span>
           </div>
 
-          <div class="rounded-lg bg-surface-card p-2 border border-border-subtle/60">
-            <span class="text-[10px] uppercase tracking-wider text-content-tertiary block">Ajustes Canje</span>
-            <span class="font-mono font-semibold text-content-primary text-xs block mt-0.5">
+          <div class="border-border-subtle/60 rounded-lg border bg-surface-card p-2">
+            <span class="text-content-tertiary block text-[10px] uppercase tracking-wider"
+              >Ajustes Canje</span
+            >
+            <span class="mt-0.5 block font-mono text-xs font-semibold text-content-primary">
               {{ shift.exchangeAdjustments.CUP }} CUP
             </span>
-            <span class="font-mono text-[11px] text-content-secondary block">
+            <span class="block font-mono text-[11px] text-content-secondary">
               +${{ shift.exchangeAdjustments.USD }} USD
             </span>
           </div>
         </div>
 
         <!-- Fondos Esperados en Gaveta (Calculados) -->
-        <div class="border-t border-border-subtle/80 pt-2 flex items-center justify-between px-1">
+        <div class="border-border-subtle/80 flex items-center justify-between border-t px-1 pt-2">
           <span class="font-bold text-content-primary">Fondos Esperados:</span>
           <div class="text-right">
-            <span class="font-mono font-bold text-primary mr-2" data-testid="expected-funds-cup">
+            <span class="mr-2 font-mono font-bold text-primary" data-testid="expected-funds-cup">
               {{ localExpectedCUP }} CUP
             </span>
             <span class="font-mono font-bold text-primary" data-testid="expected-funds-usd">
@@ -90,7 +98,7 @@
               data-testid="close-counted-cup-input"
             >
               <template #prefix>
-                <span class="text-xs font-semibold text-content-tertiary">CUP</span>
+                <span class="text-content-tertiary text-xs font-semibold">CUP</span>
               </template>
             </BaseInput>
           </BaseFormField>
@@ -109,7 +117,7 @@
               data-testid="close-counted-usd-input"
             >
               <template #prefix>
-                <span class="text-xs font-semibold text-content-tertiary">USD</span>
+                <span class="text-content-tertiary text-xs font-semibold">USD</span>
               </template>
             </BaseInput>
           </BaseFormField>
@@ -120,13 +128,15 @@
           class="rounded-lg border p-3 text-xs"
           :class="
             hasLocalDifference
-              ? 'border-state-warning-border bg-state-warning-bg/30 text-state-warning'
-              : 'border-state-success-border bg-state-success-bg/30 text-state-success'
+              ? 'bg-state-warning-bg/30 border-state-warning-border text-state-warning'
+              : 'bg-state-success-bg/30 border-state-success-border text-state-success'
           "
         >
           <div class="flex items-center justify-between font-semibold">
-            <span>{{ hasLocalDifference ? 'Diferencia detectada en gaveta:' : 'Arqueo conforme:' }}</span>
-            <div class="text-right font-mono font-bold space-x-2">
+            <span>{{
+              hasLocalDifference ? 'Diferencia detectada en gaveta:' : 'Arqueo conforme:'
+            }}</span>
+            <div class="space-x-2 text-right font-mono font-bold">
               <span :data-testid="hasLocalDifference ? 'diff-preview-cup' : 'diff-zero-cup'">
                 {{ localDiffCUP }} CUP
               </span>
@@ -137,20 +147,31 @@
             </div>
           </div>
           <p v-if="hasLocalDifference" class="mt-1 text-[11px] text-content-secondary">
-            Existe una discrepancia entre el conteo físico y lo esperado. Debe justificar el motivo obligatoriamente (mínimo 10 caracteres).
+            Existe una discrepancia entre el conteo físico y lo esperado. Debe justificar el motivo
+            obligatoriamente (mínimo 10 caracteres).
           </p>
         </div>
 
         <!-- 4. Motivo / Observaciones del Cierre -->
         <BaseFormField
-          :label="hasLocalDifference ? 'Motivo del descuadre (obligatorio)' : 'Notas de cierre (opcional)'"
+          :label="
+            hasLocalDifference ? 'Motivo del descuadre (obligatorio)' : 'Notas de cierre (opcional)'
+          "
           :required="hasLocalDifference"
           :error="formErrors.notes"
-          :description="hasLocalDifference ? 'Mínimo 10 caracteres explicando el faltante o sobrante.' : 'Observaciones operativas del turno.'"
+          :description="
+            hasLocalDifference
+              ? 'Mínimo 10 caracteres explicando el faltante o sobrante.'
+              : 'Observaciones operativas del turno.'
+          "
         >
           <BaseInput
             v-model="notes"
-            :placeholder="hasLocalDifference ? 'Explique el motivo del faltante o sobrante...' : 'Observaciones del turno (opcional)'"
+            :placeholder="
+              hasLocalDifference
+                ? 'Explique el motivo del faltante o sobrante...'
+                : 'Observaciones del turno (opcional)'
+            "
             :has-error="Boolean(formErrors.notes)"
             data-testid="close-notes-input"
           />
@@ -161,19 +182,26 @@
     <!-- PANTALLA 2: RESUMEN DEVUELTO POR EL SERVIDOR TRAS CIERRE EXITOSO -->
     <div v-else-if="closeResult" class="space-y-4 py-2" data-testid="close-shift-result-view">
       <div class="flex items-center gap-3">
-        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-state-success-border bg-state-success-bg text-state-success">
+        <div
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-state-success-border bg-state-success-bg text-state-success"
+        >
           <CheckCircle2 class="h-5 w-5" />
         </div>
         <div>
           <h4 class="text-sm font-bold text-content-primary">Turno {{ closeResult.id }} Cerrado</h4>
-          <p class="text-xs text-content-muted">Arqueo físico registrado y auditado por el servidor</p>
+          <p class="text-xs text-content-muted">
+            Arqueo físico registrado y auditado por el servidor
+          </p>
         </div>
       </div>
 
-      <div class="rounded-xl border border-border-subtle bg-surface-sunken p-3 space-y-2 text-xs">
+      <div class="space-y-2 rounded-xl border border-border-subtle bg-surface-sunken p-3 text-xs">
         <div class="flex justify-between">
           <span class="text-content-secondary">Fondos Esperados (CUP / USD):</span>
-          <span class="font-mono font-bold text-content-primary" data-testid="result-expected-funds">
+          <span
+            class="font-mono font-bold text-content-primary"
+            data-testid="result-expected-funds"
+          >
             {{ closeResult.expectedFunds.CUP }} CUP / ${{ closeResult.expectedFunds.USD }} USD
           </span>
         </div>
@@ -185,12 +213,16 @@
           </span>
         </div>
 
-        <div class="border-t border-border-subtle pt-2 flex items-baseline justify-between">
+        <div class="flex items-baseline justify-between border-t border-border-subtle pt-2">
           <span class="font-bold text-content-primary">Diferencias Finales:</span>
           <div class="text-right">
             <span
               class="font-mono font-extrabold"
-              :class="closeResult.differences.CUP !== '0.00' || closeResult.differences.USD !== '0.00' ? 'text-state-warning' : 'text-state-success'"
+              :class="
+                closeResult.differences.CUP !== '0.00' || closeResult.differences.USD !== '0.00'
+                  ? 'text-state-warning'
+                  : 'text-state-success'
+              "
               data-testid="result-differences"
             >
               {{ closeResult.differences.CUP }} CUP &bull; ${{ closeResult.differences.USD }} USD
@@ -198,9 +230,12 @@
           </div>
         </div>
 
-        <div v-if="closeResult.discrepancyReason" class="mt-2 rounded bg-surface-card p-2 border border-border-subtle text-[11px]">
-          <span class="font-semibold text-content-secondary block">Justificación registrada:</span>
-          <span class="text-content-primary italic">{{ closeResult.discrepancyReason }}</span>
+        <div
+          v-if="closeResult.discrepancyReason"
+          class="mt-2 rounded border border-border-subtle bg-surface-card p-2 text-[11px]"
+        >
+          <span class="block font-semibold text-content-secondary">Justificación registrada:</span>
+          <span class="italic text-content-primary">{{ closeResult.discrepancyReason }}</span>
         </div>
       </div>
     </div>
@@ -254,12 +289,7 @@ import BaseInput from '@/shared/ui/BaseInput.vue'
 import BaseButton from '@/shared/ui/BaseButton.vue'
 import type { CashShift, ShiftCloseResult } from '../types'
 import { usePosShift } from '../composables/usePosShift'
-import {
-  addDecimals,
-  subtractDecimals,
-  compareDecimals,
-  normalizeDecimal,
-} from '@/shared/utils/decimal'
+import { addDecimals, subtractDecimals, normalizeDecimal } from '@/shared/utils/decimal'
 import { ApiError } from '@/shared/types/api'
 
 interface Props {
@@ -375,7 +405,8 @@ const handleSubmit = async () => {
   if (hasLocalDifference.value) {
     const trimmedNotes = notes.value.trim()
     if (!trimmedNotes || trimmedNotes.length < 10) {
-      formErrors.notes = 'Existe una diferencia en el arqueo. Debe ingresar obligatoriamente un motivo con al menos 10 caracteres.'
+      formErrors.notes =
+        'Existe una diferencia en el arqueo. Debe ingresar obligatoriamente un motivo con al menos 10 caracteres.'
       return
     }
   }

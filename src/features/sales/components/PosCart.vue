@@ -160,7 +160,9 @@
         >
           <span>Equivalente:</span>
           <span class="font-mono font-bold text-content-secondary">{{ equivalentUSD }} USD</span>
-          <span class="text-[10px] text-content-tertiary">(1 USD = {{ effectiveRateUSD }} CUP)</span>
+          <span class="text-content-tertiary text-[10px]"
+            >(1 USD = {{ effectiveRateUSD }} CUP)</span
+          >
         </div>
       </div>
 
@@ -176,9 +178,7 @@
           <Banknote class="size-4" aria-hidden="true" />
           <span>Cobrar Venta</span>
         </span>
-        <kbd
-          class="rounded bg-black/25 px-1.5 py-0.5 font-mono text-[10px] font-medium text-white"
-        >
+        <kbd class="rounded bg-black/25 px-1.5 py-0.5 font-mono text-[10px] font-medium text-white">
           F8
         </kbd>
       </button>

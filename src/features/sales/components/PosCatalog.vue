@@ -193,6 +193,7 @@ const emit = defineEmits<{
 const searchInputRef = ref<HTMLInputElement | null>(null)
 
 const {
+  products,
   loading,
   searchQuery,
   selectedCategory,
@@ -257,5 +258,6 @@ defineExpose({
   focusSearch,
   searchInputRef,
   loadProducts,
+  products,
 })
 </script>
