@@ -1647,6 +1647,7 @@ Parámetros globales de configuración operativa de caja, incluyendo el margen d
 ### 10.5 Control de Turnos de Caja (`/api/cash/shifts`)
 
 Endpoints para gestión de apertura, consulta de estado activo y cierre con arqueo de gaveta.
+Consumidos por la pantalla dedicada **"Turno y arqueo"** (`/cash/shift`) en el menú Caja y por el Punto de Venta (POS), bajo el permiso `cash.open_close`.
 
 #### 10.5.1 GET /api/cash/shifts/current
 Obtiene el turno de caja actualmente abierto para el usuario o la estación de trabajo.
