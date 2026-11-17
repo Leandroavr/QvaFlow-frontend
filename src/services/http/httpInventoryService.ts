@@ -231,4 +231,20 @@ export class HttpInventoryService implements InventoryService {
     const response = await httpClient.post<InventoryAdjustment>('/inventory/adjustments', dto)
     return response.data
   }
+
+  async deductStock(
+    _productCode: string,
+    _quantity: string,
+    _warehouseCode?: string
+  ): Promise<void> {
+    // Delegado de manera autoritativa al backend Symfony en POST /api/sales
+  }
+
+  async restoreStock(
+    _productCode: string,
+    _quantity: string,
+    _warehouseCode?: string
+  ): Promise<void> {
+    // Delegado de manera autoritativa al backend Symfony en POST /api/sales/{id}/cancel
+  }
 }

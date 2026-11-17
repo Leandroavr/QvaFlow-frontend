@@ -50,18 +50,19 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'sales/pos',
         name: 'sales-pos',
-        component: () => import('../views/ModulePlaceholderView.vue'),
+        component: () => import('../../features/sales/views/PosTerminalView.vue'),
         meta: {
           permission: 'sales.create',
           title: 'Punto de Venta - QvaFlow',
           breadcrumb: 'Punto de venta',
           parentBreadcrumb: 'Ventas',
+          layout: 'fullscreen',
         },
       },
       {
         path: 'sales/history',
         name: 'sales-history',
-        component: () => import('../views/ModulePlaceholderView.vue'),
+        component: () => import('../../features/sales/views/SalesHistoryView.vue'),
         meta: {
           permission: 'sales.view',
           title: 'Historial de Ventas - QvaFlow',

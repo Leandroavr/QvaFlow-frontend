@@ -1,7 +1,13 @@
 <template>
-  <!-- Soporte futuro de modo Kiosco (layout: 'fullscreen' en meta de ruta) -->
-  <div v-if="isFullscreen" class="h-dvh overflow-auto bg-surface-app text-content-primary">
+  <!-- Soporte de modo Kiosco (layout: 'fullscreen' en meta de ruta) -->
+  <div v-if="isFullscreen" class="h-dvh overflow-hidden bg-surface-app text-content-primary">
     <router-view />
+    <Toaster
+      :theme="isDark ? 'dark' : 'light'"
+      position="top-right"
+      :rich-colors="true"
+      :close-button="true"
+    />
   </div>
 
   <!-- Layout Estándar de Aplicación Desktop (100% Viewport Height) -->

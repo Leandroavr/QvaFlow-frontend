@@ -10,6 +10,9 @@ import {
   divideDecimals,
   calculatePercentage,
   isPositiveDecimal,
+  roundToInteger,
+  ceilToInteger,
+  maxDecimal,
 } from '../decimal'
 
 describe('Utilidades de aritmética decimal exacta (decimal.ts)', () => {
@@ -96,5 +99,32 @@ describe('Utilidades de aritmética decimal exacta (decimal.ts)', () => {
     expect(isPositiveDecimal('10.50')).toBe(true)
     expect(isPositiveDecimal('100')).toBe(true)
     expect(isPositiveDecimal('50000.00')).toBe(true)
+  })
+
+  it('ceilToInteger redondea forzadamente hacia arriba al entero superior', () => {
+    expect(ceilToInteger('4.12')).toBe('5.00')
+    expect(ceilToInteger('4.00')).toBe('4.00')
+    expect(ceilToInteger('0.00')).toBe('0.00')
+    expect(ceilToInteger('0.01')).toBe('1.00')
+    expect(ceilToInteger('-4.12')).toBe('-4.00')
+    expect(ceilToInteger('-4.00')).toBe('-4.00')
+  })
+
+  it('roundToInteger redondea al entero más cercano con regla half-up simétrica', () => {
+    expect(roundToInteger('0.50')).toBe('1.00')
+    expect(roundToInteger('0.49')).toBe('0.00')
+    expect(roundToInteger('4.12')).toBe('4.00')
+    expect(roundToInteger('4.50')).toBe('5.00')
+    expect(roundToInteger('4.00')).toBe('4.00')
+    expect(roundToInteger('-0.50')).toBe('-1.00')
+    expect(roundToInteger('-4.12')).toBe('-4.00')
+    expect(roundToInteger('-4.60')).toBe('-5.00')
+  })
+
+  it('maxDecimal determina el mayor de múltiples cantidades decimales exactas', () => {
+    expect(maxDecimal('350.00', '1.00')).toBe('350.00')
+    expect(maxDecimal('1.00', '350.00')).toBe('350.00')
+    expect(maxDecimal('-10.00', '-5.00', '0.00')).toBe('0.00')
+    expect(maxDecimal('10.00')).toBe('10.00')
   })
 })

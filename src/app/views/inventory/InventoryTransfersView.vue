@@ -153,6 +153,20 @@
           {{ value || '—' }}
         </span>
       </template>
+
+      <!-- Celda personalizada: Acción Ver -->
+      <template #cell-actions="{ row }">
+        <BaseButton
+          variant="ghost"
+          density="compact"
+          class="p-1 text-xs font-semibold text-primary hover:underline"
+          title="Ver detalle del traslado"
+          data-testid="btn-view-transfer"
+          @click.stop="openTransferDetail(row)"
+        >
+          Ver
+        </BaseButton>
+      </template>
     </DataTable>
 
     <!-- Drawer de Detalle del Traslado -->
@@ -369,6 +383,13 @@ const columns: DataTableColumn<StockTransfer>[] = [
     title: 'Creado por',
     width: '120px',
     sortable: true,
+  },
+  {
+    key: 'actions',
+    title: '',
+    width: '60px',
+    align: 'center',
+    sortable: false,
   },
 ]
 
