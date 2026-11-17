@@ -38,6 +38,7 @@
           @remove="handleRemove"
           @clear="handleClear"
           @checkout="handleCheckout"
+          @hold="handleSuspendCart"
           @open-shift="openModal"
         />
       </aside>
@@ -94,6 +95,7 @@
       @update:open="isCheckoutDrawerOpen = $event"
       @close="handleCheckoutClose"
       @success="handleCheckoutSuccess"
+      @hold="handleSuspendCart"
     />
 
     <!-- Modal Resumen de Venta con Vuelto Entregado -->
@@ -274,6 +276,20 @@ const handleSummaryClose = () => {
   catalogRef.value?.focusSearch()
 }
 
+const handleSuspendCart = () => {
+  if (cart.isEmpty.value) return
+  heldOrdersComposable.suspendCart(
+    cart.items.value,
+    cart.totalCUP.value,
+    cart.totalLinesCount.value,
+    cart.totalUnitsCount.value
+  )
+  cart.clearCart()
+  isCheckoutDrawerOpen.value = false
+  toast.info('Venta activa suspendida en espera (F4)')
+  catalogRef.value?.focusSearch()
+}
+
 const handleGlobalKeyDown = (e: KeyboardEvent) => {
   // Atajo Escape: salir del POS si no hay modales abiertos
   if (e.key === 'Escape') {
@@ -288,15 +304,7 @@ const handleGlobalKeyDown = (e: KeyboardEvent) => {
   if (e.key === 'F4') {
     e.preventDefault()
     if (!cart.isEmpty.value) {
-      heldOrdersComposable.suspendCart(
-        cart.items.value,
-        cart.totalCUP.value,
-        cart.totalLinesCount.value,
-        cart.totalUnitsCount.value
-      )
-      cart.clearCart()
-      toast.info('Venta activa suspendida en espera (F4)')
-      catalogRef.value?.focusSearch()
+      handleSuspendCart()
     } else {
       isHeldModalOpen.value = true
     }

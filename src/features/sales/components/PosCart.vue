@@ -13,17 +13,32 @@
         </span>
       </div>
 
-      <!-- Botón Vaciar Carrito -->
-      <button
-        type="button"
-        :disabled="isEmpty"
-        class="text-danger hover:bg-danger/10 focus:ring-danger inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40"
-        title="Vaciar carrito"
-        @click="showClearConfirm = true"
-      >
-        <Trash2 class="size-3.5" aria-hidden="true" />
-        <span>Vaciar</span>
-      </button>
+      <div class="flex items-center gap-1">
+        <!-- Botón Poner en Espera rápido en cabecera -->
+        <button
+          type="button"
+          :disabled="isEmpty"
+          class="hover:bg-surface-hover inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-content-secondary transition-colors hover:text-content-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40"
+          title="Poner orden activa en espera (F4)"
+          data-testid="btn-hold-cart-header"
+          @click="emit('hold')"
+        >
+          <Clock class="size-3.5" aria-hidden="true" />
+          <span class="hidden sm:inline">En espera</span>
+        </button>
+
+        <!-- Botón Vaciar Carrito -->
+        <button
+          type="button"
+          :disabled="isEmpty"
+          class="text-danger hover:bg-danger/10 focus:ring-danger inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40"
+          title="Vaciar carrito"
+          @click="showClearConfirm = true"
+        >
+          <Trash2 class="size-3.5" aria-hidden="true" />
+          <span>Vaciar</span>
+        </button>
+      </div>
     </div>
 
     <!-- Lista de Líneas del Carrito -->
@@ -166,22 +181,43 @@
         </div>
       </div>
 
-      <!-- Botón de Cobro (F8) con contraste de texto suficiente mediante opacidad en el botón -->
-      <button
-        type="button"
-        :disabled="isEmpty || !isShiftOpen"
-        class="shadow-xs mt-3 flex h-11 w-full items-center justify-between rounded-xl bg-primary px-4 text-sm font-bold text-white transition-all hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
-        title="Proceder al cobro de la venta (F8)"
-        @click="emit('checkout')"
-      >
-        <span class="flex items-center gap-1.5">
-          <Banknote class="size-4" aria-hidden="true" />
-          <span>Cobrar Venta</span>
-        </span>
-        <kbd class="rounded bg-black/25 px-1.5 py-0.5 font-mono text-[10px] font-medium text-white">
-          F8
-        </kbd>
-      </button>
+      <!-- Botones de Acción: En espera (F4) y Cobro (F8) -->
+      <div class="mt-3 flex items-center gap-2">
+        <button
+          type="button"
+          :disabled="isEmpty"
+          class="shadow-2xs hover:bg-surface-hover flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-border-subtle bg-surface-card px-3 text-xs font-semibold text-content-primary transition-all hover:border-border-strong focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+          title="Poner orden activa en espera (F4)"
+          data-testid="btn-hold-cart"
+          @click="emit('hold')"
+        >
+          <Clock class="size-4 text-content-secondary" aria-hidden="true" />
+          <span class="hidden sm:inline">En espera</span>
+          <kbd
+            class="rounded border border-border-strong bg-surface-app px-1 py-0.5 font-mono text-[9px] font-medium text-content-muted"
+          >
+            F4
+          </kbd>
+        </button>
+
+        <button
+          type="button"
+          :disabled="isEmpty || !isShiftOpen"
+          class="shadow-xs flex h-11 flex-1 items-center justify-between rounded-xl bg-primary px-4 text-sm font-bold text-white transition-all hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+          title="Proceder al cobro de la venta (F8)"
+          @click="emit('checkout')"
+        >
+          <span class="flex items-center gap-1.5">
+            <Banknote class="size-4" aria-hidden="true" />
+            <span>Cobrar Venta</span>
+          </span>
+          <kbd
+            class="rounded bg-black/25 px-1.5 py-0.5 font-mono text-[10px] font-medium text-white"
+          >
+            F8
+          </kbd>
+        </button>
+      </div>
 
       <!-- Aviso con botón Abrir Turno si la caja está cerrada -->
       <div
@@ -225,7 +261,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { ShoppingCart, Trash2, X, Plus, Minus, Banknote, AlertCircle } from 'lucide-vue-next'
+import { ShoppingCart, Trash2, X, Plus, Minus, Banknote, AlertCircle, Clock } from 'lucide-vue-next'
 import type { CartItem } from '../types'
 import type { DecimalString } from '@/shared/types/currency'
 import { compareDecimals, divideDecimals, ceilToInteger } from '@/shared/utils/decimal'
@@ -255,6 +291,7 @@ const emit = defineEmits<{
   (e: 'clear'): void
   (e: 'checkout'): void
   (e: 'open-shift'): void
+  (e: 'hold'): void
 }>()
 
 const showClearConfirm = ref<boolean>(false)

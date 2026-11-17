@@ -169,6 +169,61 @@ describe('Punto de Venta (POS) - Canje, Espera y Cierre de Turno', () => {
     wrapper.unmount()
   })
 
+  it('(3b) botón En espera en el carrito suspende y guarda orden activa', async () => {
+    const shiftComposable = usePosShift()
+    shiftComposable.currentShift.value = {
+      id: 'TURNO-2026-001',
+      cashierName: 'Yadira Reyes',
+      openedAt: new Date().toISOString(),
+      status: 'OPEN',
+      dailyRateUSD: '360.00',
+      initialFunds: { CUP: '1000.00', USD: '10.00' },
+      salesTotals: { cupCash: '0.00', cupTransfer: '0.00', USD: '0.00' },
+      exchangeAdjustments: { CUP: '0.00', USD: '0.00' },
+    }
+
+    const cart = usePosCart()
+    const product: PosProduct = {
+      id: 101,
+      code: '78910001',
+      name: 'Café Serrano',
+      category: 'Cafetería',
+      priceCUP: '650.00',
+      priceUSD: '1.81',
+      stock: '20.00',
+      unit: 'paquete',
+    }
+    cart.addToCart(product, '1.00')
+    expect(cart.isEmpty.value).toBe(false)
+
+    const wrapper = mount(PosTerminalView, {
+      global: {
+        plugins: [pinia, router],
+      },
+      attachTo: document.body,
+    })
+
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    await flushPromises()
+
+    // Hacer clic en el botón "En espera" del carrito
+    const holdBtn = wrapper.find('[data-testid="btn-hold-cart"]')
+    expect(holdBtn.exists()).toBe(true)
+    await holdBtn.trigger('click')
+    await flushPromises()
+
+    // El carrito se vacía
+    expect(cart.isEmpty.value).toBe(true)
+
+    // Se persistió en localStorage
+    const stored = localStorage.getItem('qvaflow_pos_held_orders')
+    expect(stored).not.toBeNull()
+    const parsed = JSON.parse(stored || '[]')
+    expect(parsed.length).toBeGreaterThan(0)
+
+    wrapper.unmount()
+  })
+
   it('(4) restaurar suspende el actual: al restaurar con carrito activo guarda el actual como "Ticket anterior"', async () => {
     const heldComposable = usePosHeldOrders()
     const cart = usePosCart()
