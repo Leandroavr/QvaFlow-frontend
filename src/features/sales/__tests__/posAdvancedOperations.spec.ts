@@ -169,7 +169,7 @@ describe('Punto de Venta (POS) - Canje, Espera y Cierre de Turno', () => {
     wrapper.unmount()
   })
 
-  it('(3b) botón En espera en el carrito suspende y guarda orden activa', async () => {
+  it('(3b) botón Suspender en la cabecera del carrito suspende y guarda orden activa', async () => {
     const shiftComposable = usePosShift()
     shiftComposable.currentShift.value = {
       id: 'TURNO-2026-001',
@@ -206,20 +206,69 @@ describe('Punto de Venta (POS) - Canje, Espera y Cierre de Turno', () => {
     await new Promise((resolve) => setTimeout(resolve, 300))
     await flushPromises()
 
-    // Hacer clic en el botón "En espera" del carrito
-    const holdBtn = wrapper.find('[data-testid="btn-hold-cart"]')
-    expect(holdBtn.exists()).toBe(true)
-    await holdBtn.trigger('click')
+    // Hacer clic en el botón "Suspender" de la cabecera del carrito
+    const suspendBtn = wrapper.find('[data-testid="btn-suspend-cart"]')
+    expect(suspendBtn.exists()).toBe(true)
+    expect(suspendBtn.text()).toContain('Suspender')
+    await suspendBtn.trigger('click')
     await flushPromises()
 
-    // El carrito se vacía
+    // El carrito se vacía y el botón queda deshabilitado
     expect(cart.isEmpty.value).toBe(true)
+    expect(suspendBtn.attributes('disabled')).toBeDefined()
 
     // Se persistió en localStorage
     const stored = localStorage.getItem('qvaflow_pos_held_orders')
     expect(stored).not.toBeNull()
     const parsed = JSON.parse(stored || '[]')
     expect(parsed.length).toBeGreaterThan(0)
+
+    wrapper.unmount()
+  })
+
+  it('(3c) botón En espera de la cabecera muestra badge solo si hay tickets y abre la lista', async () => {
+    const heldComposable = usePosHeldOrders()
+    const product: PosProduct = {
+      id: 101,
+      code: '78910001',
+      name: 'Café Serrano',
+      category: 'Cafetería',
+      priceCUP: '650.00',
+      priceUSD: '1.81',
+      stock: '20.00',
+      unit: 'paquete',
+    }
+    heldComposable.suspendCart(
+      [{ product, quantity: '1.00', subtotalCUP: '650.00' }],
+      '650.00',
+      1,
+      '1.00',
+      'Ticket #1'
+    )
+
+    const wrapper = mount(PosTerminalView, {
+      global: {
+        plugins: [pinia, router],
+      },
+      attachTo: document.body,
+    })
+
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    await flushPromises()
+
+    const heldBtn = wrapper.find('[data-testid="header-held-orders-btn"]')
+    expect(heldBtn.exists()).toBe(true)
+    expect(heldBtn.text()).toContain('En espera')
+
+    const badge = wrapper.find('[data-testid="header-held-badge"]')
+    expect(badge.exists()).toBe(true)
+    expect(badge.text()).toBe('1')
+
+    await heldBtn.trigger('click')
+    await flushPromises()
+
+    // El modal de órdenes en espera debe abrirse
+    expect(wrapper.findComponent({ name: 'HeldOrdersModal' }).props('open')).toBe(true)
 
     wrapper.unmount()
   })

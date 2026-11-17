@@ -95,7 +95,6 @@
       @update:open="isCheckoutDrawerOpen = $event"
       @close="handleCheckoutClose"
       @success="handleCheckoutSuccess"
-      @hold="handleSuspendCart"
     />
 
     <!-- Modal Resumen de Venta con Vuelto Entregado -->

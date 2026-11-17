@@ -305,53 +305,32 @@
 
     <!-- Pie de Acciones del Drawer -->
     <template #actions>
-      <div class="flex w-full items-center justify-between">
-        <BaseButton
-          variant="ghost"
-          density="compact"
-          class="gap-1.5 text-xs text-content-secondary hover:text-content-primary"
-          title="Poner orden activa en espera y cerrar cobro (F4)"
-          data-testid="btn-checkout-hold"
-          @click="handleHold"
-        >
-          <Clock class="size-3.5 text-content-secondary" aria-hidden="true" />
-          <span>En espera</span>
-          <kbd
-            class="rounded border border-border-strong bg-surface-card px-1 py-0.5 font-mono text-[9px] font-medium text-content-muted"
-          >
-            F4
-          </kbd>
-        </BaseButton>
+      <BaseButton
+        variant="secondary"
+        density="compact"
+        :disabled="checkout.isSubmitting.value"
+        @click="handleCancel"
+      >
+        Cancelar (Esc)
+      </BaseButton>
 
-        <div class="flex items-center gap-2">
-          <BaseButton
-            variant="secondary"
-            density="compact"
-            :disabled="checkout.isSubmitting.value"
-            @click="handleCancel"
-          >
-            Cancelar (Esc)
-          </BaseButton>
-
-          <BaseButton
-            variant="primary"
-            density="compact"
-            :disabled="!canConfirm || checkout.isSubmitting.value"
-            :loading="checkout.isSubmitting.value"
-            data-testid="btn-confirm-checkout"
-            @click="handleConfirm"
-          >
-            Confirmar Cobro (Enter)
-          </BaseButton>
-        </div>
-      </div>
+      <BaseButton
+        variant="primary"
+        density="compact"
+        :disabled="!canConfirm || checkout.isSubmitting.value"
+        :loading="checkout.isSubmitting.value"
+        data-testid="btn-confirm-checkout"
+        @click="handleConfirm"
+      >
+        Confirmar Cobro (Enter)
+      </BaseButton>
     </template>
   </BaseDrawer>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
-import { AlertCircle, Clock } from 'lucide-vue-next'
+import { AlertCircle } from 'lucide-vue-next'
 import BaseDrawer from '@/shared/ui/BaseDrawer.vue'
 import BaseButton from '@/shared/ui/BaseButton.vue'
 import BaseFormField from '@/shared/ui/BaseFormField.vue'
@@ -389,13 +368,7 @@ const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
   (e: 'success', sale: Sale): void
   (e: 'close'): void
-  (e: 'hold'): void
 }>()
-
-const handleHold = () => {
-  emit('update:open', false)
-  emit('hold')
-}
 
 const checkout = usePosCheckout()
 

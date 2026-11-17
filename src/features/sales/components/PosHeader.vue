@@ -88,16 +88,16 @@
 
     <!-- Zona Derecha: Acciones rápidas y Pantalla Completa (Fullscreen API) -->
     <div class="flex items-center gap-2">
-      <!-- Botón Tickets en Espera (F4) -->
+      <!-- Botón Tickets en Espera (abre lista de órdenes suspendidas) -->
       <button
         type="button"
         class="shadow-xs hover:bg-surface-hover relative inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface-app px-2.5 py-1 text-xs font-semibold text-content-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
-        title="Tickets en espera (F4)"
+        title="Tickets en espera"
         data-testid="header-held-orders-btn"
         @click="emit('open-held')"
       >
         <Clock class="size-3.5 text-content-secondary" aria-hidden="true" />
-        <span class="hidden sm:inline">En espera</span>
+        <span>En espera</span>
         <span
           v-if="heldCount > 0"
           class="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white"
@@ -105,11 +105,6 @@
         >
           {{ heldCount }}
         </span>
-        <kbd
-          class="hidden rounded border border-border-strong bg-surface-card px-1 py-0.5 font-mono text-[9px] font-medium text-content-muted md:inline-block"
-        >
-          F4
-        </kbd>
       </button>
 
       <!-- Botón Canje de Divisas (F6) -->
