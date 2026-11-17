@@ -207,7 +207,7 @@ export class MockCashService implements CashService {
   }
 
   async getCurrentShift(): Promise<CashShift | null> {
-    if (!this.checkAnyPermission(['sales.create', 'cash.open_close'])) {
+    if (!this.checkAnyPermission(['sales.create', 'cash.open_close', 'sales.view'])) {
       throw new ApiError(
         { code: 'FORBIDDEN', message: 'No posee permisos para consultar el turno actual.' },
         403
@@ -388,11 +388,12 @@ export class MockCashService implements CashService {
   }
 
   async getShifts(query: CashShiftsQuery = {}): Promise<PaginatedResponse<CashShift>> {
-    if (!this.checkHasPermission('cash.view_history')) {
+    if (!this.checkAnyPermission(['cash.view_history', 'sales.view'])) {
       throw new ApiError(
         {
           code: 'FORBIDDEN',
-          message: 'Requiere permiso cash.view_history para consultar el historial de turnos.',
+          message:
+            'Requiere permiso cash.view_history o sales.view para consultar el historial de turnos.',
         },
         403
       )
@@ -401,6 +402,10 @@ export class MockCashService implements CashService {
     if (query.status) {
       filtered = filtered.filter((s) => s.status === query.status)
     }
+    if (query.cashierName) {
+      const c = query.cashierName.trim().toLowerCase()
+      filtered = filtered.filter((s) => s.cashierName?.trim().toLowerCase() === c)
+    }
     if (query.desde) {
       filtered = filtered.filter((s) => s.openedAt >= query.desde!)
     }
@@ -408,8 +413,10 @@ export class MockCashService implements CashService {
       filtered = filtered.filter((s) => s.openedAt <= query.hasta!)
     }
 
-    const page = Number(query.page) || 1
-    const perPage = Number(query.perPage) || 10
+    filtered.sort((a, b) => b.openedAt.localeCompare(a.openedAt))
+
+    const page = parseInt(String(query.page || 1), 10) || 1
+    const perPage = parseInt(String(query.perPage || 10), 10) || 10
     const start = (page - 1) * perPage
     const items = filtered.slice(start, start + perPage)
 

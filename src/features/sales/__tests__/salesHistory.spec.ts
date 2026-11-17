@@ -6,9 +6,10 @@ import SalesHistoryView from '../views/SalesHistoryView.vue'
 import SaleDetailDrawer from '../components/SaleDetailDrawer.vue'
 import { routes, setupNavigationGuard } from '@/app/router'
 import { useAuthStore } from '@/features/auth/stores/authStore'
-import { salesService } from '@/services'
+import { salesService, cashService } from '@/services'
 import { ApiError } from '@/shared/types/api'
-import type { Sale, SaleListItem } from '../types'
+import type { Sale, SaleListItem, CashShift } from '../types'
+import { useSalesFilters, formatShiftOptionLabel } from '../composables/useSalesFilters'
 
 describe('Historial de Ventas (/sales/history)', () => {
   let router: Router
@@ -475,5 +476,128 @@ describe('Historial de Ventas (/sales/history)', () => {
 
     // El servicio lanza 403 sin sales.view
     await expect(salesService.getSales()).rejects.toThrow()
+  })
+
+  it('(10) composable de filtros: cambiar de cajero filtra turnos y resetea turno inválido', async () => {
+    const mockShifts: CashShift[] = [
+      {
+        id: 'TURNO-YADIRA-1',
+        cashierName: 'Yadira Reyes',
+        openedAt: '2026-11-14T08:00:00Z',
+        closedAt: '2026-11-14T19:40:00Z',
+        status: 'CLOSED',
+        dailyRateUSD: '360.00',
+        initialFunds: { CUP: '1000.00', USD: '10.00' },
+        salesTotals: { cupCash: '0.00', cupTransfer: '0.00', USD: '0.00' },
+        exchangeAdjustments: { CUP: '0.00', USD: '0.00' },
+      },
+      {
+        id: 'TURNO-CARLOS-1',
+        cashierName: 'Carlos Gómez',
+        openedAt: '2026-11-15T08:00:00Z',
+        status: 'OPEN',
+        dailyRateUSD: '360.00',
+        initialFunds: { CUP: '1000.00', USD: '10.00' },
+        salesTotals: { cupCash: '0.00', cupTransfer: '0.00', USD: '0.00' },
+        exchangeAdjustments: { CUP: '0.00', USD: '0.00' },
+      },
+    ]
+
+    const mockCustomSalesSvc: any = {
+      getCashiers: vi.fn().mockResolvedValue(['Carlos Gómez', 'Yadira Reyes']),
+    }
+    const mockCustomCashSvc: any = {
+      getShifts: vi.fn().mockResolvedValue({ items: mockShifts, total: 2, page: 1, perPage: 100 }),
+    }
+
+    const filtersComposable = useSalesFilters({
+      salesService: mockCustomSalesSvc,
+      cashService: mockCustomCashSvc,
+    })
+
+    await filtersComposable.loadFilterData()
+
+    expect(filtersComposable.cashiers.value).toEqual(['Carlos Gómez', 'Yadira Reyes'])
+    expect(filtersComposable.availableShifts.value).toHaveLength(2)
+
+    // Seleccionar cajero 'Yadira Reyes'
+    filtersComposable.setCashier('Yadira Reyes')
+    expect(filtersComposable.availableShifts.value).toHaveLength(1)
+    expect(filtersComposable.availableShifts.value[0].id).toBe('TURNO-YADIRA-1')
+
+    // Seleccionar el turno de Yadira
+    filtersComposable.setShiftId('TURNO-YADIRA-1')
+    expect(filtersComposable.selectedShiftId.value).toBe('TURNO-YADIRA-1')
+
+    // Cambiar de cajero a 'Carlos Gómez': el turno de Yadira ya no pertenece a Carlos y debe resetearse
+    filtersComposable.setCashier('Carlos Gómez')
+    expect(filtersComposable.availableShifts.value).toHaveLength(1)
+    expect(filtersComposable.availableShifts.value[0].id).toBe('TURNO-CARLOS-1')
+    expect(filtersComposable.selectedShiftId.value).toBe('')
+  })
+
+  it('(11) componente/vista: render de los selectores y etiqueta legible del turno', async () => {
+    const mockShifts: CashShift[] = [
+      {
+        id: 'TURNO-2026-001',
+        cashierName: 'Yadira Reyes',
+        openedAt: '2026-11-14T08:00:00Z',
+        closedAt: '2026-11-14T19:40:00Z',
+        status: 'CLOSED',
+        dailyRateUSD: '360.00',
+        initialFunds: { CUP: '1000.00', USD: '10.00' },
+        salesTotals: { cupCash: '0.00', cupTransfer: '0.00', USD: '0.00' },
+        exchangeAdjustments: { CUP: '0.00', USD: '0.00' },
+      },
+    ]
+
+    vi.spyOn(salesService, 'getSales').mockResolvedValue({
+      items: mockSaleList,
+      total: 2,
+      page: 1,
+      perPage: 10,
+    })
+    vi.spyOn(salesService, 'getCashiers').mockResolvedValue(['Yadira Reyes'])
+    vi.spyOn(cashService, 'getShifts').mockResolvedValue({
+      items: mockShifts,
+      total: 1,
+      page: 1,
+      perPage: 100,
+    })
+
+    // Comprobar formato legible generado por formatShiftOptionLabel
+    const label = formatShiftOptionLabel(mockShifts[0])
+    expect(label).toBe('14/11/2026 · Yadira Reyes · 08:00–19:40')
+
+    const openShift: CashShift = {
+      ...mockShifts[0],
+      id: 'TURNO-OPEN',
+      closedAt: undefined,
+      status: 'OPEN',
+    }
+    expect(formatShiftOptionLabel(openShift)).toBe('14/11/2026 · Yadira Reyes · 08:00–abierto')
+
+    const wrapper = mount(SalesHistoryView, {
+      global: {
+        plugins: [pinia, router],
+      },
+      attachTo: document.body,
+    })
+
+    await flushPromises()
+
+    // Selector de Cajero presente
+    const cashierSelect = wrapper.find('[data-testid="filter-cashier-select"]')
+    expect(cashierSelect.exists()).toBe(true)
+
+    // Selector de Turno presente
+    const shiftSelect = wrapper.find('[data-testid="filter-shift-select"]')
+    expect(shiftSelect.exists()).toBe(true)
+
+    // Buscador con placeholder mejorado
+    const searchInput = wrapper.find('input[placeholder="Buscar por ticket, cajero o producto..."]')
+    expect(searchInput.exists()).toBe(true)
+
+    wrapper.unmount()
   })
 })

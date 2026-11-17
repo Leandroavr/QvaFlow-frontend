@@ -515,4 +515,68 @@ describe('Servicios de Ventas y Caja (SalesService y CashService)', () => {
     expect(exchange.effectiveRate).toBe('335.00')
     expect(exchange.amountTo).toBe('3350.00') // 10 * 335 = 3350 CUP
   })
+
+  it('(16) búsqueda en getSales filtra por ticket, cajero, nombre de producto, SKU, sin acentos y sin resultados', async () => {
+    // Venta 1 con Yadira Reyes y Café Serrano (SKU 78910001)
+    localStorage.setItem(
+      'qvaflow_user',
+      JSON.stringify({
+        fullName: 'Yadira Reyes',
+        permissions: ['sales.create', 'sales.view', 'cash.manage'],
+      })
+    )
+    const sale1 = await salesService.createSale({
+      clientRequestId: 'search-test-sale-1',
+      shiftId: 'TURNO-2026-001',
+      warehouseId: 'ALM-TIENDA',
+      items: [{ productCode: '78910001', quantity: '1.00' }],
+      paidCurrency: 'CUP',
+      paymentMethod: 'CASH',
+      cashReceived: '1000.00',
+    })
+
+    // Venta 2 con Carlos Gómez y Cerveza Cristal (SKU 78910004)
+    localStorage.setItem(
+      'qvaflow_user',
+      JSON.stringify({
+        fullName: 'Carlos Gómez',
+        permissions: ['sales.create', 'sales.view', 'cash.manage'],
+      })
+    )
+    const sale2 = await salesService.createSale({
+      clientRequestId: 'search-test-sale-2',
+      shiftId: 'TURNO-2026-002',
+      warehouseId: 'ALM-TIENDA',
+      items: [{ productCode: '78910004', quantity: '1.00' }],
+      paidCurrency: 'USD',
+      paymentMethod: 'CASH',
+      cashReceived: '5.00',
+    })
+
+    // (a) Búsqueda por folio de ticket
+    const resTicket = await salesService.getSales({ search: sale1.id })
+    expect(resTicket.items).toHaveLength(1)
+    expect(resTicket.items[0].id).toBe(sale1.id)
+
+    // (b) Búsqueda por nombre de cajero
+    const resCashier = await salesService.getSales({ search: 'Carlos' })
+    expect(resCashier.items.some((s) => s.id === sale2.id)).toBe(true)
+
+    // (c) Búsqueda por nombre de producto
+    const resProduct = await salesService.getSales({ search: 'Cristal' })
+    expect(resProduct.items.some((s) => s.id === sale2.id)).toBe(true)
+
+    // (d) Búsqueda por SKU / productCode
+    const resSKU = await salesService.getSales({ search: '78910001' })
+    expect(resSKU.items.some((s) => s.id === sale1.id)).toBe(true)
+
+    // (e) Búsqueda sin acentos ("cafe" debe coincidir con "Café")
+    const resAccent = await salesService.getSales({ search: 'cafe' })
+    expect(resAccent.items.some((s) => s.id === sale1.id)).toBe(true)
+
+    // (f) Búsqueda sin resultados
+    const resEmpty = await salesService.getSales({ search: 'producto_inexistente_xyz' })
+    expect(resEmpty.items).toHaveLength(0)
+    expect(resEmpty.total).toBe(0)
+  })
 })

@@ -27,6 +27,14 @@ import {
 } from '@/shared/utils/decimal'
 import { MOCK_USERS } from '@/mocks/users'
 
+function normalizeSearchText(str: string): string {
+  return (str || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
 /**
  * Catálogo base del POS alineado con el inventario inicial del sistema.
  */
@@ -219,7 +227,7 @@ export class MockSalesService implements SalesService {
         if (match) {
           if (!prod) {
             prod = {
-              id: Number(match.productCode) || 999,
+              id: parseInt(match.productCode, 10) || 999,
               code: match.productCode,
               name: match.productName,
               category: match.category,
@@ -471,6 +479,10 @@ export class MockSalesService implements SalesService {
     if (query.shiftId) {
       filtered = filtered.filter((s) => s.shiftId === query.shiftId)
     }
+    if (query.cashierName) {
+      const c = normalizeSearchText(query.cashierName)
+      filtered = filtered.filter((s) => normalizeSearchText(s.cashierName) === c)
+    }
     if (query.currency) {
       filtered = filtered.filter((s) => s.paidCurrency === query.currency)
     }
@@ -481,14 +493,22 @@ export class MockSalesService implements SalesService {
       filtered = filtered.filter((s) => s.createdAt <= query.hasta!)
     }
     if (query.search) {
-      const q = query.search.toLowerCase()
-      filtered = filtered.filter(
-        (s) => s.id.toLowerCase().includes(q) || s.cashierName.toLowerCase().includes(q)
-      )
+      const q = normalizeSearchText(query.search)
+      if (q) {
+        filtered = filtered.filter((s) => {
+          if (normalizeSearchText(s.id).includes(q)) return true
+          if (normalizeSearchText(s.cashierName).includes(q)) return true
+          return s.items.some((item) => {
+            const nameMatch = normalizeSearchText(item.name).includes(q)
+            const codeMatch = normalizeSearchText(item.productCode).includes(q)
+            return nameMatch || codeMatch
+          })
+        })
+      }
     }
 
-    const page = Number(query.page) || 1
-    const perPage = Number(query.perPage) || 10
+    const page = parseInt(String(query.page || 1), 10) || 1
+    const perPage = parseInt(String(query.perPage || 10), 10) || 10
     const start = (page - 1) * perPage
     const paged = filtered.slice(start, start + perPage)
 
@@ -511,6 +531,38 @@ export class MockSalesService implements SalesService {
       page,
       perPage,
     }
+  }
+
+  async getCashiers(): Promise<string[]> {
+    if (!this.checkHasPermission('sales.view')) {
+      throw new ApiError(
+        {
+          code: 'FORBIDDEN',
+          message: 'Requiere permiso sales.view para consultar los cajeros.',
+        },
+        403
+      )
+    }
+
+    const set = new Set<string>()
+    for (const s of this.sales) {
+      if (s.cashierName?.trim()) {
+        set.add(s.cashierName.trim())
+      }
+    }
+    if (this.cashService) {
+      try {
+        const shifts = await this.cashService.getShifts({ perPage: 100 })
+        for (const sh of shifts.items) {
+          if (sh.cashierName?.trim()) {
+            set.add(sh.cashierName.trim())
+          }
+        }
+      } catch {
+        // Ignorar si no hay turnos
+      }
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b))
   }
 
   async getSaleById(id: string): Promise<Sale> {

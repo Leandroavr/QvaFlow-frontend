@@ -20,72 +20,117 @@
       </template>
     </PageHeader>
 
-    <!-- Barra de Filtros Sincronizada con la URL -->
-    <FilterBar
-      :search="search"
-      search-placeholder="Buscar ticket o cajero..."
-      :can-clear="hasActiveFilters"
-      @update:search="setSearch"
-      @clear="handleClearFilters"
+    <!-- Barra de Filtros en 2 Filas Sincronizada con la URL -->
+    <div
+      class="shadow-xs flex w-full flex-col gap-2.5 rounded-xl border border-border-subtle bg-surface-card p-3"
+      data-testid="sales-history-filter-bar"
     >
-      <template #filters>
-        <!-- Filtro por Moneda -->
-        <div class="w-44">
-          <BaseSelect
-            :model-value="currency || 'ALL'"
-            :options="currencyOptions"
-            placeholder="Moneda"
-            @update:model-value="handleCurrencyChange"
+      <!-- Fila 1: Buscador (ancho flexible), Cajero, Turno -->
+      <div class="flex flex-wrap items-center gap-2.5 sm:flex-nowrap">
+        <!-- Buscador con ancho flexible y debounce -->
+        <div class="min-w-[200px] flex-1">
+          <BaseInput
+            :model-value="search"
+            placeholder="Buscar por ticket, cajero o producto..."
+            density="compact"
+            :prefix-icon="Search"
+            clearable
+            @update:model-value="handleSearchUpdate"
+            @clear="handleClearSearch"
           />
         </div>
 
-        <!-- Filtro por Turno -->
-        <div class="w-44">
-          <BaseInput
-            :model-value="shiftId"
-            placeholder="TURNO-2026-001"
+        <!-- Selector de Cajero -->
+        <div class="w-full shrink-0 sm:w-52">
+          <BaseSelect
+            :model-value="cashier || 'ALL'"
+            :options="cashierOptions"
+            placeholder="Cajero"
             density="compact"
+            data-testid="filter-cashier-select"
+            @update:model-value="handleCashierChange"
+          />
+        </div>
+
+        <!-- Selector de Turno (dependiente del cajero) -->
+        <div class="w-full shrink-0 sm:w-72">
+          <BaseSelect
+            :model-value="shiftId || 'ALL'"
+            :options="shiftOptions"
+            placeholder="Turno"
+            density="compact"
+            data-testid="filter-shift-select"
             @update:model-value="handleShiftChange"
           />
         </div>
+      </div>
 
-        <!-- Filtro Fecha Desde -->
-        <div class="flex items-center gap-1.5">
-          <label for="filter-desde" class="shrink-0 text-xs font-medium text-content-secondary">
-            Desde:
-          </label>
-          <div class="w-36">
-            <BaseInput
-              id="filter-desde"
-              :model-value="desde"
-              type="date"
+      <!-- Fila 2: Moneda, Desde, Hasta, y Limpiar filtros -->
+      <div class="flex flex-wrap items-center justify-between gap-2.5 pt-0.5">
+        <div class="flex flex-wrap items-center gap-2.5">
+          <!-- Filtro por Moneda -->
+          <div class="w-44 shrink-0">
+            <BaseSelect
+              :model-value="currency || 'ALL'"
+              :options="currencyOptions"
+              placeholder="Moneda"
               density="compact"
-              title="Fecha inicial de venta (Desde)"
-              aria-label="Fecha inicial de venta (Desde)"
-              @update:model-value="handleDesdeChange"
+              data-testid="filter-currency-select"
+              @update:model-value="handleCurrencyChange"
             />
+          </div>
+
+          <!-- Filtro Fecha Desde -->
+          <div class="flex items-center gap-1.5">
+            <label for="filter-desde" class="shrink-0 text-xs font-medium text-content-secondary">
+              Desde:
+            </label>
+            <div class="w-34">
+              <BaseInput
+                id="filter-desde"
+                :model-value="desde"
+                type="date"
+                density="compact"
+                title="Fecha inicial de venta (Desde)"
+                aria-label="Fecha inicial de venta (Desde)"
+                @update:model-value="handleDesdeChange"
+              />
+            </div>
+          </div>
+
+          <!-- Filtro Fecha Hasta -->
+          <div class="flex items-center gap-1.5">
+            <label for="filter-hasta" class="shrink-0 text-xs font-medium text-content-secondary">
+              Hasta:
+            </label>
+            <div class="w-34">
+              <BaseInput
+                id="filter-hasta"
+                :model-value="hasta"
+                type="date"
+                density="compact"
+                title="Fecha final de venta (Hasta)"
+                aria-label="Fecha final de venta (Hasta)"
+                @update:model-value="handleHastaChange"
+              />
+            </div>
           </div>
         </div>
 
-        <!-- Filtro Fecha Hasta -->
-        <div class="flex items-center gap-1.5">
-          <label for="filter-hasta" class="shrink-0 text-xs font-medium text-content-secondary">
-            Hasta:
-          </label>
-          <div class="w-36">
-            <BaseInput
-              id="filter-hasta"
-              :model-value="hasta"
-              type="date"
-              density="compact"
-              title="Fecha final de venta (Hasta)"
-              aria-label="Fecha final de venta (Hasta)"
-              @update:model-value="handleHastaChange"
-            />
-          </div>
-        </div>
-      </template>
-    </FilterBar>
+        <!-- Botón Limpiar filtros (inline, solo visible cuando hay filtros activos) -->
+        <BaseButton
+          v-if="hasActiveFilters"
+          variant="ghost"
+          density="compact"
+          :icon="RotateCcw"
+          class="shrink-0 text-xs text-content-secondary hover:text-content-primary"
+          data-testid="btn-clear-filters"
+          @click="handleClearFilters"
+        >
+          Limpiar filtros
+        </BaseButton>
+      </div>
+    </div>
 
     <!-- Tabla Principal de Ventas en Modo Servidor -->
     <DataTable
@@ -204,19 +249,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Store } from 'lucide-vue-next'
+import { Store, Search, RotateCcw } from 'lucide-vue-next'
 import PageHeader from '@/shared/ui/PageHeader.vue'
 import BaseButton from '@/shared/ui/BaseButton.vue'
 import BaseBadge from '@/shared/ui/BaseBadge.vue'
 import BaseInput from '@/shared/ui/BaseInput.vue'
 import BaseSelect from '@/shared/ui/BaseSelect.vue'
 import type { SelectOption } from '@/shared/ui/BaseSelect.vue'
-import { DataTable, FilterBar } from '@/shared/ui/DataTable'
+import { DataTable } from '@/shared/ui/DataTable'
 import type { DataTableColumn } from '@/shared/ui/DataTable'
 import SaleDetailDrawer from '../components/SaleDetailDrawer.vue'
 import { useSalesHistory } from '../composables/useSalesHistory'
+import { useSalesFilters } from '../composables/useSalesFilters'
 import { useDataTableQuery } from '@/shared/composables/useDataTableQuery'
 import { usePermissions } from '@/shared/composables/usePermissions'
 import { formatDate } from '@/shared/utils/formatDate'
@@ -256,6 +302,7 @@ const {
   resetFilters,
 } = useDataTableQuery<{
   shiftId: string
+  cashier: string
   desde: string
   hasta: string
   currency: string
@@ -263,6 +310,7 @@ const {
   initialSort: 'createdAt:desc',
   initialFilters: {
     shiftId: '',
+    cashier: '',
     desde: '',
     hasta: '',
     currency: '',
@@ -270,14 +318,48 @@ const {
   syncUrl: true,
 })
 
+const cashier = computed(() => filters.value.cashier)
 const shiftId = computed(() => filters.value.shiftId)
 const desde = computed(() => filters.value.desde)
 const hasta = computed(() => filters.value.hasta)
 const currency = computed(() => filters.value.currency)
 
+const {
+  cashierOptions,
+  shiftOptions,
+  availableShifts,
+  setCashier: setFilterCashier,
+  setShiftId: setFilterShiftId,
+  loadFilterData,
+} = useSalesFilters({
+  initialCashier: cashier.value,
+  initialShiftId: shiftId.value,
+})
+
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+const handleSearchUpdate = (val: string | number | null) => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => {
+    setSearch(String(val || ''))
+    setPage(1)
+  }, 300)
+}
+
+const handleClearSearch = () => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  setSearch('')
+  setPage(1)
+}
+
+onBeforeUnmount(() => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+})
+
 const hasActiveFilters = computed<boolean>(() => {
   return (
     Boolean(search.value?.trim()) ||
+    Boolean(cashier.value) ||
     Boolean(shiftId.value) ||
     Boolean(desde.value) ||
     Boolean(hasta.value) ||
@@ -371,6 +453,7 @@ const loadSales = async () => {
       perPage: perPage.value,
       sort: sort.value || 'createdAt:desc',
       search: search.value?.trim() || undefined,
+      cashierName: cashier.value || undefined,
       shiftId: shiftId.value || undefined,
       desde: desde.value || undefined,
       hasta: hasta.value || undefined,
@@ -381,14 +464,32 @@ const loadSales = async () => {
   }
 }
 
-const handleCurrencyChange = (val: string | number | null) => {
+const handleCashierChange = (val: string | number | null) => {
   const str = String(val || '')
-  setFilter('currency', str === 'ALL' ? '' : str)
+  const newCashier = str === 'ALL' ? '' : str
+  setFilter('cashier', newCashier)
+  setFilterCashier(newCashier)
   setPage(1)
+  if (shiftId.value) {
+    const shiftExists = availableShifts.value.some((s) => s.id === shiftId.value)
+    if (!shiftExists) {
+      setFilter('shiftId', '')
+      setFilterShiftId('')
+    }
+  }
 }
 
 const handleShiftChange = (val: string | number | null) => {
-  setFilter('shiftId', String(val || ''))
+  const str = String(val || '')
+  const newShift = str === 'ALL' ? '' : str
+  setFilter('shiftId', newShift)
+  setFilterShiftId(newShift)
+  setPage(1)
+}
+
+const handleCurrencyChange = (val: string | number | null) => {
+  const str = String(val || '')
+  setFilter('currency', str === 'ALL' ? '' : str)
   setPage(1)
 }
 
@@ -403,8 +504,11 @@ const handleHastaChange = (val: string | number | null) => {
 }
 
 const handleClearFilters = () => {
+  if (debounceTimer) clearTimeout(debounceTimer)
   resetFilters()
   setSearch('')
+  setFilterCashier('')
+  setFilterShiftId('')
   setPage(1)
 }
 
@@ -430,8 +534,11 @@ const handleCancelSale = async (reason: string) => {
 watch(
   () => route.query,
   (q) => {
-    if (q.page && Number(q.page) !== page.value) {
-      page.value = Number(q.page)
+    if (q.page) {
+      const parsed = parseInt(String(q.page), 10)
+      if (parsed && parsed !== page.value) {
+        page.value = parsed
+      }
     }
     if (q.sort && String(q.sort) !== sort.value) {
       sort.value = String(q.sort)
@@ -439,8 +546,14 @@ watch(
     if (q.search !== undefined && String(q.search) !== search.value) {
       search.value = String(q.search)
     }
+    const qCashier = q.cashier ?? q.cashierName
+    if (qCashier !== undefined && String(qCashier) !== filters.value.cashier) {
+      filters.value.cashier = String(qCashier)
+      setFilterCashier(String(qCashier))
+    }
     if (q.shiftId !== undefined && String(q.shiftId) !== filters.value.shiftId) {
       filters.value.shiftId = String(q.shiftId)
+      setFilterShiftId(String(q.shiftId))
     }
     if (q.desde !== undefined && String(q.desde) !== filters.value.desde) {
       filters.value.desde = String(q.desde)
@@ -462,6 +575,7 @@ watch(
     () => perPage.value,
     () => sort.value,
     () => search.value,
+    () => filters.value.cashier,
     () => filters.value.shiftId,
     () => filters.value.desde,
     () => filters.value.hasta,
@@ -472,7 +586,15 @@ watch(
   }
 )
 
-onMounted(() => {
+onMounted(async () => {
+  await loadFilterData()
+  if (cashier.value && shiftId.value) {
+    const shiftExists = availableShifts.value.some((s) => s.id === shiftId.value)
+    if (!shiftExists) {
+      setFilter('shiftId', '')
+      setFilterShiftId('')
+    }
+  }
   loadSales()
 })
 </script>

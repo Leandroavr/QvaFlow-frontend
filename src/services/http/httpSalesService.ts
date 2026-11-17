@@ -54,4 +54,9 @@ export class HttpSalesService implements SalesService {
     )
     return response.data
   }
+
+  async getCashiers(): Promise<string[]> {
+    const response = await httpClient.get<string[]>('/sales/cashiers')
+    return response.data
+  }
 }

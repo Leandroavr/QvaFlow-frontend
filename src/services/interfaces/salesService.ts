@@ -46,4 +46,10 @@ export interface SalesService {
    * Requiere permiso: sales.cancel
    */
   cancelSale(id: string, dto: CancelSaleDto): Promise<CancelSaleResult>
+
+  /**
+   * Listado de nombres únicos de cajeros registrados con ventas o turnos.
+   * Requiere permiso: sales.view
+   */
+  getCashiers(): Promise<string[]>
 }

@@ -1998,7 +1998,8 @@ Listado paginado de ventas para auditoría comercial y consulta de comprobantes.
   - `desde` _(opcional, fecha YYYY-MM-DD)_: Fecha inicial de facturación.
   - `hasta` _(opcional, fecha YYYY-MM-DD)_: Fecha final de facturación.
   - `currency` _(opcional, string)_: Filtrar por moneda cobrada (`CUP`, `USD`, `CUP_TRANSFER`, `MLC`).
-  - `search` _(opcional, string)_: Búsqueda por folio de ticket o nombre del cajero.
+  - `cashierName` _(opcional, string)_: Filtrar por nombre de cajero específico. > **Nota (PROPUESTA):** Filtro por cajero pendiente a confirmar con backend.
+  - `search` _(opcional, string)_: Búsqueda coincidente (insensible a mayúsculas y acentos) en folio de ticket, nombre del cajero, o nombre y código/SKU de cualquiera de los productos en las líneas de la venta. > **Nota (PROPUESTA):** Búsqueda ampliada a productos en líneas de venta pendiente a confirmar con backend.
 
 ##### Response 200 OK
 
@@ -2121,6 +2122,26 @@ Anulación formal de una venta, reversión de existencias al almacén emisor y a
 
 ---
 
+#### 10.8.4 GET /api/sales/cashiers [PROPUESTA]
+Listado de nombres únicos de cajeros con turnos o ventas registradas para poblar selectores de auditoría en frontend.
+
+- **Método:** `GET`
+- **Ruta:** `/api/sales/cashiers`
+- **Autenticación requerida:** Sí (`sales.view`).
+- **Estado:** PROPUESTA (pendiente a confirmar con backend).
+
+##### Response 200 OK
+
+```json
+[
+  "Administrador General",
+  "Carlos Gómez",
+  "Yadira Reyes"
+]
+```
+
+---
+
 ### 10.9 Endpoints de Historial de Cuadres de Caja
 
 #### 10.9.1 GET /api/cash/shifts
@@ -2133,6 +2154,7 @@ Listado paginado de cierres de caja y arqueos históricos para control contable 
   - `page` _(opcional, entero, defecto 1)_.
   - `perPage` _(opcional, entero, defecto 10)_.
   - `sort` _(opcional, string, defecto `"openedAt:desc"`)_.
+  - `cashierName` _(opcional, string)_: Filtrar turnos de un cajero específico. > **Nota (PROPUESTA):** Filtro por cajero en listado de turnos pendiente a confirmar con backend.
   - `status` _(opcional, string)_: `'OPEN'` o `'CLOSED'`.
   - `desde` _(opcional, fecha YYYY-MM-DD)_.
   - `hasta` _(opcional, fecha YYYY-MM-DD)_.

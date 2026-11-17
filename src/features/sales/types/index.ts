@@ -146,6 +146,7 @@ export interface CashShiftsQuery extends PaginationParams {
   status?: ShiftStatus
   desde?: string
   hasta?: string
+  cashierName?: string
 }
 
 /**
@@ -269,6 +270,7 @@ export interface SalesQuery extends PaginationParams {
   hasta?: string
   currency?: Currency
   search?: string
+  cashierName?: string
 }
 
 /**
