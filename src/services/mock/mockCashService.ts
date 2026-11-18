@@ -1,4 +1,5 @@
 import type { CashService } from '../interfaces/cashService'
+import type { InventoryService } from '../interfaces/inventoryService'
 import type { PaginatedResponse } from '@/shared/types/api'
 import { ApiError } from '@/shared/types/api'
 import type {
@@ -13,6 +14,8 @@ import type {
   CashShiftsQuery,
   CurrencyExchange,
   CreateCurrencyExchangeDto,
+  CashWithdrawal,
+  CreateWithdrawalDto,
   PaymentMethod,
 } from '@/features/sales/types'
 import type { Currency, DecimalString } from '@/shared/types/currency'
@@ -43,9 +46,16 @@ export class MockCashService implements CashService {
 
   private shifts: CashShift[] = []
   private exchanges: CurrencyExchange[] = []
+  private withdrawals: CashWithdrawal[] = []
+  private inventoryService?: InventoryService
 
-  constructor() {
+  constructor(inventoryService?: InventoryService) {
+    this.inventoryService = inventoryService
     this.seedDefaultShift()
+  }
+
+  public setInventoryService(inventoryService: InventoryService): void {
+    this.inventoryService = inventoryService
   }
 
   /**
@@ -72,9 +82,18 @@ export class MockCashService implements CashService {
           CUP: '0.00',
           USD: '0.00',
         },
+        withdrawalsTotals: {
+          CUP: '0.00',
+          USD: '0.00',
+        },
+        withdrawalsCount: {
+          cash: 0,
+          product: 0,
+        },
       },
     ]
     this.exchanges = []
+    this.withdrawals = []
   }
 
   /**
@@ -176,7 +195,7 @@ export class MockCashService implements CashService {
   }
 
   async getSettings(): Promise<CashSettings> {
-    if (!this.checkAnyPermission(['cash.manage', 'system.config'])) {
+    if (!this.checkAnyPermission(['cash.manage', 'system.config', 'sales.create'])) {
       throw new ApiError(
         { code: 'FORBIDDEN', message: 'No posee permisos para consultar configuración de caja.' },
         403
@@ -218,11 +237,11 @@ export class MockCashService implements CashService {
   }
 
   async openShift(dto: OpenShiftDto): Promise<CashShift> {
-    if (!this.checkHasPermission('cash.open_close')) {
+    if (!this.checkAnyPermission(['cash.open_close', 'sales.create'])) {
       throw new ApiError(
         {
           code: 'FORBIDDEN',
-          message: 'Requiere permiso cash.open_close para abrir un turno de caja.',
+          message: 'Requiere permiso cash.open_close o sales.create para abrir un turno de caja.',
         },
         403
       )
@@ -258,6 +277,14 @@ export class MockCashService implements CashService {
         CUP: '0.00',
         USD: '0.00',
       },
+      withdrawalsTotals: {
+        CUP: '0.00',
+        USD: '0.00',
+      },
+      withdrawalsCount: {
+        cash: 0,
+        product: 0,
+      },
     }
     this.shifts.unshift(newShift)
     return JSON.parse(JSON.stringify(newShift))
@@ -287,13 +314,22 @@ export class MockCashService implements CashService {
       )
     }
 
-    const expectedCUP = addDecimals(
-      addDecimals(shift.initialFunds.CUP, shift.salesTotals.cupCash),
-      shift.exchangeAdjustments.CUP
+    const withdrawalsCUP = shift.withdrawalsTotals?.CUP || '0.00'
+    const withdrawalsUSD = shift.withdrawalsTotals?.USD || '0.00'
+
+    const expectedCUP = subtractDecimals(
+      addDecimals(
+        addDecimals(shift.initialFunds.CUP, shift.salesTotals.cupCash),
+        shift.exchangeAdjustments.CUP
+      ),
+      withdrawalsCUP
     )
-    const expectedUSD = addDecimals(
-      addDecimals(shift.initialFunds.USD, shift.salesTotals.USD),
-      shift.exchangeAdjustments.USD
+    const expectedUSD = subtractDecimals(
+      addDecimals(
+        addDecimals(shift.initialFunds.USD, shift.salesTotals.USD),
+        shift.exchangeAdjustments.USD
+      ),
+      withdrawalsUSD
     )
 
     const countedCUP = normalizeDecimal(dto.countedCUP)
@@ -332,11 +368,11 @@ export class MockCashService implements CashService {
   }
 
   async createExchange(dto: CreateCurrencyExchangeDto): Promise<CurrencyExchange> {
-    if (!this.checkHasPermission('cash.exchange')) {
+    if (!this.checkAnyPermission(['cash.exchange', 'sales.create'])) {
       throw new ApiError(
         {
           code: 'FORBIDDEN',
-          message: 'Requiere permiso cash.exchange para registrar canje de divisas.',
+          message: 'Requiere permiso cash.exchange o sales.create para registrar canje de divisas.',
         },
         403
       )
@@ -387,13 +423,211 @@ export class MockCashService implements CashService {
     return JSON.parse(JSON.stringify(exchange))
   }
 
+  async createWithdrawal(dto: CreateWithdrawalDto): Promise<CashWithdrawal> {
+    if (!this.checkHasPermission('sales.create')) {
+      throw new ApiError(
+        {
+          code: 'FORBIDDEN',
+          message: 'Requiere permiso sales.create para registrar salidas desde el POS.',
+        },
+        403
+      )
+    }
+
+    const existing = this.withdrawals.find((w) => w.clientRequestId === dto.clientRequestId)
+    if (existing) {
+      return JSON.parse(JSON.stringify(existing))
+    }
+
+    const shift = this.shifts.find((s) => s.id === dto.shiftId && s.status === 'OPEN')
+    if (!shift) {
+      throw new ApiError(
+        {
+          code: 'SHIFT_NOT_OPEN',
+          message: 'No es posible registrar salidas sin un turno de caja activo en el terminal.',
+        },
+        409
+      )
+    }
+
+    const reason = dto.reason?.trim() || ''
+    if (reason.length < 10) {
+      throw new ApiError(
+        {
+          code: 'INVALID_WITHDRAWAL_DATA',
+          message: 'El motivo de la salida es obligatorio y debe contener al menos 10 caracteres.',
+          details: {
+            reason: ['El motivo debe contener al menos 10 caracteres.'],
+          },
+        },
+        400
+      )
+    }
+
+    if (dto.beneficiary === 'OTHER' && !dto.beneficiaryName?.trim()) {
+      throw new ApiError(
+        {
+          code: 'INVALID_WITHDRAWAL_DATA',
+          message: 'Debe especificar el nombre del beneficiario cuando no es el dueño.',
+          details: {
+            beneficiaryName: [
+              'El nombre del beneficiario es obligatorio cuando se selecciona "Otro".',
+            ],
+          },
+        },
+        400
+      )
+    }
+
+    if (dto.kind === 'CASH') {
+      const currency: 'CUP' | 'USD' = dto.currency === 'USD' ? 'USD' : 'CUP'
+      const amount = dto.amount ? normalizeDecimal(dto.amount) : '0.00'
+      if (!isPositiveDecimal(amount)) {
+        throw new ApiError(
+          {
+            code: 'INVALID_WITHDRAWAL_DATA',
+            message: 'El importe de la salida en efectivo debe ser mayor que 0.00.',
+            details: {
+              amount: ['El importe debe ser mayor que 0.00.'],
+            },
+          },
+          400
+        )
+      }
+
+      const currentInitial = shift.initialFunds[currency] || '0.00'
+      const currentSalesCash =
+        currency === 'CUP' ? shift.salesTotals.cupCash : shift.salesTotals.USD
+      const currentExchanges = shift.exchangeAdjustments[currency] || '0.00'
+      const currentWithdrawals = shift.withdrawalsTotals?.[currency] || '0.00'
+
+      const currentExpected = subtractDecimals(
+        addDecimals(addDecimals(currentInitial, currentSalesCash), currentExchanges),
+        currentWithdrawals
+      )
+
+      if (compareDecimals(amount, currentExpected) > 0) {
+        throw new ApiError(
+          {
+            code: 'INSUFFICIENT_CASH_IN_DRAWER',
+            message: `El importe solicitado (${amount} ${currency}) supera el efectivo esperado disponible en gaveta (${currentExpected} ${currency}).`,
+            details: {
+              amount: [
+                `No hay suficiente efectivo en gaveta. Disponible: ${currentExpected} ${currency}`,
+              ],
+            },
+          },
+          409
+        )
+      }
+
+      if (!shift.withdrawalsTotals) {
+        shift.withdrawalsTotals = { CUP: '0.00', USD: '0.00' }
+      }
+      if (!shift.withdrawalsCount) {
+        shift.withdrawalsCount = { cash: 0, product: 0 }
+      }
+      shift.withdrawalsTotals[currency] = addDecimals(shift.withdrawalsTotals[currency], amount)
+      shift.withdrawalsCount.cash += 1
+    } else if (dto.kind === 'PRODUCT') {
+      const quantity = dto.quantity ? normalizeDecimal(dto.quantity) : '0.00'
+      if (!isPositiveDecimal(quantity)) {
+        throw new ApiError(
+          {
+            code: 'INVALID_WITHDRAWAL_DATA',
+            message: 'La cantidad de producto a retirar debe ser mayor que 0.00.',
+            details: {
+              quantity: ['La cantidad debe ser mayor que 0.00.'],
+            },
+          },
+          400
+        )
+      }
+
+      const productCode = String(dto.sku || dto.productId || '')
+      if (!productCode.trim()) {
+        throw new ApiError(
+          {
+            code: 'INVALID_WITHDRAWAL_DATA',
+            message: 'Debe especificar el código o identificador del producto a retirar.',
+            details: {
+              product: ['Debe seleccionar un producto válido.'],
+            },
+          },
+          400
+        )
+      }
+
+      const warehouseCode = 'ALM-TIENDA-01'
+      if (this.inventoryService) {
+        await this.inventoryService.deductStock(
+          productCode,
+          quantity,
+          warehouseCode,
+          `Salida POS: ${reason} (Beneficiario: ${dto.beneficiary === 'OWNER' ? 'Dueño' : dto.beneficiaryName})`
+        )
+      }
+
+      if (!shift.withdrawalsCount) {
+        shift.withdrawalsCount = { cash: 0, product: 0 }
+      }
+      shift.withdrawalsCount.product += 1
+    }
+
+    const now = new Date().toISOString()
+    const withdrawal: CashWithdrawal = {
+      id: `SAL-${now.slice(0, 10).replace(/-/g, '')}-${String(this.withdrawals.length + 1).padStart(3, '0')}`,
+      clientRequestId: dto.clientRequestId,
+      shiftId: shift.id,
+      kind: dto.kind,
+      currency: dto.kind === 'CASH' ? dto.currency || 'CUP' : undefined,
+      amount: dto.kind === 'CASH' ? normalizeDecimal(dto.amount || '0.00') : undefined,
+      productId: dto.kind === 'PRODUCT' ? dto.productId : undefined,
+      productName: dto.kind === 'PRODUCT' ? dto.productName : undefined,
+      sku: dto.kind === 'PRODUCT' ? dto.sku : undefined,
+      quantity: dto.kind === 'PRODUCT' ? normalizeDecimal(dto.quantity || '0.00') : undefined,
+      beneficiary: dto.beneficiary,
+      beneficiaryName: dto.beneficiary === 'OTHER' ? dto.beneficiaryName?.trim() : undefined,
+      reason,
+      createdAt: now,
+      createdBy: this.getCurrentUsername(),
+    }
+
+    this.withdrawals.unshift(withdrawal)
+    return JSON.parse(JSON.stringify(withdrawal))
+  }
+
+  async getWithdrawals(
+    query: { shiftId?: string } = {}
+  ): Promise<PaginatedResponse<CashWithdrawal>> {
+    if (!this.checkAnyPermission(['sales.create', 'cash.view_history', 'cash.open_close'])) {
+      throw new ApiError(
+        {
+          code: 'FORBIDDEN',
+          message: 'No posee permisos para consultar salidas de caja.',
+        },
+        403
+      )
+    }
+    let filtered = [...this.withdrawals]
+    if (query.shiftId) {
+      filtered = filtered.filter((w) => w.shiftId === query.shiftId)
+    }
+    return {
+      items: JSON.parse(JSON.stringify(filtered)),
+      total: filtered.length,
+      page: 1,
+      perPage: 100,
+    }
+  }
+
   async getShifts(query: CashShiftsQuery = {}): Promise<PaginatedResponse<CashShift>> {
-    if (!this.checkAnyPermission(['cash.view_history', 'sales.view'])) {
+    if (!this.checkAnyPermission(['cash.view_history', 'sales.view', 'cash.open_close'])) {
       throw new ApiError(
         {
           code: 'FORBIDDEN',
           message:
-            'Requiere permiso cash.view_history o sales.view para consultar el historial de turnos.',
+            'Requiere permiso cash.view_history, sales.view o cash.open_close para consultar el historial de turnos.',
         },
         403
       )

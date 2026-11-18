@@ -12,6 +12,9 @@ import type {
   CashShiftsQuery,
   CurrencyExchange,
   CreateCurrencyExchangeDto,
+  CashWithdrawal,
+  CreateWithdrawalDto,
+  CashWithdrawalsQuery,
 } from '@/features/sales/types'
 import { httpClient } from '../api/httpClient'
 
@@ -56,6 +59,20 @@ export class HttpCashService implements CashService {
 
   async createExchange(dto: CreateCurrencyExchangeDto): Promise<CurrencyExchange> {
     const response = await httpClient.post<CurrencyExchange>('/cash/exchanges', dto)
+    return response.data
+  }
+
+  async createWithdrawal(dto: CreateWithdrawalDto): Promise<CashWithdrawal> {
+    const response = await httpClient.post<CashWithdrawal>('/cash/withdrawals', dto)
+    return response.data
+  }
+
+  async getWithdrawals(
+    query: CashWithdrawalsQuery = {}
+  ): Promise<PaginatedResponse<CashWithdrawal>> {
+    const response = await httpClient.get<PaginatedResponse<CashWithdrawal>>('/cash/withdrawals', {
+      params: query,
+    })
     return response.data
   }
 

@@ -5,11 +5,13 @@ import { createRouter, createMemoryHistory, type Router } from 'vue-router'
 import PosTerminalView from '../views/PosTerminalView.vue'
 import CurrencyExchangeModal from '../components/CurrencyExchangeModal.vue'
 import CloseShiftModal from '../components/CloseShiftModal.vue'
+import WithdrawalModal from '../components/WithdrawalModal.vue'
 import { usePosCart } from '../composables/usePosCart'
 import { usePosShift } from '../composables/usePosShift'
 import { usePosHeldOrders } from '../composables/usePosHeldOrders'
 import { routes } from '@/app/router'
-import { cashService } from '@/services'
+import { cashService, inventoryService } from '@/services'
+import { addDecimals, subtractDecimals } from '@/shared/utils/decimal'
 import type { PosProduct, CashShift } from '../types'
 
 describe('Punto de Venta (POS) - Canje, Espera y Cierre de Turno', () => {
@@ -22,6 +24,7 @@ describe('Punto de Venta (POS) - Canje, Espera y Cierre de Turno', () => {
     localStorage.clear()
     document.body.innerHTML = ''
     usePosCart().clearCart()
+    ;(cashService as any).reset?.()
 
     localStorage.setItem(
       'qvaflow_user',
@@ -675,6 +678,131 @@ describe('Punto de Venta (POS) - Canje, Espera y Cierre de Turno', () => {
         countedUSD: '150.00',
       })
     )
+
+    wrapper.unmount()
+  })
+
+  it('(11) mock rechaza motivo corto (< 10 caracteres) con error 400', async () => {
+    await expect(
+      cashService.createWithdrawal({
+        clientRequestId: 'test-req-1',
+        shiftId: 'TURNO-2026-001',
+        kind: 'CASH',
+        currency: 'CUP',
+        amount: '100.00',
+        beneficiary: 'OWNER',
+        reason: 'Corto',
+      })
+    ).rejects.toThrow()
+  })
+
+  it('(12) mock rechaza salida de efectivo que supera el disponible en gaveta con 409', async () => {
+    let caughtError: any = null
+    try {
+      await cashService.createWithdrawal({
+        clientRequestId: 'test-req-2',
+        shiftId: 'TURNO-2026-001',
+        kind: 'CASH',
+        currency: 'CUP',
+        amount: '99999999.00',
+        beneficiary: 'OWNER',
+        reason: 'Retiro excesivo para el dueño del negocio',
+      })
+    } catch (err: any) {
+      caughtError = err
+    }
+    expect(caughtError).not.toBeNull()
+    expect(caughtError?.statusCode).toBe(409)
+    expect(caughtError?.code).toBe('INSUFFICIENT_CASH_IN_DRAWER')
+  })
+
+  it('(13) salida de efectivo reduce el efectivo esperado del turno', async () => {
+    const activeShift = await cashService.getCurrentShift()
+    expect(activeShift).not.toBeNull()
+    const initialWithdrawals = activeShift?.withdrawalsTotals?.CUP || '0.00'
+
+    const withdrawal = await cashService.createWithdrawal({
+      clientRequestId: 'test-req-3',
+      shiftId: activeShift!.id,
+      kind: 'CASH',
+      currency: 'CUP',
+      amount: '500.00',
+      beneficiary: 'OWNER',
+      reason: 'Retiro de efectivo para compra menor de suministros',
+    })
+
+    expect(withdrawal.id).toBeDefined()
+    expect(withdrawal.amount).toBe('500.00')
+
+    const updatedShift = await cashService.getCurrentShift()
+    expect(updatedShift?.withdrawalsTotals?.CUP).toBe(addDecimals(initialWithdrawals, '500.00'))
+    expect(updatedShift?.withdrawalsCount?.cash).toBeGreaterThan(0)
+  })
+
+  it('(14) salida de producto descuenta stock en inventario y genera movimiento', async () => {
+    const activeShift = await cashService.getCurrentShift()
+    expect(activeShift).not.toBeNull()
+
+    const stockBefore = await inventoryService.getStock({ search: '78910001' })
+    const prodBefore = stockBefore.items[0]
+    expect(prodBefore).toBeDefined()
+    const prevQty = prodBefore.quantity
+
+    const withdrawal = await cashService.createWithdrawal({
+      clientRequestId: 'test-req-4',
+      shiftId: activeShift!.id,
+      kind: 'PRODUCT',
+      productId: 1,
+      productName: prodBefore.productName,
+      sku: prodBefore.productCode,
+      quantity: '2.00',
+      beneficiary: 'OWNER',
+      reason: 'Muestra comercial autorizada para el dueño',
+    })
+
+    expect(withdrawal.id).toBeDefined()
+    expect(withdrawal.kind).toBe('PRODUCT')
+
+    const stockAfter = await inventoryService.getStock({ search: '78910001' })
+    const prodAfter = stockAfter.items[0]
+    expect(prodAfter.quantity).toBe(subtractDecimals(prevQty, '2.00'))
+  })
+
+  it('(15) vendedor registra salida desde el POS con atajo F7 o botón Salida', async () => {
+    // Usuario vendedor: solo sales.create y sales.view (sin permisos cash.*)
+    localStorage.setItem(
+      'qvaflow_user',
+      JSON.stringify({
+        username: 'vendedor',
+        fullName: 'Carlos Valdés',
+        permissions: ['sales.create', 'sales.view'],
+      })
+    )
+
+    const shiftComposable = usePosShift()
+    await shiftComposable.loadShiftData()
+
+    const wrapper = mount(PosTerminalView, {
+      global: {
+        plugins: [pinia, router],
+      },
+      attachTo: document.body,
+    })
+
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    await flushPromises()
+
+    // Verificar botón Salida en el header del POS
+    const withdrawalBtn = wrapper.find('[data-testid="header-withdrawal-btn"]')
+    expect(withdrawalBtn.exists()).toBe(true)
+
+    // Abrir modal con click
+    await withdrawalBtn.trigger('click')
+    await flushPromises()
+
+    const modal = wrapper.findComponent(WithdrawalModal)
+    expect(modal.exists()).toBe(true)
+    expect(modal.props('open')).toBe(true)
 
     wrapper.unmount()
   })

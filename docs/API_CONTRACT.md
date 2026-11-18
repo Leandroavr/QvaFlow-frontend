@@ -282,12 +282,27 @@ El frontend **NUNCA** hardcodea el catálogo de permisos disponibles en el siste
       {
         "code": "sales.create",
         "label": "Registrar Ventas",
-        "description": "Permite emitir tickets de venta en el terminal POS."
+        "description": "Permite emitir tickets de venta en el terminal POS, abrir turno, canje y salidas."
+      },
+      {
+        "code": "sales.view",
+        "label": "Consultar Ventas",
+        "description": "Permite consultar tickets de venta (filtrado a ventas propias si no posee sales.view_all)."
+      },
+      {
+        "code": "sales.view_all",
+        "label": "Ver Todas las Ventas",
+        "description": "Permite consultar el historial de ventas de todos los cajeros y turnos. [PROPUESTA]"
       },
       {
         "code": "sales.cancel",
         "label": "Anular Ventas",
         "description": "Permite cancelar tickets y devolver mercancía."
+      },
+      {
+        "code": "cash.open_close",
+        "label": "Abrir y Cerrar Turnos de Caja",
+        "description": "Permite supervisar turnos abiertos y ejecutar el cierre con arqueo físico (exclusivo administración)."
       },
       {
         "code": "cash.manage",
@@ -981,6 +996,7 @@ Entrega los totales agregados e indicadores financieros clave del período.
   - `warehouseCode` _(string, opcional)_: Código de almacén para consolidar un centro específico.
 
 #### Ejemplo de Petición HTTP
+
 ```http
 GET /api/reports/finance-summary?desde=2026-10-01&hasta=2026-10-31 HTTP/1.1
 Host: localhost:8000
@@ -989,6 +1005,7 @@ Accept: application/json
 ```
 
 #### Ejemplo de Respuesta CON permiso `products.view_cost` (200 OK)
+
 ```json
 {
   "currency": "USD",
@@ -1010,6 +1027,7 @@ Accept: application/json
 ```
 
 #### Ejemplo de Respuesta SIN permiso `products.view_cost` (200 OK - campos sensibles ausentes)
+
 ```json
 {
   "currency": "USD",
@@ -1024,6 +1042,7 @@ Accept: application/json
 ```
 
 #### Errores Posibles
+
 - `400 Bad Request` (Rango inválido o parámetros incorrectos):
   ```json
   {
@@ -1070,6 +1089,7 @@ Serie histórica cronológica de ventas y compras para visualización en gráfic
   - `warehouseCode` _(string, opcional)_: Filtro opcional por almacén.
 
 #### Ejemplo de Petición HTTP
+
 ```http
 GET /api/reports/finance-timeseries?granularity=month&desde=2026-06-01&hasta=2026-10-31 HTTP/1.1
 Host: localhost:8000
@@ -1078,6 +1098,7 @@ Accept: application/json
 ```
 
 #### Ejemplo de Respuesta (200 OK)
+
 ```json
 {
   "granularity": "month",
@@ -1115,9 +1136,11 @@ Accept: application/json
   ]
 }
 ```
+
 > **Nota de cálculo de ganancia:** El campo `grossProfit` se calcula contablemente como `salesTotal - cogsTotal` (margen sobre el costo de la mercancía efectivamente vendida), siguiendo la misma fórmula del resumen financiero (`getSummary`). No representa `salesTotal - purchasesTotal` (el cual corresponde al balance de caja `cashBalance`). En 2026-10, con un `cogsTotal` de 92,100.00 USD, `grossProfit` resulta en 53,750.00 USD, consistente con la sección 9.2.
 
 #### Errores Posibles
+
 - `400 Bad Request` (Granularidad inválida o fechas incoherentes):
   ```json
   {
@@ -1149,6 +1172,7 @@ Agregado de recaudación y unidades comercializadas por categoría de catálogo.
   - `warehouseCode` _(string, opcional)_: Filtro opcional por almacén.
 
 #### Ejemplo de Petición HTTP
+
 ```http
 GET /api/reports/sales-by-category?desde=2026-10-01&hasta=2026-10-31 HTTP/1.1
 Host: localhost:8000
@@ -1157,6 +1181,7 @@ Accept: application/json
 ```
 
 #### Ejemplo de Respuesta (200 OK)
+
 ```json
 [
   {
@@ -1181,6 +1206,7 @@ Accept: application/json
 ```
 
 #### Errores Posibles
+
 - `400 Bad Request` (`INVALID_DATE_RANGE`).
 - `403 Forbidden` (`FORBIDDEN`).
 - `500 Internal Server Error` (`SERVER_ERROR`).
@@ -1200,6 +1226,7 @@ Ranking de productos con mayor rotación comercial en unidades o recaudación.
   - `warehouseCode` _(string, opcional) [OPCIONAL]_: Filtro por almacén.
 
 #### Ejemplo de Petición HTTP
+
 ```http
 GET /api/reports/top-products?limit=5&desde=2026-10-01&hasta=2026-10-31 HTTP/1.1
 Host: localhost:8000
@@ -1208,6 +1235,7 @@ Accept: application/json
 ```
 
 #### Ejemplo de Respuesta (200 OK)
+
 ```json
 [
   {
@@ -1257,9 +1285,11 @@ Accept: application/json
   }
 ]
 ```
+
 > **Nota de cálculo de rotación (PROPUESTA - Decisión A):** Dado que el legado no definía fórmula para la rotación porcentual ante límites dinámicos, se propone calcularla en servidor como porcentaje de `unitsSold` respecto al producto con más unidades comercializadas del resultado obtenido (`(unitsSold / maxUnitsSold) * 100`).
 
 #### Errores Posibles
+
 - `400 Bad Request` (`INVALID_LIMIT`, `INVALID_DATE_RANGE`, `INVALID_DATE_FORMAT`).
 - `403 Forbidden` (`FORBIDDEN`).
 - `500 Internal Server Error` (`SERVER_ERROR`).
@@ -1280,6 +1310,7 @@ Productos con existencias en inventario que no han registrado ventas en un perí
   - `categoryId` _(string|number, opcional) [OPCIONAL]_: Filtrar por categoría.
 
 #### Ejemplo de Petición HTTP
+
 ```http
 GET /api/reports/idle-products?days=30&page=1&perPage=10&sort=daysWithoutSale:desc HTTP/1.1
 Host: localhost:8000
@@ -1288,6 +1319,7 @@ Accept: application/json
 ```
 
 #### Ejemplo de Respuesta CON `products.view_cost` (200 OK)
+
 ```json
 {
   "items": [
@@ -1330,6 +1362,7 @@ Accept: application/json
 ```
 
 #### Ejemplo de Respuesta SIN `products.view_cost` (200 OK)
+
 ```json
 {
   "items": [
@@ -1359,6 +1392,7 @@ Accept: application/json
 ```
 
 #### Errores Posibles
+
 - `400 Bad Request` (`INVALID_DAYS`, `INVALID_PAGE`, `PAGINATION_OUT_OF_BOUNDS`):
   ```json
   {
@@ -1388,6 +1422,7 @@ Auditoría detallada de transacciones financieras individuales (ventas netas y c
   - `warehouseCode` _(string, opcional)_: Filtrar por almacén.
 
 #### Ejemplo de Petición HTTP
+
 ```http
 GET /api/reports/movements?page=1&perPage=10&sort=date:desc&desde=2026-10-01&hasta=2026-10-31&type=ALL HTTP/1.1
 Host: localhost:8000
@@ -1396,6 +1431,7 @@ Accept: application/json
 ```
 
 #### Ejemplo de Respuesta (200 OK)
+
 ```json
 {
   "items": [
@@ -1431,11 +1467,14 @@ Accept: application/json
   "perPage": 10
 }
 ```
+
 > **Campos de movimiento:**
+>
 > - `paymentMethod` _(string)_: Código del método de pago (`'CASH'`, `'CARD'`, `'TRANSFER'`), el cual se traduce en la interfaz según el diccionario de presentación (`CASH` -> "Efectivo", `CARD` -> "Tarjeta", `TRANSFER` -> "Transferencia").
 > - `amountBase` _(string)_: Importe equivalente expresado en la moneda contable base (`USD`) como `DecimalString`.
 
 #### Errores Posibles
+
 - `400 Bad Request` (`INVALID_DATE_RANGE`, `PAGINATION_OUT_OF_BOUNDS`).
 - `400 Bad Request` (Rango excede el límite máximo permitido de 366 días):
   ```json
@@ -1447,22 +1486,56 @@ Accept: application/json
 - `403 Forbidden` (`FORBIDDEN`).
 - `500 Internal Server Error` (`SERVER_ERROR`).
 
-
-
 ---
 
 ## 10. Módulo de Ventas y Caja [PROPUESTA]
 
-Esta sección define el contrato de API para las operaciones del Punto de Venta (POS), control de turnos y arqueos de caja, canjes de divisas en mostrador, emisión de tickets y auditoría de ventas en QvaFlow.
+Esta sección define el contrato de API para las operaciones del Punto de Venta (POS), control de turnos y arqueos de caja, canjes de divisas en mostrador, salidas de efectivo/producto, emisión de tickets y auditoría de ventas en QvaFlow.
 
 > [!IMPORTANT] CONVENCIONES DE PRECISIÓN Y MULTIMONEDA EN VENTAS
-> - **Precisión Monetaria y Decimales:** Todos los importes y cantidades se transmiten como **`DecimalString`** (string decimal exacto con 2 decimales, ej: `"1250.00"`, `"2.00"`), nunca como números flotantes.
+>
+> - **Precisión Monetaria y Decimales:** Todos los importes y cantidades se transmiten como **`DecimalString`** (string decimal exacto con 2 decimales, ej: `"1250.00"`, `"2.00"`), nunca como números flotantes (`float`/`double`).
 > - **Monedas Soportadas:** `USD` (moneda de referencia económica), `CUP` (moneda contable nacional en efectivo), `CUP_TRANSFER` (transferencia nacional EnZona / Transfermóvil) y `MLC` (tarjeta magnética nacional).
 > - **Regla de Redondeo en Efectivo:**
 >   - **En CUP efectivo:** Redondeo estricto al entero más cercano (`precision: 0`, sin centavos).
 >   - **En USD efectivo:** Redondeo forzado hacia arriba al entero superior (`Math.ceil`, solo billetes enteros sin centavos).
 >   - **Vuelto al Cliente:** Ante cobros en divisa extranjera (USD), el vuelto o cambio restante se calcula y **se entrega siempre en pesos cubanos (`CUP`)**.
-> - **Idempotencia (`clientRequestId`):** Para prevenir cobros duplicados por reintentos de red o doble clic en el terminal, la emisión de ventas exige un UUID v4 generado en el frontend (`clientRequestId`). Si el servidor recibe una solicitud con un `clientRequestId` ya registrado, retorna la venta existente con HTTP `200 OK` sin duplicar transacciones ni movimientos de stock.
+> - **Idempotencia (`clientRequestId`):** Para prevenir cobros duplicados o doble retiro por reintentos de red o doble clic en el terminal, las peticiones de creación (`POST /api/sales`, `POST /api/cash/withdrawals`) exigen un UUID v4 generado en el frontend (`clientRequestId`). Si el servidor recibe una solicitud con un `clientRequestId` ya registrado, retorna la entidad existente con HTTP `200 OK` sin duplicar transacciones ni movimientos de stock.
+
+---
+
+### 10.0 Matriz de Permisos del Módulo de Ventas y Caja
+
+| Permiso             | Módulo | Acciones que Habilita en el Sistema                                                                                                                                                                                                                                                                                                       | Perfiles Habituales                         |
+| ------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `sales.create`      | Ventas | Emitir tickets de venta en POS (`POST /api/sales`), abrir turno de caja en el POS (`POST /api/cash/shifts/open`), realizar canjes de divisas en mostrador F6 (`POST /api/cash/exchanges`), registrar salidas autorizadas de efectivo o producto F7 (`POST /api/cash/withdrawals`) y consultar catálogo del POS (`GET /api/pos/products`). | Vendedor, Cajero, Administrador             |
+| `sales.view`        | Ventas | Consultar historial de tickets emitidos (`GET /api/sales`, `GET /api/sales/{id}`). **Regla de autorización por objeto:** Si el usuario carece de `sales.view_all`, el backend filtra obligatoriamente por su usuario y devuelve **únicamente sus propias ventas**.                                                                        | Vendedor, Cajero, Auditor, Administrador    |
+| `sales.view_all`    | Ventas | Visualizar el historial de ventas global de todos los cajeros y turnos (`GET /api/sales`). Habilita el selector de filtro por cajero (`GET /api/sales/cashiers`).                                                                                                                                                                         | Administrador, Supervisor, Auditor          |
+| `sales.cancel`      | Ventas | Anular tickets de venta emitidos (`POST /api/sales/{id}/cancel`), reintegrando existencias al inventario con justificación obligatoria (mínimo 10 caracteres).                                                                                                                                                                            | Supervisor, Administrador                   |
+| `cash.open_close`   | Caja   | Acceso exclusivo a la pantalla **Turno y arqueo** (`/cash/shift`). Permite consultar turnos abiertos concurrentes de todos los cajeros (`GET /api/cash/shifts?status=OPEN`). **Cerrar turnos de caja y registrar el arqueo físico** (`POST /api/cash/shifts/{id}/close`). **Exclusivo de administración.**                                | Administrador, Tesorero, Supervisor de Caja |
+| `cash.exchange`     | Caja   | Acceso a la pantalla **Cambio y canje** (`/cash/exchange`). Consultar y actualizar tasas de cambio del día (`PUT /api/cash/rates`) y margen comercial de canje (`PUT /api/cash/settings`).                                                                                                                                                | Administrador, Tesorero                     |
+| `cash.view_history` | Caja   | Acceso a la pantalla **Cuadres de caja** (`/cash/shifts`). Consultar listado paginado de turnos históricos cerrados (`GET /api/cash/shifts?status=CLOSED`) y detalle exhaustivo de arqueos auditados (`GET /api/cash/shifts/{id}`).                                                                                                       | Administrador, Auditor, Contador            |
+
+> [!CAUTION] REGLA DE SEGREGACIÓN DE ROLES (VENDEDOR vs ADMINISTRACIÓN)
+>
+> - **El Vendedor:** Se limita exclusivamente al menú **Ventas** (Punto de Venta e Historial de SUS ventas) y cuenta únicamente con permisos `sales.*` (`sales.create`, `sales.view`). No tiene acceso a ninguna opción del menú Caja (`Turno y arqueo`, `Cambio y canje`, `Cuadres`). Opera autónomamente en el POS: abre su turno, vende, canjea divisa y registra salidas autorizadas.
+> - **La Administración:** Es el único perfil con permisos `cash.*`. El **cierre de turno y arqueo físico** es una potestad **exclusiva de la administración** (`cash.open_close`); el vendedor no puede cerrar su propio turno. La administración supervisa los turnos abiertos de todos los cajeros desde `/cash/shift` y realiza los arqueos y cuadres.
+
+---
+
+### 10.0.1 Cálculo Autoritativo del Efectivo Esperado en Gaveta
+
+El backend recalcula y valida el efectivo esperado en gaveta de forma independiente por divisa física (`CUP` y `USD`), utilizando aritmética decimal de punto fijo (`DecimalString`, prohibidos números flotantes).
+
+**Fórmula de Conciliación:**
+$$\text{Efectivo Esperado} = \text{Fondo Inicial} + \text{Ventas en Efectivo} + \text{Ajustes por Canje} - \text{Salidas de Efectivo}$$
+
+- **Para CUP:**
+  $$\text{expectedCUP} = \text{initialFunds.CUP} + \text{salesTotals.cupCash} + \text{exchangeAdjustments.CUP} - \text{withdrawalsTotals.CUP}$$
+- **Para USD:**
+  $$\text{expectedUSD} = \text{initialFunds.USD} + \text{salesTotals.USD} + \text{exchangeAdjustments.USD} - \text{withdrawalsTotals.USD}$$
+
+_Nota sobre transferencias (`cupTransfer`):_ Los pagos por transferencia electrónica (EnZona / Transfermóvil) impactan la recaudación contable pero **NO** ingresan efectivo físico a la gaveta, por lo que no forman parte del efectivo esperado en caja.
 
 ---
 
@@ -1506,6 +1579,7 @@ Catálogo de productos disponibles para venta en el terminal POS con existencias
 ```
 
 #### Errores Posibles
+
 - `401 Unauthorized`: Token ausente o expirado (`AUTH_TOKEN_EXPIRED`).
 - `403 Forbidden`: No posee el permiso `sales.create` (`FORBIDDEN`).
 
@@ -1539,6 +1613,7 @@ Búsqueda rápida optimizada para lectores y pistolas de código de barras USB.
 ```
 
 #### Errores Posibles
+
 - `404 Not Found`:
   ```json
   {
@@ -1554,6 +1629,7 @@ Búsqueda rápida optimizada para lectores y pistolas de código de barras USB.
 Consulta y fijación de las tasas de cambio de referencia del día para las operaciones de cobro y canje en mostrador.
 
 #### GET /api/cash/rates
+
 - **Método:** `GET`
 - **Ruta:** `/api/cash/rates`
 - **Autenticación requerida:** Sí (`sales.create` o `cash.manage` o `cash.exchange`).
@@ -1569,6 +1645,7 @@ Consulta y fijación de las tasas de cambio de referencia del día para las oper
 ```
 
 #### PUT /api/cash/rates
+
 - **Método:** `PUT`
 - **Ruta:** `/api/cash/rates`
 - **Autenticación requerida:** Sí (`cash.exchange`).
@@ -1594,6 +1671,7 @@ Consulta y fijación de las tasas de cambio de referencia del día para las oper
 ```
 
 ##### Errores Posibles
+
 - `400 Bad Request`: Tasas negativas o no válidas (`INVALID_EXCHANGE_RATE`).
 - `403 Forbidden`: No posee el permiso `cash.exchange` (`FORBIDDEN`).
 
@@ -1604,6 +1682,7 @@ Consulta y fijación de las tasas de cambio de referencia del día para las oper
 Parámetros globales de configuración operativa de caja, incluyendo el margen de canje en mostrador.
 
 #### GET /api/cash/settings
+
 - **Método:** `GET`
 - **Ruta:** `/api/cash/settings`
 - **Autenticación requerida:** Sí (`cash.manage` o `system.config`).
@@ -1617,6 +1696,7 @@ Parámetros globales de configuración operativa de caja, incluyendo el margen d
 ```
 
 #### PUT /api/cash/settings
+
 - **Método:** `PUT`
 - **Ruta:** `/api/cash/settings`
 - **Autenticación requerida:** Sí (`system.config`).
@@ -1639,6 +1719,7 @@ Parámetros globales de configuración operativa de caja, incluyendo el margen d
 ```
 
 ##### Errores Posibles
+
 - `400 Bad Request`: Valor menor a 0.00 (`INVALID_SETTINGS_VALUE`).
 - `403 Forbidden`: Exige permiso administrativo `system.config` (`FORBIDDEN`).
 
@@ -1648,7 +1729,12 @@ Parámetros globales de configuración operativa de caja, incluyendo el margen d
 
 Endpoints para gestión de apertura, consulta de estado activo y cierre con arqueo de gaveta.
 
+- La **apertura** puede realizarse desde el Punto de Venta (POS) con `sales.create` o desde administración con `cash.open_close`.
+- La **consulta de turno activo** la realiza el POS con `sales.create` o administración con `cash.open_close`.
+- El **cierre de turno y arqueo físico** es una potestad **exclusiva de la administración** mediante `cash.open_close`. El vendedor no tiene acceso a cerrar turnos.
+
 #### 10.5.1 GET /api/cash/shifts/current
+
 Obtiene el turno de caja actualmente abierto para el usuario o la estación de trabajo.
 
 - **Método:** `GET`
@@ -1676,6 +1762,14 @@ Obtiene el turno de caja actualmente abierto para el usuario o la estación de t
   "exchangeAdjustments": {
     "CUP": "-7200.00",
     "USD": "20.00"
+  },
+  "withdrawalsTotals": {
+    "CUP": "1500.00",
+    "USD": "0.00"
+  },
+  "withdrawalsCount": {
+    "cash": 1,
+    "product": 0
   }
 }
 ```
@@ -1689,11 +1783,12 @@ null
 ---
 
 #### 10.5.2 POST /api/cash/shifts/open
+
 Apertura de un nuevo turno de caja fijando fondo inicial dual y tasa diaria.
 
 - **Método:** `POST`
 - **Ruta:** `/api/cash/shifts/open`
-- **Autenticación requerida:** Sí (`cash.open_close`).
+- **Autenticación requerida:** Sí (`sales.create` o `cash.open_close`).
 
 ##### Request Body
 
@@ -1727,11 +1822,20 @@ Apertura de un nuevo turno de caja fijando fondo inicial dual y tasa diaria.
   "exchangeAdjustments": {
     "CUP": "0.00",
     "USD": "0.00"
+  },
+  "withdrawalsTotals": {
+    "CUP": "0.00",
+    "USD": "0.00"
+  },
+  "withdrawalsCount": {
+    "cash": 0,
+    "product": 0
   }
 }
 ```
 
 ##### Errores Posibles
+
 - `409 Conflict`: Ya existe un turno activo para la caja o usuario actual:
   ```json
   {
@@ -1743,11 +1847,12 @@ Apertura de un nuevo turno de caja fijando fondo inicial dual y tasa diaria.
 ---
 
 #### 10.5.3 POST /api/cash/shifts/{id}/close
-Cierre definitivo y arqueo físico del turno comparando lo esperado contra el efectivo contado.
+
+Cierre definitivo y arqueo físico del turno comparando lo esperado contra el efectivo contado. **Exclusivo de administración.**
 
 - **Método:** `POST`
 - **Ruta:** `/api/cash/shifts/{id}/close`
-- **Autenticación requerida:** Sí (`cash.open_close`).
+- **Autenticación requerida:** Sí (`cash.open_close`). Exclusivo para perfiles administrativos.
 - **Parámetros de ruta:**
   - `id` _(string, requerido)_: Identificador del turno a cerrar.
 
@@ -1755,9 +1860,9 @@ Cierre definitivo y arqueo físico del turno comparando lo esperado contra el ef
 
 ```json
 {
-  "countedCUP": "28780.00",
+  "countedCUP": "27280.00",
   "countedUSD": "160.00",
-  "notes": "Arqueo exacto sin diferencias. Conteo físico cotejado con gaveta."
+  "notes": "Arqueo exacto sin diferencias. Conteo físico cotejado con gaveta tras descontar salidas autorizadas."
 }
 ```
 
@@ -1784,22 +1889,44 @@ Cierre definitivo y arqueo físico del turno comparando lo esperado contra el ef
     "CUP": "-7200.00",
     "USD": "20.00"
   },
+  "withdrawalsTotals": {
+    "CUP": "1500.00",
+    "USD": "0.00"
+  },
+  "withdrawalsCount": {
+    "cash": 1,
+    "product": 0
+  },
   "expectedFunds": {
-    "CUP": "28780.00",
+    "CUP": "27280.00",
     "USD": "160.00"
   },
   "countedFunds": {
-    "CUP": "28780.00",
+    "CUP": "27280.00",
     "USD": "160.00"
   },
   "differences": {
     "CUP": "0.00",
     "USD": "0.00"
   },
-  "discrepancyReason": "Arqueo exacto sin diferencias. Conteo físico cotejado con gaveta.",
-  "notes": "Arqueo exacto sin diferencias. Conteo físico cotejado con gaveta."
+  "discrepancyReason": "Arqueo exacto sin diferencias. Conteo físico cotejado con gaveta tras descontar salidas autorizadas.",
+  "notes": "Arqueo exacto sin diferencias. Conteo físico cotejado con gaveta tras descontar salidas autorizadas."
 }
 ```
+
+"countedFunds": {
+"CUP": "28780.00",
+"USD": "160.00"
+},
+"differences": {
+"CUP": "0.00",
+"USD": "0.00"
+},
+"discrepancyReason": "Arqueo exacto sin diferencias. Conteo físico cotejado con gaveta.",
+"notes": "Arqueo exacto sin diferencias. Conteo físico cotejado con gaveta."
+}
+
+````
 
 ##### Errores Posibles
 - `404 Not Found`: El turno indicado no existe (`SHIFT_NOT_FOUND`).
@@ -1809,7 +1936,8 @@ Cierre definitivo y arqueo físico del turno comparando lo esperado contra el ef
     "code": "SHIFT_NOT_OPEN",
     "message": "El turno de caja especificado ya se encuentra cerrado."
   }
-  ```
+````
+
 - `400 Bad Request` (Diferencia de dinero sin justificación válida):
   ```json
   {
@@ -1829,7 +1957,7 @@ Registro de compra de divisas extranjeras entregadas por un cliente en mostrador
 
 - **Método:** `POST`
 - **Ruta:** `/api/cash/exchanges`
-- **Autenticación requerida:** Sí (`cash.exchange`).
+- **Autenticación requerida:** Sí (`sales.create` o `cash.exchange`). Habilita a los cajeros/vendedores a realizar canjes de mostrador dentro del terminal POS (atajo F6) sin requerir permisos administrativos de caja.
 
 #### Request Body
 
@@ -1863,6 +1991,7 @@ Registro de compra de divisas extranjeras entregadas por un cliente en mostrador
 > `amountTo = Math.round(amountFrom * effectiveRate)` (en CUP entero sin centavos).
 
 #### Errores Posibles
+
 - `409 Conflict`: No hay turno abierto para imputar el canje (`SHIFT_NOT_OPEN`).
 - `400 Bad Request`: Importe no positivo o moneda no soportada (`INVALID_EXCHANGE_DATA`).
 
@@ -1942,12 +2071,14 @@ Emisión autoritativa de una venta completada en el terminal POS con soporte de 
 ```
 
 > **Reglas aplicadas por el servidor:**
+>
 > 1. `totalCUP = 1300.00 + 320.00 = 1620.00 CUP`.
 > 2. `effectiveRateUSD = 360.00 - 10.00 = 350.00 CUP`.
 > 3. `totalInCurrency (USD) = ceil(1620.00 / 350.00) = 5.00 USD` (redondeo hacia arriba estricto al entero superior).
 > 4. `changeGivenCUP = (10.00 * 350.00) - 1620.00 = 3500.00 - 1620.00 = 1880.00 CUP` (entregado en pesos cubanos).
 
 #### Errores Posibles
+
 - `400 Bad Request` (Efectivo insuficiente):
   ```json
   {
@@ -1985,6 +2116,7 @@ Emisión autoritativa de una venta completada en el terminal POS con soporte de 
 ### 10.8 Endpoints de Consulta y Anulación de Ventas
 
 #### 10.8.1 GET /api/sales
+
 Listado paginado de ventas para auditoría comercial y consulta de comprobantes.
 
 - **Método:** `GET`
@@ -2028,6 +2160,7 @@ Listado paginado de ventas para auditoría comercial y consulta de comprobantes.
 ---
 
 #### 10.8.2 GET /api/sales/{id}
+
 Detalle exhaustivo de una venta individual y líneas de comprobante para impresión térmica.
 
 - **Método:** `GET`
@@ -2077,11 +2210,13 @@ Detalle exhaustivo de una venta individual y líneas de comprobante para impresi
 ```
 
 ##### Errores Posibles
+
 - `404 Not Found`: El ticket indicado no existe (`SALE_NOT_FOUND`).
 
 ---
 
 #### 10.8.3 POST /api/sales/{id}/cancel
+
 Anulación formal de una venta, reversión de existencias al almacén emisor y ajuste negativo en la recaudación del turno.
 
 - **Método:** `POST`
@@ -2111,6 +2246,7 @@ Anulación formal de una venta, reversión de existencias al almacén emisor y a
 ```
 
 ##### Errores Posibles
+
 - `404 Not Found`: Ticket no encontrado (`SALE_NOT_FOUND`).
 - `409 Conflict`: La venta ya se encuentra anulada previamente:
   ```json
@@ -2123,20 +2259,39 @@ Anulación formal de una venta, reversión de existencias al almacén emisor y a
 ---
 
 #### 10.8.4 GET /api/sales/cashiers [PROPUESTA]
-Listado de nombres únicos de cajeros con turnos o ventas registradas para poblar selectores de auditoría en frontend.
+
+Listado de cajeros y vendedores con ventas o turnos registrados para poblar selectores de auditoría en frontend.
+
+> [!IMPORTANT] REQUISITO DE IDENTIFICACIÓN UNÍVOCA (PROPUESTA)
+> Para evitar ambigüedades por homónimos, apodos o cambios de nombre de usuario en base de datos, este endpoint **debe devolver identificadores únicos de usuario (`id`)** junto con el nombre legible (`name`) y el nombre de cuenta (`username`), en lugar de una lista plana de strings.
 
 - **Método:** `GET`
 - **Ruta:** `/api/sales/cashiers`
 - **Autenticación requerida:** Sí (`sales.view`).
-- **Estado:** PROPUESTA (pendiente a confirmar con backend).
+- **Estado:** PROPUESTA (pendiente de implementación en backend Symfony).
+- **Regla de autorización por objeto:**
+  - Si el usuario autenticado posee `sales.view_all` o `cash.manage`, retorna la lista de todos los cajeros/vendedores con actividad.
+  - Si el usuario carece de `sales.view_all` (vendedor estándar), el backend retorna **únicamente** su propio usuario para evitar fuga de identidades operativas.
 
 ##### Response 200 OK
 
 ```json
 [
-  "Administrador General",
-  "Carlos Gómez",
-  "Yadira Reyes"
+  {
+    "id": 1,
+    "username": "admin",
+    "name": "Administrador General"
+  },
+  {
+    "id": 2,
+    "username": "carlos",
+    "name": "Carlos Valdés"
+  },
+  {
+    "id": 3,
+    "username": "yadira",
+    "name": "Yadira Reyes"
+  }
 ]
 ```
 
@@ -2145,19 +2300,23 @@ Listado de nombres únicos de cajeros con turnos o ventas registradas para pobla
 ### 10.9 Endpoints de Historial de Cuadres de Caja
 
 #### 10.9.1 GET /api/cash/shifts
-Listado paginado de cierres de caja y arqueos históricos para control contable y supervisión administrativa.
+
+Listado paginado de turnos de caja y arqueos para control contable, supervisión administrativa y consulta de turnos activos.
 
 - **Método:** `GET`
 - **Ruta:** `/api/cash/shifts`
-- **Autenticación requerida:** Sí (`cash.view_history`).
+- **Autenticación requerida:** Sí (`cash.view_history`, `cash.open_close` o `sales.view`).
+- **Casos de uso principales:**
+  1. **Supervisión de Turnos Abiertos en Turno y Arqueo (`/cash/shift`):** La administración consulta `GET /api/cash/shifts?status=OPEN&perPage=100` bajo `cash.open_close` para listar y cerrar turnos activos de los cajeros en tiempo real.
+  2. **Auditoría Histórica de Cuadres (`/cash/shifts`):** Consulta histórica paginada con `status=CLOSED` bajo `cash.view_history`.
 - **Parámetros de consulta (Query params):**
+  - `status` _(opcional, string)_: `'OPEN'` o `'CLOSED'`.
+  - `cashierName` _(opcional, string)_: Filtrar turnos por nombre o identificador del cajero asignado.
+  - `desde` _(opcional, fecha YYYY-MM-DD)_.
+  - `hasta` _(opcional, fecha YYYY-MM-DD)_.
   - `page` _(opcional, entero, defecto 1)_.
   - `perPage` _(opcional, entero, defecto 10)_.
   - `sort` _(opcional, string, defecto `"openedAt:desc"`)_.
-  - `cashierName` _(opcional, string)_: Filtrar turnos de un cajero específico. > **Nota (PROPUESTA):** Filtro por cajero en listado de turnos pendiente a confirmar con backend.
-  - `status` _(opcional, string)_: `'OPEN'` o `'CLOSED'`.
-  - `desde` _(opcional, fecha YYYY-MM-DD)_.
-  - `hasta` _(opcional, fecha YYYY-MM-DD)_.
 
 ##### Response 200 OK
 
@@ -2184,11 +2343,28 @@ Listado paginado de cierres de caja y arqueos históricos para control contable 
         "CUP": "-7200.00",
         "USD": "20.00"
       },
+      "withdrawalsTotals": {
+        "CUP": "1500.00",
+        "USD": "0.00"
+      },
+      "withdrawalsCount": {
+        "cash": 1,
+        "product": 0
+      },
+      "expectedFunds": {
+        "CUP": "27280.00",
+        "USD": "160.00"
+      },
+      "countedFunds": {
+        "CUP": "27280.00",
+        "USD": "160.00"
+      },
       "differences": {
         "CUP": "0.00",
         "USD": "0.00"
       },
-      "discrepancyReason": "Arqueo exacto sin diferencias. Conteo físico cotejado con gaveta."
+      "discrepancyReason": "Arqueo exacto sin diferencias. Conteo físico cotejado con gaveta.",
+      "ticketCount": 18
     }
   ],
   "total": 1,
@@ -2200,6 +2376,7 @@ Listado paginado de cierres de caja y arqueos históricos para control contable 
 ---
 
 #### 10.9.2 GET /api/cash/shifts/{id}
+
 Detalle exhaustivo de un arqueo histórico con desglose de transacciones y conciliación bancaria.
 
 - **Método:** `GET`
@@ -2231,12 +2408,20 @@ Detalle exhaustivo de un arqueo histórico con desglose de transacciones y conci
     "CUP": "-7200.00",
     "USD": "20.00"
   },
+  "withdrawalsTotals": {
+    "CUP": "1500.00",
+    "USD": "0.00"
+  },
+  "withdrawalsCount": {
+    "cash": 1,
+    "product": 0
+  },
   "expectedFunds": {
-    "CUP": "28780.00",
+    "CUP": "27280.00",
     "USD": "160.00"
   },
   "countedFunds": {
-    "CUP": "28780.00",
+    "CUP": "27280.00",
     "USD": "160.00"
   },
   "differences": {
@@ -2244,9 +2429,142 @@ Detalle exhaustivo de un arqueo histórico con desglose de transacciones y conci
     "USD": "0.00"
   },
   "discrepancyReason": "Arqueo exacto sin diferencias. Conteo físico cotejado con gaveta.",
-  "notes": "Arqueo exacto sin diferencias. Conteo físico cotejado con gaveta."
+  "notes": "Arqueo exacto sin diferencias. Conteo físico cotejado con gaveta.",
+  "ticketCount": 18
 }
 ```
 
 ##### Errores Posibles
+
 - `404 Not Found`: Turno no encontrado (`SHIFT_NOT_FOUND`).
+
+---
+
+### 10.10 Endpoints de Salidas de Caja e Inventario desde el POS (`/api/cash/withdrawals`) [PROPUESTA]
+
+Endpoints para registrar salidas no operativas desde el Punto de Venta (POS): retiros de dinero en efectivo de la gaveta solicitados por el dueño o autorizados, y salidas de productos de inventario sin venta asociada.
+
+#### 10.10.1 POST /api/cash/withdrawals
+
+Registro de salida de efectivo o producto desde el mostrador.
+
+- **Método:** `POST`
+- **Ruta:** `/api/cash/withdrawals`
+- **Autenticación requerida:** Sí (`sales.create`). Habilita al vendedor o cajero a registrar la salida desde el POS (atajo F7) sin requerir permisos de administración de caja.
+- **Idempotencia:** Soportada mediante el campo obligatorio `clientRequestId` (UUID v4). Si el backend recibe un `clientRequestId` ya registrado, retorna la entidad existente con HTTP `200 OK` sin duplicar movimientos.
+
+##### Request Body (Salida de Efectivo)
+
+```json
+{
+  "clientRequestId": "a3b8cd12-789a-4bc3-9876-123456789abc",
+  "shiftId": "TURNO-2026-001",
+  "kind": "CASH",
+  "currency": "CUP",
+  "amount": "1500.00",
+  "beneficiary": "OWNER",
+  "reason": "Retiro para pago urgente de flete de mercancía"
+}
+```
+
+##### Request Body (Salida de Producto)
+
+```json
+{
+  "clientRequestId": "e4f5a6b7-89c0-12d3-e456-426614174000",
+  "shiftId": "TURNO-2026-001",
+  "kind": "PRODUCT",
+  "productId": 101,
+  "sku": "78910001",
+  "productName": "Café Serrano Clásico 250g",
+  "quantity": "2.00",
+  "beneficiary": "OTHER",
+  "beneficiaryName": "Juan Pérez (Inspector Sanitario)",
+  "reason": "Muestra oficial solicitada para control de calidad"
+}
+```
+
+##### Response 201 Created (o 200 OK por reintento idempotente)
+
+```json
+{
+  "id": "SAL-20261114-001",
+  "clientRequestId": "a3b8cd12-789a-4bc3-9876-123456789abc",
+  "shiftId": "TURNO-2026-001",
+  "kind": "CASH",
+  "currency": "CUP",
+  "amount": "1500.00",
+  "productId": null,
+  "productName": null,
+  "sku": null,
+  "quantity": null,
+  "beneficiary": "OWNER",
+  "beneficiaryName": null,
+  "reason": "Retiro para pago urgente de flete de mercancía",
+  "createdAt": "2026-11-14T15:30:00Z",
+  "createdBy": "carlos"
+}
+```
+
+##### Reglas de Negocio y Efectos Colaterales en el Servidor
+
+1. **Verificación de Turno:** Requiere que `shiftId` corresponda a un turno actualmente abierto (`status === 'OPEN'`). Si el turno está cerrado o no existe, responde `409 Conflict` (`SHIFT_NOT_OPEN`).
+2. **Validación de Motivo:** El campo `reason` es estrictamente obligatorio y debe tener al menos 10 caracteres explicativos para fines de auditoría. Si no los cumple, responde `400 Bad Request` (`INVALID_WITHDRAWAL_DATA`).
+3. **Validación de Beneficiario:** Si `beneficiary === 'OTHER'`, el campo `beneficiaryName` es obligatorio. Si falta, responde `400 Bad Request` (`INVALID_WITHDRAWAL_DATA`).
+4. **Efecto de Salida en Efectivo (`kind === 'CASH'`):**
+   - El importe `amount` debe ser mayor a `0.00`.
+   - **Control de Gaveta:** El importe solicitado no puede superar el efectivo esperado disponible en ese momento en la gaveta para esa divisa (`fondo + ventas_efectivo + canjes - salidas_previas`). Si lo supera, responde `409 Conflict` (`INSUFFICIENT_CASH_IN_DRAWER`).
+   - **Acumulación Contable:** Se suma al total de salidas del turno `shift.withdrawalsTotals[currency]` y se incrementa `shift.withdrawalsCount.cash`.
+5. **Efecto de Salida de Producto (`kind === 'PRODUCT'`):**
+   - La cantidad `quantity` debe ser mayor a `0.00`.
+   - **Control de Stock:** La cantidad solicitada no puede exceder las existencias físicas del producto en el almacén asociado al turno (ej: `ALM-TIENDA-01`). Si no hay existencias suficientes, responde `409 Conflict` (`STOCK_INSUFFICIENT`).
+   - **Descuento Real de Existencias:** El backend descuenta de forma autoritativa el stock en el inventario y genera un movimiento/documento de ajuste auditado con estado `CONFIRMED`, registrando el motivo y beneficiario.
+   - **Acumulación Operativa:** Incrementa `shift.withdrawalsCount.product`.
+
+##### Errores Posibles
+
+- `400 Bad Request` (`INVALID_WITHDRAWAL_DATA`): Datos incompletos o inválidos (motivo menor a 10 caracteres, beneficiario 'OTHER' sin nombre, importes no positivos).
+- `403 Forbidden` (`FORBIDDEN`): Usuario carece de permiso `sales.create`.
+- `409 Conflict` (`SHIFT_NOT_OPEN`): No existe un turno abierto para asociar la salida.
+- `409 Conflict` (`INSUFFICIENT_CASH_IN_DRAWER`): El importe solicitado excede el dinero físico disponible en la gaveta.
+- `409 Conflict` (`STOCK_INSUFFICIENT`): La cantidad solicitada excede el stock físico en almacén.
+
+---
+
+#### 10.10.2 GET /api/cash/withdrawals
+
+Consulta e historial paginado de salidas de caja e inventario registradas en el sistema.
+
+- **Método:** `GET`
+- **Ruta:** `/api/cash/withdrawals`
+- **Autenticación requerida:** Sí (`sales.create`, `cash.view_history` o `cash.open_close`).
+- **Parámetros de consulta (Query params):**
+  - `shiftId` _(opcional, string)_: Filtrar salidas pertenecientes a un turno específico.
+  - `kind` _(opcional, string)_: `'CASH'` o `'PRODUCT'`.
+  - `page` _(opcional, entero, defecto 1)_.
+  - `perPage` _(opcional, entero, defecto 20)_.
+
+##### Response 200 OK
+
+```json
+{
+  "items": [
+    {
+      "id": "SAL-20261114-001",
+      "clientRequestId": "a3b8cd12-789a-4bc3-9876-123456789abc",
+      "shiftId": "TURNO-2026-001",
+      "kind": "CASH",
+      "currency": "CUP",
+      "amount": "1500.00",
+      "beneficiary": "OWNER",
+      "beneficiaryName": null,
+      "reason": "Retiro para pago urgente de flete de mercancía",
+      "createdAt": "2026-11-14T15:30:00Z",
+      "createdBy": "carlos"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "perPage": 20
+}
+```

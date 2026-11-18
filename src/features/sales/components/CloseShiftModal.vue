@@ -28,7 +28,16 @@
           <span class="text-content-secondary">Cajero: {{ shift.cashierName }}</span>
         </div>
 
-        <div class="grid grid-cols-3 gap-2 pt-1 text-center">
+        <div
+          class="grid gap-2 pt-1 text-center"
+          :class="
+            shift.withdrawalsTotals &&
+            (isPositiveDecimal(shift.withdrawalsTotals.CUP) ||
+              isPositiveDecimal(shift.withdrawalsTotals.USD))
+              ? 'grid-cols-2 sm:grid-cols-4'
+              : 'grid-cols-3'
+          "
+        >
           <div class="border-border-subtle/60 rounded-lg border bg-surface-card p-2">
             <span class="text-content-tertiary block text-[10px] uppercase tracking-wider"
               >Fondo Inicial</span
@@ -62,6 +71,25 @@
             </span>
             <span class="block font-mono text-[11px] text-content-secondary">
               +{{ shift.exchangeAdjustments.USD }} USD
+            </span>
+          </div>
+
+          <div
+            v-if="
+              shift.withdrawalsTotals &&
+              (isPositiveDecimal(shift.withdrawalsTotals.CUP) ||
+                isPositiveDecimal(shift.withdrawalsTotals.USD))
+            "
+            class="border-border-subtle/60 rounded-lg border bg-surface-card p-2"
+          >
+            <span class="text-content-tertiary block text-[10px] uppercase tracking-wider"
+              >Salidas Efectivo</span
+            >
+            <span class="mt-0.5 block font-mono text-xs font-semibold text-state-warning">
+              -{{ shift.withdrawalsTotals.CUP }} CUP
+            </span>
+            <span class="block font-mono text-[11px] text-state-warning">
+              -{{ shift.withdrawalsTotals.USD }} USD
             </span>
           </div>
         </div>
@@ -127,42 +155,45 @@
 
         <!-- 3. Previsualización de Diferencias -->
         <div
-          class="rounded-lg border p-3 text-xs"
-          :class="
-            hasLocalDifference
-              ? 'bg-state-warning-bg/30 border-state-warning-border text-state-warning'
-              : 'bg-state-success-bg/30 border-state-success-border text-state-success'
-          "
+          v-if="isDiscrepancy"
+          class="bg-state-warning-bg/30 rounded-lg border border-state-warning-border p-3 text-xs text-state-warning"
         >
           <div class="flex items-center justify-between font-semibold">
-            <span>{{
-              hasLocalDifference ? 'Diferencia detectada en gaveta:' : 'Arqueo conforme:'
-            }}</span>
+            <span>Diferencia detectada en gaveta:</span>
             <div class="space-x-2 text-right font-mono font-bold">
-              <span :data-testid="hasLocalDifference ? 'diff-preview-cup' : 'diff-zero-cup'">
-                {{ localDiffCUP }} CUP
-              </span>
+              <span data-testid="diff-preview-cup"> {{ localDiffCUP }} CUP </span>
               <span>&bull;</span>
-              <span :data-testid="hasLocalDifference ? 'diff-preview-usd' : 'diff-zero-usd'">
-                {{ localDiffUSD }} USD
-              </span>
+              <span data-testid="diff-preview-usd"> {{ localDiffUSD }} USD </span>
             </div>
           </div>
-          <p v-if="hasLocalDifference" class="mt-1 text-[11px] text-content-secondary">
+          <p class="mt-1 text-[11px] text-content-secondary">
             Existe una discrepancia entre el conteo físico y lo esperado. Debe justificar el motivo
             obligatoriamente (mínimo 10 caracteres).
           </p>
+        </div>
+        <div
+          v-else
+          class="bg-state-success-bg/30 rounded-lg border border-state-success-border p-3 text-xs text-state-success"
+        >
+          <div class="flex items-center justify-between font-semibold">
+            <span>Arqueo conforme:</span>
+            <div class="space-x-2 text-right font-mono font-bold">
+              <span data-testid="diff-zero-cup"> {{ localDiffCUP }} CUP </span>
+              <span>&bull;</span>
+              <span data-testid="diff-zero-usd"> {{ localDiffUSD }} USD </span>
+            </div>
+          </div>
         </div>
 
         <!-- 4. Motivo / Observaciones del Cierre -->
         <BaseFormField
           :label="
-            hasLocalDifference ? 'Motivo del descuadre (obligatorio)' : 'Notas de cierre (opcional)'
+            isDiscrepancy ? 'Motivo del descuadre (obligatorio)' : 'Notas de cierre (opcional)'
           "
-          :required="hasLocalDifference"
+          :required="isDiscrepancy"
           :error="formErrors.notes"
           :description="
-            hasLocalDifference
+            isDiscrepancy
               ? 'Mínimo 10 caracteres explicando el faltante o sobrante.'
               : 'Observaciones operativas del turno.'
           "
@@ -170,7 +201,7 @@
           <BaseInput
             v-model="notes"
             :placeholder="
-              hasLocalDifference
+              isDiscrepancy
                 ? 'Explique el motivo del faltante o sobrante...'
                 : 'Observaciones del turno (opcional)'
             "
@@ -297,6 +328,7 @@ import {
   subtractDecimals,
   compareDecimals,
   normalizeDecimal,
+  isPositiveDecimal,
 } from '@/shared/utils/decimal'
 import { ApiError } from '@/shared/types/api'
 
@@ -318,6 +350,7 @@ const { closeShift } = usePosShift()
 const isSubmitting = ref(false)
 const serverError = ref<string | null>(null)
 const closeResult = ref<ShiftCloseResult | null>(null)
+const reasonRequired = ref(false)
 
 const countedCUP = ref<string>('0.00')
 const countedUSD = ref<string>('0.00')
@@ -362,13 +395,17 @@ const formErrors = reactive<Record<string, string>>({
 const localExpectedCUP = computed<string>(() => {
   if (!props.shift) return '0.00'
   const base = addDecimals(props.shift.initialFunds.CUP, props.shift.salesTotals.cupCash)
-  return addDecimals(base, props.shift.exchangeAdjustments.CUP)
+  const withExchanges = addDecimals(base, props.shift.exchangeAdjustments.CUP)
+  const withdrawals = props.shift.withdrawalsTotals?.CUP || '0.00'
+  return subtractDecimals(withExchanges, withdrawals)
 })
 
 const localExpectedUSD = computed<string>(() => {
   if (!props.shift) return '0.00'
   const base = addDecimals(props.shift.initialFunds.USD, props.shift.salesTotals.USD)
-  return addDecimals(base, props.shift.exchangeAdjustments.USD)
+  const withExchanges = addDecimals(base, props.shift.exchangeAdjustments.USD)
+  const withdrawals = props.shift.withdrawalsTotals?.USD || '0.00'
+  return subtractDecimals(withExchanges, withdrawals)
 })
 
 const localDiffCUP = computed<string>(() => {
@@ -385,9 +422,14 @@ const hasLocalDifference = computed<boolean>(() => {
   return localDiffCUP.value !== '0.00' || localDiffUSD.value !== '0.00'
 })
 
+const isDiscrepancy = computed<boolean>(() => {
+  return hasLocalDifference.value || reasonRequired.value
+})
+
 const resetForm = () => {
   serverError.value = null
   closeResult.value = null
+  reasonRequired.value = false
   formErrors.countedCUP = ''
   formErrors.countedUSD = ''
   formErrors.notes = ''
@@ -443,8 +485,8 @@ const handleSubmit = async (e?: Event) => {
 
   if (!props.shift) return
 
-  // Validación de motivo si hay diferencia (Decisión N: mínimo 10 caracteres)
-  if (hasLocalDifference.value) {
+  // Validación de motivo si hay diferencia (mínimo 10 caracteres)
+  if (isDiscrepancy.value) {
     const trimmedNotes = notes.value.trim()
     if (!trimmedNotes || trimmedNotes.length < 10) {
       formErrors.notes =
@@ -463,6 +505,12 @@ const handleSubmit = async (e?: Event) => {
     closeResult.value = res
   } catch (err: any) {
     if (err instanceof ApiError) {
+      if (err.code === 'REASON_REQUIRED') {
+        reasonRequired.value = true
+        formErrors.notes =
+          'Existe una diferencia en el arqueo. Debe ingresar obligatoriamente un motivo con al menos 10 caracteres.'
+        return
+      }
       serverError.value = err.message
       if (err.details?.notes) {
         formErrors.notes = Array.isArray(err.details.notes)

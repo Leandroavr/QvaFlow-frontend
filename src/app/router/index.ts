@@ -74,9 +74,9 @@ export const routes: RouteRecordRaw[] = [
       {
         path: 'cash/shift',
         name: 'cash-shift',
-        component: () => import('../views/ModulePlaceholderView.vue'),
+        component: () => import('../../features/cash/views/CashShiftView.vue'),
         meta: {
-          permission: 'cash.manage',
+          permission: 'cash.open_close',
           title: 'Turno y Arqueo - QvaFlow',
           breadcrumb: 'Turno y arqueo',
           parentBreadcrumb: 'Caja',

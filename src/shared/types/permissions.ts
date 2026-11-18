@@ -15,6 +15,7 @@ export const KNOWN_PERMISSIONS = [
   'sales.create',
   'sales.cancel',
   'sales.view',
+  'sales.view_all', // [PROPUESTA] Ver historial de ventas de todos los cajeros
   'cash.manage',
   'cash.open_close',
   'cash.exchange', // [PROPUESTA] Tasa de cambio diaria y canje de divisas

@@ -1638,12 +1638,13 @@ export class MockInventoryService implements InventoryService {
   }
 
   /**
-   * Descuenta stock físico de un producto tras completarse una venta.
+   * Descuenta stock físico de un producto tras completarse una venta o salida de caja.
    */
   async deductStock(
     productCode: string,
     quantity: DecimalString,
-    warehouseCode?: string
+    warehouseCode?: string,
+    reason?: string
   ): Promise<void> {
     let item = this.stock.find(
       (s) => s.productCode === productCode && (!warehouseCode || s.warehouseCode === warehouseCode)
@@ -1671,7 +1672,34 @@ export class MockInventoryService implements InventoryService {
         409
       )
     }
+    const previousQuantity = item.quantity
     item.quantity = subtractDecimals(item.quantity, quantity)
+
+    if (reason) {
+      const now = new Date().toISOString()
+      const adjustment: InventoryAdjustment = {
+        id: this.adjustments.length + 1,
+        noDocument: this.generateAdjustmentNumber(),
+        date: now,
+        status: 'CONFIRMED',
+        reason,
+        createdBy: this.getCurrentUsername(),
+        items: [
+          {
+            id: 1,
+            productCode: item.productCode,
+            productName: item.productName,
+            locationCode: item.locationCode,
+            locationName: item.locationName,
+            warehouseName: item.warehouseName || 'Almacén Principal',
+            systemQuantity: previousQuantity,
+            countedQuantity: item.quantity,
+            difference: `-${normalizeDecimal(quantity)}`,
+          },
+        ],
+      }
+      this.adjustments.unshift(adjustment)
+    }
   }
 
   /**

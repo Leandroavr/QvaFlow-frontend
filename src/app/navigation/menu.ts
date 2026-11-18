@@ -77,7 +77,7 @@ export const APP_MENU: MenuItem[] = [
         label: 'Turno y arqueo',
         icon: Coins,
         to: '/cash/shift',
-        permission: 'cash.manage',
+        permission: 'cash.open_close',
       },
       {
         id: 'cash-exchange',

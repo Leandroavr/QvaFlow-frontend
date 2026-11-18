@@ -102,11 +102,18 @@ export interface CashShift {
   initialFunds: ShiftDualFunds
   salesTotals: ShiftSalesTotals
   exchangeAdjustments: ShiftExchangeAdjustments
+  withdrawalsTotals?: ShiftDualFunds
+  withdrawalsCount?: {
+    cash: number
+    product: number
+  }
   expectedFunds?: ShiftDualFunds
   countedFunds?: ShiftDualFunds
   differences?: ShiftDualFunds
   discrepancyReason?: string
   notes?: string
+  /** Cantidad de tickets emitidos en el turno (provisto por el backend). */
+  ticketCount?: number
 }
 
 /**
@@ -172,6 +179,62 @@ export interface CreateCurrencyExchangeDto {
   currencyFrom: Currency
   amountFrom: DecimalString
   notes?: string
+}
+
+/**
+ * Modalidad de salida desde el POS (efectivo de gaveta o producto de inventario).
+ */
+export type WithdrawalKind = 'CASH' | 'PRODUCT'
+
+/**
+ * Beneficiario del retiro (Dueño u Otro autorizado).
+ */
+export type WithdrawalBeneficiary = 'OWNER' | 'OTHER'
+
+/**
+ * Registro de salida de efectivo o producto desde el POS.
+ */
+export interface CashWithdrawal {
+  id: string
+  clientRequestId?: string
+  shiftId: string
+  kind: WithdrawalKind
+  currency?: 'CUP' | 'USD'
+  amount?: DecimalString
+  productId?: Id
+  productName?: string
+  sku?: string
+  quantity?: DecimalString
+  beneficiary: WithdrawalBeneficiary
+  beneficiaryName?: string
+  reason: string
+  createdAt: string
+  createdBy: string
+}
+
+/**
+ * DTO para registrar una salida de efectivo o producto desde el POS.
+ */
+export interface CreateWithdrawalDto {
+  clientRequestId: string
+  shiftId: string
+  kind: WithdrawalKind
+  currency?: 'CUP' | 'USD'
+  amount?: DecimalString
+  productId?: Id
+  productName?: string
+  sku?: string
+  quantity?: DecimalString
+  beneficiary: WithdrawalBeneficiary
+  beneficiaryName?: string
+  reason: string
+}
+
+/**
+ * Parámetros de consulta y filtrado para salidas de caja.
+ */
+export interface CashWithdrawalsQuery extends PaginationParams {
+  shiftId?: string
 }
 
 /**
