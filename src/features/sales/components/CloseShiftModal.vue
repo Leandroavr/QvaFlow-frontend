@@ -1,7 +1,7 @@
 <template>
   <BaseModal
     :open="open"
-    :title="closeResult ? 'Resumen de Cierre de Turno' : 'Cierre de Turno y Arqueo de Caja'"
+    :title="modalTitle"
     size="md"
     :auto-focus-first-input="!closeResult"
     @update:open="handleOpenUpdate"
@@ -19,8 +19,9 @@
 
     <!-- PANTALLA 1: FORMULARIO DE CONTEO Y ARQUEO -->
     <div v-if="!closeResult && shift" class="space-y-4 py-1">
-      <!-- 1. Cuadro de Valores Operativos Registrados por el Servidor -->
+      <!-- 1. Cuadro de Valores Operativos Registrados por el Servidor (solo si canSeeExpected) -->
       <div
+        v-if="canSeeExpected"
         class="bg-surface-sunken/40 space-y-2.5 rounded-xl border border-border-subtle p-3 text-xs"
       >
         <div class="flex items-center justify-between border-b border-border-subtle pb-2">
@@ -80,6 +81,17 @@
         </div>
       </div>
 
+      <!-- Encabezado resumido para cierre ciego -->
+      <div
+        v-else
+        class="bg-surface-sunken/40 rounded-xl border border-border-subtle p-3 text-xs"
+      >
+        <div class="flex items-center justify-between">
+          <span class="font-semibold text-content-primary">Turno: {{ shift.id }}</span>
+          <span class="text-content-secondary">Cajero: {{ shift.cashierName }}</span>
+        </div>
+      </div>
+
       <!-- 2. Formulario de Conteo Físico -->
       <form id="close-shift-form" class="space-y-4" @submit.prevent="handleSubmit">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -125,8 +137,9 @@
           </BaseFormField>
         </div>
 
-        <!-- 3. Previsualización de Diferencias -->
+        <!-- 3. Previsualización de Diferencias (solo si canSeeExpected) -->
         <div
+          v-if="canSeeExpected"
           class="rounded-lg border p-3 text-xs"
           :class="
             hasLocalDifference
@@ -154,26 +167,27 @@
           </p>
         </div>
 
+        <!-- Alerta de REASON_REQUIRED para cierre ciego (sin importes) -->
+        <div
+          v-if="!canSeeExpected && reasonRequired"
+          class="rounded-lg border border-state-warning-border bg-state-warning-bg/30 p-3 text-xs text-state-warning"
+          data-testid="blind-reason-required"
+        >
+          <span class="font-semibold">
+            El conteo no coincide con lo registrado. Indica el motivo.
+          </span>
+        </div>
+
         <!-- 4. Motivo / Observaciones del Cierre -->
         <BaseFormField
-          :label="
-            hasLocalDifference ? 'Motivo del descuadre (obligatorio)' : 'Notas de cierre (opcional)'
-          "
-          :required="hasLocalDifference"
+          :label="notesLabel"
+          :required="notesRequired"
           :error="formErrors.notes"
-          :description="
-            hasLocalDifference
-              ? 'Mínimo 10 caracteres explicando el faltante o sobrante.'
-              : 'Observaciones operativas del turno.'
-          "
+          :description="notesDescription"
         >
           <BaseInput
             v-model="notes"
-            :placeholder="
-              hasLocalDifference
-                ? 'Explique el motivo del faltante o sobrante...'
-                : 'Observaciones del turno (opcional)'
-            "
+            :placeholder="notesPlaceholder"
             :has-error="Boolean(formErrors.notes)"
             data-testid="close-notes-input"
             @keydown.enter.prevent.stop
@@ -184,63 +198,94 @@
 
     <!-- PANTALLA 2: RESUMEN DEVUELTO POR EL SERVIDOR TRAS CIERRE EXITOSO -->
     <div v-else-if="closeResult" class="space-y-4 py-2" data-testid="close-shift-result-view">
-      <div class="flex items-center gap-3">
-        <div
-          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-state-success-border bg-state-success-bg text-state-success"
-        >
-          <CheckCircle2 class="h-5 w-5" />
-        </div>
-        <div>
-          <h4 class="text-sm font-bold text-content-primary">Turno {{ closeResult.id }} Cerrado</h4>
-          <p class="text-xs text-content-muted">
-            Arqueo físico registrado y auditado por el servidor
-          </p>
-        </div>
-      </div>
-
-      <div class="space-y-2 rounded-xl border border-border-subtle bg-surface-sunken p-3 text-xs">
-        <div class="flex justify-between">
-          <span class="text-content-secondary">Fondos Esperados (CUP / USD):</span>
-          <span
-            class="font-mono font-bold text-content-primary"
-            data-testid="result-expected-funds"
+      <!-- Resultado para cierre ciego -->
+      <template v-if="!canSeeExpected">
+        <div class="text-center py-2" data-testid="blind-modal-success">
+          <div
+            class="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-state-success-border bg-state-success-bg text-state-success"
           >
-            {{ closeResult.expectedFunds.CUP }} CUP / {{ closeResult.expectedFunds.USD }} USD
-          </span>
+            <CheckCircle2 class="h-5 w-5" />
+          </div>
+          <h4 class="text-sm font-bold text-content-primary">
+            Turno cerrado. Tu arqueo fue enviado a revision.
+          </h4>
+          <div class="mx-auto mt-3 max-w-xs space-y-1.5 text-xs">
+            <div class="flex justify-between rounded-lg border border-border-subtle bg-surface-sunken/40 px-3 py-2">
+              <span class="text-content-secondary">Declarado CUP:</span>
+              <span class="font-mono font-bold text-content-primary" data-testid="blind-result-counted-cup">
+                {{ closeResult.countedFunds.CUP }} CUP
+              </span>
+            </div>
+            <div class="flex justify-between rounded-lg border border-border-subtle bg-surface-sunken/40 px-3 py-2">
+              <span class="text-content-secondary">Declarado USD:</span>
+              <span class="font-mono font-bold text-content-primary" data-testid="blind-result-counted-usd">
+                {{ closeResult.countedFunds.USD }} USD
+              </span>
+            </div>
+          </div>
         </div>
+      </template>
 
-        <div class="flex justify-between">
-          <span class="text-content-secondary">Fondos Contados (CUP / USD):</span>
-          <span class="font-mono font-bold text-content-primary" data-testid="result-counted-funds">
-            {{ closeResult.countedFunds.CUP }} CUP / {{ closeResult.countedFunds.USD }} USD
-          </span>
-        </div>
-
-        <div class="flex items-baseline justify-between border-t border-border-subtle pt-2">
-          <span class="font-bold text-content-primary">Diferencias Finales:</span>
-          <div class="text-right">
-            <span
-              class="font-mono font-extrabold"
-              :class="
-                closeResult.differences.CUP !== '0.00' || closeResult.differences.USD !== '0.00'
-                  ? 'text-state-warning'
-                  : 'text-state-success'
-              "
-              data-testid="result-differences"
-            >
-              {{ closeResult.differences.CUP }} CUP &bull; {{ closeResult.differences.USD }} USD
-            </span>
+      <!-- Resultado completo (canSeeExpected) -->
+      <template v-else>
+        <div class="flex items-center gap-3">
+          <div
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-state-success-border bg-state-success-bg text-state-success"
+          >
+            <CheckCircle2 class="h-5 w-5" />
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-content-primary">Turno {{ closeResult.id }} Cerrado</h4>
+            <p class="text-xs text-content-muted">
+              Arqueo físico registrado y auditado por el servidor
+            </p>
           </div>
         </div>
 
-        <div
-          v-if="closeResult.discrepancyReason"
-          class="mt-2 rounded border border-border-subtle bg-surface-card p-2 text-[11px]"
-        >
-          <span class="block font-semibold text-content-secondary">Justificación registrada:</span>
-          <span class="italic text-content-primary">{{ closeResult.discrepancyReason }}</span>
+        <div class="space-y-2 rounded-xl border border-border-subtle bg-surface-sunken p-3 text-xs">
+          <div class="flex justify-between">
+            <span class="text-content-secondary">Fondos Esperados (CUP / USD):</span>
+            <span
+              class="font-mono font-bold text-content-primary"
+              data-testid="result-expected-funds"
+            >
+              {{ closeResult.expectedFunds.CUP }} CUP / {{ closeResult.expectedFunds.USD }} USD
+            </span>
+          </div>
+
+          <div class="flex justify-between">
+            <span class="text-content-secondary">Fondos Contados (CUP / USD):</span>
+            <span class="font-mono font-bold text-content-primary" data-testid="result-counted-funds">
+              {{ closeResult.countedFunds.CUP }} CUP / {{ closeResult.countedFunds.USD }} USD
+            </span>
+          </div>
+
+          <div class="flex items-baseline justify-between border-t border-border-subtle pt-2">
+            <span class="font-bold text-content-primary">Diferencias Finales:</span>
+            <div class="text-right">
+              <span
+                class="font-mono font-extrabold"
+                :class="
+                  closeResult.differences.CUP !== '0.00' || closeResult.differences.USD !== '0.00'
+                    ? 'text-state-warning'
+                    : 'text-state-success'
+                "
+                data-testid="result-differences"
+              >
+                {{ closeResult.differences.CUP }} CUP &bull; {{ closeResult.differences.USD }} USD
+              </span>
+            </div>
+          </div>
+
+          <div
+            v-if="closeResult.discrepancyReason"
+            class="mt-2 rounded border border-border-subtle bg-surface-card p-2 text-[11px]"
+          >
+            <span class="block font-semibold text-content-secondary">Justificación registrada:</span>
+            <span class="italic text-content-primary">{{ closeResult.discrepancyReason }}</span>
+          </div>
         </div>
-      </div>
+      </template>
     </div>
 
     <!-- Acciones del Modal -->
@@ -303,9 +348,13 @@ import { ApiError } from '@/shared/types/api'
 interface Props {
   open: boolean
   shift: CashShift | null
+  /** El backend decide quien ve los montos esperados. */
+  canSeeExpected?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  canSeeExpected: true,
+})
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
@@ -318,11 +367,19 @@ const { closeShift } = usePosShift()
 const isSubmitting = ref(false)
 const serverError = ref<string | null>(null)
 const closeResult = ref<ShiftCloseResult | null>(null)
+/** Indica que el servidor respondió REASON_REQUIRED (cierre ciego). */
+const reasonRequired = ref(false)
 
 const countedCUP = ref<string>('0.00')
 const countedUSD = ref<string>('0.00')
 const notes = ref<string>('')
 const countedCupInputRef = ref<any>(null)
+
+const modalTitle = computed(() => {
+  if (closeResult.value && !props.canSeeExpected) return 'Turno Cerrado'
+  if (closeResult.value) return 'Resumen de Cierre de Turno'
+  return 'Cierre de Turno y Arqueo de Caja'
+})
 
 const isNotesFocused = (): boolean => {
   const el = document.activeElement
@@ -385,14 +442,60 @@ const hasLocalDifference = computed<boolean>(() => {
   return localDiffCUP.value !== '0.00' || localDiffUSD.value !== '0.00'
 })
 
+/** En cierre ciego, notas son obligatorias si REASON_REQUIRED fue disparado */
+const notesRequired = computed(() => {
+  if (props.canSeeExpected) return hasLocalDifference.value
+  return reasonRequired.value
+})
+
+const notesLabel = computed(() => {
+  if (props.canSeeExpected) {
+    return hasLocalDifference.value
+      ? 'Motivo del descuadre (obligatorio)'
+      : 'Notas de cierre (opcional)'
+  }
+  return reasonRequired.value
+    ? 'Motivo del descuadre (obligatorio)'
+    : 'Notas de cierre (opcional)'
+})
+
+const notesDescription = computed(() => {
+  if (props.canSeeExpected) {
+    return hasLocalDifference.value
+      ? 'Mínimo 10 caracteres explicando el faltante o sobrante.'
+      : 'Observaciones operativas del turno.'
+  }
+  return reasonRequired.value
+    ? 'Mínimo 10 caracteres explicando el motivo.'
+    : 'Observaciones operativas del turno.'
+})
+
+const notesPlaceholder = computed(() => {
+  if (props.canSeeExpected) {
+    return hasLocalDifference.value
+      ? 'Explique el motivo del faltante o sobrante...'
+      : 'Observaciones del turno (opcional)'
+  }
+  return reasonRequired.value
+    ? 'Indique el motivo del descuadre...'
+    : 'Observaciones del turno (opcional)'
+})
+
 const resetForm = () => {
   serverError.value = null
   closeResult.value = null
+  reasonRequired.value = false
   formErrors.countedCUP = ''
   formErrors.countedUSD = ''
   formErrors.notes = ''
-  countedCUP.value = localExpectedCUP.value
-  countedUSD.value = localExpectedUSD.value
+  // En cierre ciego no pre-rellenamos con esperado
+  if (props.canSeeExpected) {
+    countedCUP.value = localExpectedCUP.value
+    countedUSD.value = localExpectedUSD.value
+  } else {
+    countedCUP.value = '0.00'
+    countedUSD.value = '0.00'
+  }
   notes.value = ''
 }
 
@@ -443,12 +546,22 @@ const handleSubmit = async (e?: Event) => {
 
   if (!props.shift) return
 
-  // Validación de motivo si hay diferencia (Decisión N: mínimo 10 caracteres)
-  if (hasLocalDifference.value) {
+  // Validación de motivo si hay diferencia (solo cuando puede ver esperado)
+  if (props.canSeeExpected && hasLocalDifference.value) {
     const trimmedNotes = notes.value.trim()
     if (!trimmedNotes || trimmedNotes.length < 10) {
       formErrors.notes =
         'Existe una diferencia en el arqueo. Debe ingresar obligatoriamente un motivo con al menos 10 caracteres.'
+      return
+    }
+  }
+
+  // En cierre ciego con REASON_REQUIRED activo, validar notas localmente
+  if (!props.canSeeExpected && reasonRequired.value) {
+    const trimmedNotes = notes.value.trim()
+    if (!trimmedNotes || trimmedNotes.length < 10) {
+      formErrors.notes =
+        'El conteo no coincide con lo registrado. Indica el motivo.'
       return
     }
   }
@@ -463,6 +576,12 @@ const handleSubmit = async (e?: Event) => {
     closeResult.value = res
   } catch (err: any) {
     if (err instanceof ApiError) {
+      // En cierre ciego, si el servidor dice REASON_REQUIRED, marcar notas obligatorias
+      if (!props.canSeeExpected && err.code === 'REASON_REQUIRED') {
+        reasonRequired.value = true
+        formErrors.notes = 'El conteo no coincide con lo registrado. Indica el motivo.'
+        return
+      }
       serverError.value = err.message
       if (err.details?.notes) {
         formErrors.notes = Array.isArray(err.details.notes)

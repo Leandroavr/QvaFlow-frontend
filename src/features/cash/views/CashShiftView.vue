@@ -18,7 +18,7 @@
         </p>
       </div>
 
-      <!-- Acciones de cabecera -->
+      <!-- Acciones de cabecera: solo Abrir Turno (Cerrar Turno queda en la tarjeta) -->
       <div class="flex items-center gap-2">
         <BaseButton
           v-if="!isShiftOpen && !lastCloseResult"
@@ -31,19 +31,6 @@
             <Plus class="h-4 w-4" />
           </template>
           Abrir Turno
-        </BaseButton>
-
-        <BaseButton
-          v-else-if="isShiftOpen"
-          variant="danger"
-          density="compact"
-          data-testid="btn-close-shift-header"
-          @click="isCloseModalOpen = true"
-        >
-          <template #icon-start>
-            <Lock class="h-4 w-4" />
-          </template>
-          Cerrar Turno
         </BaseButton>
       </div>
     </div>
@@ -154,8 +141,13 @@
         </div>
 
         <!-- Secciones de Fondos y Resumen Operativo -->
-        <div class="grid grid-cols-1 divide-y divide-border-subtle lg:grid-cols-3 lg:divide-x lg:divide-y-0">
-          <!-- Columna 1: Fondo Inicial -->
+        <div
+          class="grid grid-cols-1 divide-y divide-border-subtle"
+          :class="canSeeExpected
+            ? 'lg:grid-cols-3 lg:divide-x lg:divide-y-0'
+            : 'lg:grid-cols-2 lg:divide-x lg:divide-y-0'"
+        >
+          <!-- Columna 1: Fondo Inicial (siempre visible) -->
           <div class="p-5">
             <div class="flex items-center gap-2 mb-3">
               <Coins class="h-4 w-4 text-content-tertiary" />
@@ -186,11 +178,23 @@
                   {{ formatExplicitAmount(currentShift.initialFunds.USD, 'USD') }}
                 </span>
               </div>
+
+              <!-- Tickets emitidos (solo cierre ciego, si el dato existe) -->
+              <div
+                v-if="!canSeeExpected && currentShift.ticketCount != null"
+                class="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-sunken/40 p-3"
+                data-testid="blind-ticket-count"
+              >
+                <span class="text-xs font-medium text-content-secondary">Tickets emitidos:</span>
+                <span class="font-mono text-sm font-bold text-content-primary">
+                  {{ currentShift.ticketCount }}
+                </span>
+              </div>
             </div>
           </div>
 
-          <!-- Columna 2: Recaudación en Ventas -->
-          <div class="p-5">
+          <!-- Columna 2: Recaudación en Ventas (solo si canSeeExpected) -->
+          <div v-if="canSeeExpected" class="p-5">
             <div class="flex items-center gap-2 mb-3">
               <TrendingUp class="h-4 w-4 text-state-success" />
               <h2 class="text-xs font-semibold uppercase tracking-wider text-content-secondary">
@@ -234,8 +238,8 @@
             </div>
           </div>
 
-          <!-- Columna 3: Efectivo Esperado en Gaveta -->
-          <div class="p-5 bg-surface-sunken/20">
+          <!-- Columna 3: Efectivo Esperado en Gaveta (solo si canSeeExpected) -->
+          <div v-if="canSeeExpected" class="p-5 bg-surface-sunken/20">
             <div class="flex items-center gap-2 mb-3">
               <Wallet class="h-4 w-4 text-primary" />
               <h2 class="text-xs font-semibold uppercase tracking-wider text-content-secondary">
@@ -284,142 +288,193 @@
       data-testid="close-arqueo-result"
     >
       <div class="overflow-hidden rounded-xl border border-border-subtle bg-surface-card shadow-xs">
-        <!-- Cabecera de Arqueo -->
-        <div
-          class="flex flex-col gap-4 border-b border-border-subtle bg-surface-sunken/40 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
-        >
-          <div class="flex items-center gap-3">
+        <!-- RESULTADO CIERRE CIEGO (sin permiso cash.view_history) -->
+        <template v-if="!canSeeExpected">
+          <div class="px-5 py-6 text-center" data-testid="blind-close-success">
             <div
-              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-state-success-border bg-state-success-bg text-state-success"
+              class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-state-success-border bg-state-success-bg text-state-success"
             >
-              <CheckCircle2 class="h-5 w-5" />
+              <CheckCircle2 class="h-6 w-6" />
             </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <h2 class="text-base font-bold text-content-primary">
-                  Arqueo de Cierre Registrado
-                </h2>
-                <BaseBadge variant="neutral" size="sm">
-                  Turno {{ lastCloseResult.id }}
-                </BaseBadge>
+            <h2 class="text-base font-bold text-content-primary">
+              Turno cerrado. Tu arqueo fue enviado a revision.
+            </h2>
+
+            <!-- Importes declarados por divisa -->
+            <div class="mx-auto mt-4 max-w-sm space-y-2" data-testid="blind-declared-funds">
+              <div
+                class="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-sunken/40 px-3 py-2 text-xs"
+              >
+                <span class="text-content-secondary">Declarado CUP:</span>
+                <span class="font-mono font-bold text-content-primary" data-testid="blind-counted-cup">
+                  {{ formatExplicitAmount(lastCloseResult.countedFunds?.CUP, 'CUP') }}
+                </span>
               </div>
-              <p class="text-xs text-content-secondary">
-                Turno cerrado el {{ formatDate(lastCloseResult.closedAt, { includeTime: true }) }} por
-                {{ lastCloseResult.cashierName }}
+              <div
+                class="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-sunken/40 px-3 py-2 text-xs"
+              >
+                <span class="text-content-secondary">Declarado USD:</span>
+                <span class="font-mono font-bold text-content-primary" data-testid="blind-counted-usd">
+                  {{ formatExplicitAmount(lastCloseResult.countedFunds?.USD, 'USD') }}
+                </span>
+              </div>
+            </div>
+
+            <div class="mt-5 flex justify-center">
+              <BaseButton
+                variant="primary"
+                density="compact"
+                data-testid="btn-open-after-close"
+                @click="openShiftModal"
+              >
+                <template #icon-start>
+                  <Plus class="h-4 w-4" />
+                </template>
+                Abrir Nuevo Turno
+              </BaseButton>
+            </div>
+          </div>
+        </template>
+
+        <!-- RESULTADO COMPLETO (con permiso cash.view_history) -->
+        <template v-else>
+          <!-- Cabecera de Arqueo -->
+          <div
+            class="flex flex-col gap-4 border-b border-border-subtle bg-surface-sunken/40 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-state-success-border bg-state-success-bg text-state-success"
+              >
+                <CheckCircle2 class="h-5 w-5" />
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h2 class="text-base font-bold text-content-primary">
+                    Arqueo de Cierre Registrado
+                  </h2>
+                  <BaseBadge variant="neutral" size="sm">
+                    Turno {{ lastCloseResult.id }}
+                  </BaseBadge>
+                </div>
+                <p class="text-xs text-content-secondary">
+                  Turno cerrado el {{ formatDate(lastCloseResult.closedAt, { includeTime: true }) }} por
+                  {{ lastCloseResult.cashierName }}
+                </p>
+              </div>
+            </div>
+
+            <BaseButton
+              variant="primary"
+              density="compact"
+              data-testid="btn-open-after-close"
+              @click="openShiftModal"
+            >
+              <template #icon-start>
+                <Plus class="h-4 w-4" />
+              </template>
+              Abrir Nuevo Turno
+            </BaseButton>
+          </div>
+
+          <!-- Tabla / Cuadrícula de Conciliación de Arqueo -->
+          <div class="p-5">
+            <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-content-secondary">
+              Conciliación de Fondos por Divisa
+            </h3>
+
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <!-- Arqueo CUP -->
+              <div
+                class="rounded-xl border border-border-subtle bg-surface-sunken/30 p-4 space-y-3"
+                data-testid="arqueo-card-cup"
+              >
+                <div class="flex items-center justify-between border-b border-border-subtle pb-2">
+                  <span class="text-sm font-bold text-content-primary">Moneda Nacional (CUP)</span>
+                  <span class="font-mono text-xs text-content-secondary">Efectivo Físico</span>
+                </div>
+
+                <div class="space-y-1.5 text-xs">
+                  <div class="flex justify-between">
+                    <span class="text-content-secondary">Esperado en Gaveta:</span>
+                    <span class="font-mono font-semibold text-content-primary" data-testid="arqueo-expected-cup">
+                      {{ formatExplicitAmount(lastCloseResult.expectedFunds?.CUP, 'CUP') }}
+                    </span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-content-secondary">Contado Físicamente:</span>
+                    <span class="font-mono font-semibold text-content-primary" data-testid="arqueo-counted-cup">
+                      {{ formatExplicitAmount(lastCloseResult.countedFunds?.CUP, 'CUP') }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Indicador de Diferencia con Texto e Ícono -->
+                <div
+                  class="flex items-center gap-2 rounded-lg border p-2.5 text-xs font-semibold transition-colors"
+                  :class="diffInfoCUP.bgClass"
+                  data-testid="arqueo-diff-cup-indicator"
+                >
+                  <component :is="diffInfoCUP.icon" class="h-4 w-4 shrink-0" />
+                  <span class="flex-1">{{ diffInfoCUP.label }}</span>
+                </div>
+              </div>
+
+              <!-- Arqueo USD -->
+              <div
+                class="rounded-xl border border-border-subtle bg-surface-sunken/30 p-4 space-y-3"
+                data-testid="arqueo-card-usd"
+              >
+                <div class="flex items-center justify-between border-b border-border-subtle pb-2">
+                  <span class="text-sm font-bold text-content-primary">Dólar Estadounidense (USD)</span>
+                  <span class="font-mono text-xs text-content-secondary">Efectivo Físico</span>
+                </div>
+
+                <div class="space-y-1.5 text-xs">
+                  <div class="flex justify-between">
+                    <span class="text-content-secondary">Esperado en Gaveta:</span>
+                    <span class="font-mono font-semibold text-content-primary" data-testid="arqueo-expected-usd">
+                      {{ formatExplicitAmount(lastCloseResult.expectedFunds?.USD, 'USD') }}
+                    </span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-content-secondary">Contado Físicamente:</span>
+                    <span class="font-mono font-semibold text-content-primary" data-testid="arqueo-counted-usd">
+                      {{ formatExplicitAmount(lastCloseResult.countedFunds?.USD, 'USD') }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Indicador de Diferencia con Texto e Ícono -->
+                <div
+                  class="flex items-center gap-2 rounded-lg border p-2.5 text-xs font-semibold transition-colors"
+                  :class="diffInfoUSD.bgClass"
+                  data-testid="arqueo-diff-usd-indicator"
+                >
+                  <component :is="diffInfoUSD.icon" class="h-4 w-4 shrink-0" />
+                  <span class="flex-1">{{ diffInfoUSD.label }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Justificación registrada si hubo descuadre -->
+            <div
+              v-if="lastCloseResult.discrepancyReason || lastCloseResult.notes"
+              class="mt-4 rounded-xl border border-border-subtle bg-surface-card p-3.5 text-xs"
+              data-testid="arqueo-reason-box"
+            >
+              <div class="flex items-center gap-2 mb-1">
+                <FileText class="h-3.5 w-3.5 text-content-tertiary" />
+                <span class="font-semibold text-content-secondary">
+                  Justificación y Observaciones de Cierre:
+                </span>
+              </div>
+              <p class="italic text-content-primary">
+                {{ lastCloseResult.discrepancyReason || lastCloseResult.notes }}
               </p>
             </div>
           </div>
-
-          <BaseButton
-            variant="primary"
-            density="compact"
-            data-testid="btn-open-after-close"
-            @click="openShiftModal"
-          >
-            <template #icon-start>
-              <Plus class="h-4 w-4" />
-            </template>
-            Abrir Nuevo Turno
-          </BaseButton>
-        </div>
-
-        <!-- Tabla / Cuadrícula de Conciliación de Arqueo -->
-        <div class="p-5">
-          <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-content-secondary">
-            Conciliación de Fondos por Divisa
-          </h3>
-
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <!-- Arqueo CUP -->
-            <div
-              class="rounded-xl border border-border-subtle bg-surface-sunken/30 p-4 space-y-3"
-              data-testid="arqueo-card-cup"
-            >
-              <div class="flex items-center justify-between border-b border-border-subtle pb-2">
-                <span class="text-sm font-bold text-content-primary">Moneda Nacional (CUP)</span>
-                <span class="font-mono text-xs text-content-secondary">Efectivo Físico</span>
-              </div>
-
-              <div class="space-y-1.5 text-xs">
-                <div class="flex justify-between">
-                  <span class="text-content-secondary">Esperado en Gaveta:</span>
-                  <span class="font-mono font-semibold text-content-primary" data-testid="arqueo-expected-cup">
-                    {{ formatExplicitAmount(lastCloseResult.expectedFunds?.CUP, 'CUP') }}
-                  </span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-content-secondary">Contado Físicamente:</span>
-                  <span class="font-mono font-semibold text-content-primary" data-testid="arqueo-counted-cup">
-                    {{ formatExplicitAmount(lastCloseResult.countedFunds?.CUP, 'CUP') }}
-                  </span>
-                </div>
-              </div>
-
-              <!-- Indicador de Diferencia con Texto e Ícono -->
-              <div
-                class="flex items-center gap-2 rounded-lg border p-2.5 text-xs font-semibold transition-colors"
-                :class="diffInfoCUP.bgClass"
-                data-testid="arqueo-diff-cup-indicator"
-              >
-                <component :is="diffInfoCUP.icon" class="h-4 w-4 shrink-0" />
-                <span class="flex-1">{{ diffInfoCUP.label }}</span>
-              </div>
-            </div>
-
-            <!-- Arqueo USD -->
-            <div
-              class="rounded-xl border border-border-subtle bg-surface-sunken/30 p-4 space-y-3"
-              data-testid="arqueo-card-usd"
-            >
-              <div class="flex items-center justify-between border-b border-border-subtle pb-2">
-                <span class="text-sm font-bold text-content-primary">Dólar Estadounidense (USD)</span>
-                <span class="font-mono text-xs text-content-secondary">Efectivo Físico</span>
-              </div>
-
-              <div class="space-y-1.5 text-xs">
-                <div class="flex justify-between">
-                  <span class="text-content-secondary">Esperado en Gaveta:</span>
-                  <span class="font-mono font-semibold text-content-primary" data-testid="arqueo-expected-usd">
-                    {{ formatExplicitAmount(lastCloseResult.expectedFunds?.USD, 'USD') }}
-                  </span>
-                </div>
-                <div class="flex justify-between">
-                  <span class="text-content-secondary">Contado Físicamente:</span>
-                  <span class="font-mono font-semibold text-content-primary" data-testid="arqueo-counted-usd">
-                    {{ formatExplicitAmount(lastCloseResult.countedFunds?.USD, 'USD') }}
-                  </span>
-                </div>
-              </div>
-
-              <!-- Indicador de Diferencia con Texto e Ícono -->
-              <div
-                class="flex items-center gap-2 rounded-lg border p-2.5 text-xs font-semibold transition-colors"
-                :class="diffInfoUSD.bgClass"
-                data-testid="arqueo-diff-usd-indicator"
-              >
-                <component :is="diffInfoUSD.icon" class="h-4 w-4 shrink-0" />
-                <span class="flex-1">{{ diffInfoUSD.label }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Justificación registrada si hubo descuadre -->
-          <div
-            v-if="lastCloseResult.discrepancyReason || lastCloseResult.notes"
-            class="mt-4 rounded-xl border border-border-subtle bg-surface-card p-3.5 text-xs"
-            data-testid="arqueo-reason-box"
-          >
-            <div class="flex items-center gap-2 mb-1">
-              <FileText class="h-3.5 w-3.5 text-content-tertiary" />
-              <span class="font-semibold text-content-secondary">
-                Justificación y Observaciones de Cierre:
-              </span>
-            </div>
-            <p class="italic text-content-primary">
-              {{ lastCloseResult.discrepancyReason || lastCloseResult.notes }}
-            </p>
-          </div>
-        </div>
+        </template>
       </div>
     </div>
 
@@ -512,6 +567,7 @@
     <CloseShiftModal
       :open="isCloseModalOpen"
       :shift="currentShift"
+      :can-see-expected="canSeeExpected"
       @update:open="isCloseModalOpen = $event"
       @success="handleCloseShiftSuccess"
       @close="isCloseModalOpen = false"
@@ -539,6 +595,7 @@ import BaseBadge from '@/shared/ui/BaseBadge.vue'
 import OpenShiftModal from '@/features/sales/components/OpenShiftModal.vue'
 import CloseShiftModal from '@/features/sales/components/CloseShiftModal.vue'
 import { usePosShift } from '@/features/sales/composables/usePosShift'
+import { useAuthStore } from '@/features/auth/stores/authStore'
 import type { ShiftCloseResult } from '@/features/sales/types'
 import { formatDate } from '@/shared/utils/formatDate'
 import {
@@ -554,9 +611,19 @@ const {
   loadShiftData,
 } = usePosShift()
 
+const authStore = useAuthStore()
+
 const isOpenModalOpen = ref(false)
 const isCloseModalOpen = ref(false)
 const lastCloseResult = ref<ShiftCloseResult | null>(null)
+
+/**
+ * El backend decide quien ve los montos esperados.
+ * Solo los usuarios con permiso cash.view_history ven esperado/diferencia.
+ */
+const canSeeExpected = computed<boolean>(() => {
+  return authStore.hasPermission('cash.view_history')
+})
 
 /**
  * Formatea cantidades con moneda explícita ("1,200.00 CUP" / "100.00 USD")

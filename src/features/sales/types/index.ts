@@ -107,6 +107,8 @@ export interface CashShift {
   differences?: ShiftDualFunds
   discrepancyReason?: string
   notes?: string
+  /** Cantidad de tickets emitidos en el turno (provisto por el backend). */
+  ticketCount?: number
 }
 
 /**
