@@ -54,7 +54,9 @@ export const reportsService: ReportsService = useMocks
  * - VITE_USE_MOCKS=true  -> MockCashService (datos mock en memoria)
  * - VITE_USE_MOCKS=false -> HttpCashService (llamadas HTTP a Symfony /api/cash)
  */
-export const cashService: CashService = useMocks ? new MockCashService() : new HttpCashService()
+export const cashService: CashService = useMocks
+  ? new MockCashService(inventoryService)
+  : new HttpCashService()
 
 /**
  * Instancia singleton de SalesService.

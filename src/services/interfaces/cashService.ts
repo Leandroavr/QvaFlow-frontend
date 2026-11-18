@@ -11,6 +11,9 @@ import type {
   CashShiftsQuery,
   CurrencyExchange,
   CreateCurrencyExchangeDto,
+  CashWithdrawal,
+  CreateWithdrawalDto,
+  CashWithdrawalsQuery,
 } from '@/features/sales/types'
 
 export interface CashService {
@@ -62,6 +65,18 @@ export interface CashService {
    * Requiere permiso: cash.exchange
    */
   createExchange(dto: CreateCurrencyExchangeDto): Promise<CurrencyExchange>
+
+  /**
+   * Registro de salida de efectivo o producto desde el POS.
+   * Requiere permiso: sales.create
+   */
+  createWithdrawal(dto: CreateWithdrawalDto): Promise<CashWithdrawal>
+
+  /**
+   * Historial o consulta de salidas de efectivo y producto registradas.
+   * Requiere permiso: sales.create o cash.view_history
+   */
+  getWithdrawals(query?: CashWithdrawalsQuery): Promise<PaginatedResponse<CashWithdrawal>>
 
   /**
    * Historial paginado de turnos de caja para auditoría y control de cuadres.

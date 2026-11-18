@@ -31,19 +31,16 @@
     </div>
 
     <!-- ESTADO 1: TURNOS ABIERTOS (LISTADO DE TARJETAS) -->
-    <div
-      v-if="openShifts.length > 0 && !lastCloseResult"
-      class="space-y-6"
-    >
+    <div v-if="openShifts.length > 0 && !lastCloseResult" class="space-y-6">
       <div
         v-for="shift in openShifts"
         :key="shift.id"
-        class="overflow-hidden rounded-xl border border-border-subtle bg-surface-card shadow-xs transition-colors"
+        class="shadow-xs overflow-hidden rounded-xl border border-border-subtle bg-surface-card transition-colors"
         data-testid="active-shift-card"
       >
         <!-- Encabezado de la Tarjeta -->
         <div
-          class="flex flex-col gap-4 border-b border-border-subtle bg-surface-sunken/40 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+          class="bg-surface-sunken/40 flex flex-col gap-4 border-b border-border-subtle px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
         >
           <div class="flex flex-wrap items-center gap-3">
             <span
@@ -54,7 +51,7 @@
             </span>
             <BaseBadge variant="success" size="sm">
               <span class="flex items-center gap-1.5 font-medium">
-                <span class="h-1.5 w-1.5 rounded-full bg-state-success animate-pulse" />
+                <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-state-success" />
                 Turno Abierto
               </span>
             </BaseBadge>
@@ -76,7 +73,14 @@
         </div>
 
         <!-- Metadatos Operativos del Turno -->
-        <div class="grid grid-cols-1 gap-4 border-b border-border-subtle p-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div
+          class="grid grid-cols-1 gap-4 border-b border-border-subtle p-5 sm:grid-cols-2"
+          :class="
+            (shift.withdrawalsCount?.cash ?? 0) > 0 || (shift.withdrawalsCount?.product ?? 0) > 0
+              ? 'lg:grid-cols-4'
+              : 'lg:grid-cols-3'
+          "
+        >
           <div class="flex items-center gap-3">
             <div
               class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border-subtle bg-surface-sunken text-content-secondary"
@@ -84,7 +88,7 @@
               <User class="h-4 w-4" />
             </div>
             <div>
-              <span class="text-xs text-content-tertiary">Cajero Asignado</span>
+              <span class="text-content-tertiary text-xs">Cajero Asignado</span>
               <p
                 class="text-sm font-semibold text-content-primary"
                 data-testid="active-shift-cashier"
@@ -101,7 +105,7 @@
               <Clock class="h-4 w-4" />
             </div>
             <div>
-              <span class="text-xs text-content-tertiary">Hora de Apertura</span>
+              <span class="text-content-tertiary text-xs">Hora de Apertura</span>
               <p
                 class="text-sm font-semibold text-content-primary"
                 data-testid="active-shift-opened-at"
@@ -118,7 +122,7 @@
               <Store class="h-4 w-4" />
             </div>
             <div>
-              <span class="text-xs text-content-tertiary">Almacén de Operación</span>
+              <span class="text-content-tertiary text-xs">Almacén de Operación</span>
               <p
                 class="text-sm font-semibold text-content-primary"
                 data-testid="active-shift-warehouse"
@@ -127,21 +131,46 @@
               </p>
             </div>
           </div>
+
+          <div
+            v-if="
+              (shift.withdrawalsCount?.cash ?? 0) > 0 || (shift.withdrawalsCount?.product ?? 0) > 0
+            "
+            class="flex items-center gap-3"
+          >
+            <div
+              class="bg-state-warning-bg/30 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-state-warning-border text-state-warning"
+            >
+              <ArrowUpRight class="h-4 w-4" />
+            </div>
+            <div>
+              <span class="text-content-tertiary text-xs">Salidas de Turno</span>
+              <p
+                class="text-sm font-semibold text-content-primary"
+                data-testid="shift-withdrawals-count"
+              >
+                Salidas: {{ shift.withdrawalsCount?.cash ?? 0 }} de efectivo,
+                {{ shift.withdrawalsCount?.product ?? 0 }} de producto
+              </p>
+            </div>
+          </div>
         </div>
 
         <!-- Secciones de Fondos y Resumen Operativo (3 Columnas) -->
-        <div class="grid grid-cols-1 divide-y divide-border-subtle lg:grid-cols-3 lg:divide-x lg:divide-y-0">
+        <div
+          class="grid grid-cols-1 divide-y divide-border-subtle lg:grid-cols-3 lg:divide-x lg:divide-y-0"
+        >
           <!-- Columna 1: Fondo Inicial -->
           <div class="p-5">
-            <div class="flex items-center gap-2 mb-3">
-              <Coins class="h-4 w-4 text-content-tertiary" />
+            <div class="mb-3 flex items-center gap-2">
+              <Coins class="text-content-tertiary h-4 w-4" />
               <h2 class="text-xs font-semibold uppercase tracking-wider text-content-secondary">
                 Fondo Inicial Asignado
               </h2>
             </div>
             <div class="space-y-3">
               <div
-                class="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-sunken/40 p-3"
+                class="bg-surface-sunken/40 flex items-center justify-between rounded-lg border border-border-subtle p-3"
               >
                 <span class="text-xs font-medium text-content-secondary">Efectivo CUP:</span>
                 <span
@@ -152,7 +181,7 @@
                 </span>
               </div>
               <div
-                class="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-sunken/40 p-3"
+                class="bg-surface-sunken/40 flex items-center justify-between rounded-lg border border-border-subtle p-3"
               >
                 <span class="text-xs font-medium text-content-secondary">Efectivo USD:</span>
                 <span
@@ -167,7 +196,7 @@
 
           <!-- Columna 2: Recaudación en Ventas -->
           <div class="p-5">
-            <div class="flex items-center gap-2 mb-3">
+            <div class="mb-3 flex items-center gap-2">
               <TrendingUp class="h-4 w-4 text-state-success" />
               <h2 class="text-xs font-semibold uppercase tracking-wider text-content-secondary">
                 Ventas Cobradas en Turno
@@ -175,7 +204,7 @@
             </div>
             <div class="space-y-2">
               <div
-                class="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-sunken/40 px-3 py-2 text-xs"
+                class="bg-surface-sunken/40 flex items-center justify-between rounded-lg border border-border-subtle px-3 py-2 text-xs"
               >
                 <span class="text-content-secondary">Efectivo CUP:</span>
                 <span
@@ -186,7 +215,7 @@
                 </span>
               </div>
               <div
-                class="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-sunken/40 px-3 py-2 text-xs"
+                class="bg-surface-sunken/40 flex items-center justify-between rounded-lg border border-border-subtle px-3 py-2 text-xs"
               >
                 <span class="text-content-secondary">Transferencia CUP:</span>
                 <span
@@ -197,22 +226,64 @@
                 </span>
               </div>
               <div
-                class="flex items-center justify-between rounded-lg border border-border-subtle bg-surface-sunken/40 px-3 py-2 text-xs"
+                class="bg-surface-sunken/40 flex items-center justify-between rounded-lg border border-border-subtle px-3 py-2 text-xs"
               >
                 <span class="text-content-secondary">Efectivo USD:</span>
-                <span
-                  class="font-mono font-semibold text-state-success"
-                  data-testid="sales-usd"
-                >
+                <span class="font-mono font-semibold text-state-success" data-testid="sales-usd">
                   +{{ formatExplicitAmount(shift.salesTotals.USD, 'USD') }}
                 </span>
+              </div>
+
+              <!-- Salidas de Efectivo (si existen) -->
+              <div
+                v-if="
+                  shift.withdrawalsTotals &&
+                  (isPositiveDecimal(shift.withdrawalsTotals.CUP) ||
+                    isPositiveDecimal(shift.withdrawalsTotals.USD))
+                "
+                class="space-y-2 border-t border-border-subtle pt-2"
+              >
+                <div
+                  class="text-content-tertiary flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider"
+                >
+                  <ArrowUpRight class="h-3 w-3 text-state-warning" />
+                  <span>Salidas de efectivo</span>
+                </div>
+                <div
+                  v-if="
+                    shift.withdrawalsTotals.CUP && isPositiveDecimal(shift.withdrawalsTotals.CUP)
+                  "
+                  class="bg-surface-sunken/40 flex items-center justify-between rounded-lg border border-border-subtle px-3 py-2 text-xs"
+                >
+                  <span class="text-content-secondary">Salidas CUP:</span>
+                  <span
+                    class="font-mono font-semibold text-state-warning"
+                    data-testid="withdrawals-cup"
+                  >
+                    -{{ formatExplicitAmount(shift.withdrawalsTotals.CUP, 'CUP') }}
+                  </span>
+                </div>
+                <div
+                  v-if="
+                    shift.withdrawalsTotals.USD && isPositiveDecimal(shift.withdrawalsTotals.USD)
+                  "
+                  class="bg-surface-sunken/40 flex items-center justify-between rounded-lg border border-border-subtle px-3 py-2 text-xs"
+                >
+                  <span class="text-content-secondary">Salidas USD:</span>
+                  <span
+                    class="font-mono font-semibold text-state-warning"
+                    data-testid="withdrawals-usd"
+                  >
+                    -{{ formatExplicitAmount(shift.withdrawalsTotals.USD, 'USD') }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- Columna 3: Efectivo Esperado en Gaveta -->
-          <div class="p-5 bg-surface-sunken/20">
-            <div class="flex items-center gap-2 mb-3">
+          <div class="bg-surface-sunken/20 p-5">
+            <div class="mb-3 flex items-center gap-2">
               <Wallet class="h-4 w-4 text-primary" />
               <h2 class="text-xs font-semibold uppercase tracking-wider text-content-secondary">
                 Efectivo Esperado en Gaveta
@@ -220,11 +291,13 @@
             </div>
             <div class="space-y-3">
               <div
-                class="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 p-3"
+                class="border-primary/20 bg-primary/5 flex items-center justify-between rounded-lg border p-3"
               >
                 <div>
                   <span class="block text-xs font-semibold text-primary">Esperado CUP</span>
-                  <span class="text-[11px] text-content-tertiary">Fondo + Ventas Efectivo + Canjes</span>
+                  <span class="text-content-tertiary text-[11px]"
+                    >Fondo + Ventas Efectivo + Canjes - Salidas</span
+                  >
                 </div>
                 <span
                   class="font-mono text-base font-extrabold text-primary"
@@ -234,11 +307,13 @@
                 </span>
               </div>
               <div
-                class="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 p-3"
+                class="border-primary/20 bg-primary/5 flex items-center justify-between rounded-lg border p-3"
               >
                 <div>
                   <span class="block text-xs font-semibold text-primary">Esperado USD</span>
-                  <span class="text-[11px] text-content-tertiary">Fondo + Ventas Efectivo + Canjes</span>
+                  <span class="text-content-tertiary text-[11px]"
+                    >Fondo + Ventas Efectivo + Canjes - Salidas</span
+                  >
                 </div>
                 <span
                   class="font-mono text-base font-extrabold text-primary"
@@ -254,15 +329,11 @@
     </div>
 
     <!-- ESTADO 2: RESULTADO DEL ARQUEO TRAS CIERRE -->
-    <div
-      v-else-if="lastCloseResult"
-      class="space-y-6"
-      data-testid="close-arqueo-result"
-    >
-      <div class="overflow-hidden rounded-xl border border-border-subtle bg-surface-card shadow-xs">
+    <div v-else-if="lastCloseResult" class="space-y-6" data-testid="close-arqueo-result">
+      <div class="shadow-xs overflow-hidden rounded-xl border border-border-subtle bg-surface-card">
         <!-- Cabecera de Arqueo -->
         <div
-          class="flex flex-col gap-4 border-b border-border-subtle bg-surface-sunken/40 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+          class="bg-surface-sunken/40 flex flex-col gap-4 border-b border-border-subtle px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
         >
           <div class="flex items-center gap-3">
             <div
@@ -275,12 +346,11 @@
                 <h2 class="text-base font-bold text-content-primary">
                   Arqueo de Cierre Registrado
                 </h2>
-                <BaseBadge variant="neutral" size="sm">
-                  Turno {{ lastCloseResult.id }}
-                </BaseBadge>
+                <BaseBadge variant="neutral" size="sm"> Turno {{ lastCloseResult.id }} </BaseBadge>
               </div>
               <p class="text-xs text-content-secondary">
-                Turno cerrado el {{ formatDate(lastCloseResult.closedAt, { includeTime: true }) }} por
+                Turno cerrado el
+                {{ formatDate(lastCloseResult.closedAt, { includeTime: true }) }} por
                 {{ lastCloseResult.cashierName }}
               </p>
             </div>
@@ -305,7 +375,7 @@
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <!-- Arqueo CUP -->
             <div
-              class="rounded-xl border border-border-subtle bg-surface-sunken/30 p-4 space-y-3"
+              class="bg-surface-sunken/30 space-y-3 rounded-xl border border-border-subtle p-4"
               data-testid="arqueo-card-cup"
             >
               <div class="flex items-center justify-between border-b border-border-subtle pb-2">
@@ -316,13 +386,19 @@
               <div class="space-y-1.5 text-xs">
                 <div class="flex justify-between">
                   <span class="text-content-secondary">Esperado en Gaveta:</span>
-                  <span class="font-mono font-semibold text-content-primary" data-testid="arqueo-expected-cup">
+                  <span
+                    class="font-mono font-semibold text-content-primary"
+                    data-testid="arqueo-expected-cup"
+                  >
                     {{ formatExplicitAmount(lastCloseResult.expectedFunds?.CUP, 'CUP') }}
                   </span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-content-secondary">Contado Físicamente:</span>
-                  <span class="font-mono font-semibold text-content-primary" data-testid="arqueo-counted-cup">
+                  <span
+                    class="font-mono font-semibold text-content-primary"
+                    data-testid="arqueo-counted-cup"
+                  >
                     {{ formatExplicitAmount(lastCloseResult.countedFunds?.CUP, 'CUP') }}
                   </span>
                 </div>
@@ -341,24 +417,32 @@
 
             <!-- Arqueo USD -->
             <div
-              class="rounded-xl border border-border-subtle bg-surface-sunken/30 p-4 space-y-3"
+              class="bg-surface-sunken/30 space-y-3 rounded-xl border border-border-subtle p-4"
               data-testid="arqueo-card-usd"
             >
               <div class="flex items-center justify-between border-b border-border-subtle pb-2">
-                <span class="text-sm font-bold text-content-primary">Dólar Estadounidense (USD)</span>
+                <span class="text-sm font-bold text-content-primary"
+                  >Dólar Estadounidense (USD)</span
+                >
                 <span class="font-mono text-xs text-content-secondary">Efectivo Físico</span>
               </div>
 
               <div class="space-y-1.5 text-xs">
                 <div class="flex justify-between">
                   <span class="text-content-secondary">Esperado en Gaveta:</span>
-                  <span class="font-mono font-semibold text-content-primary" data-testid="arqueo-expected-usd">
+                  <span
+                    class="font-mono font-semibold text-content-primary"
+                    data-testid="arqueo-expected-usd"
+                  >
                     {{ formatExplicitAmount(lastCloseResult.expectedFunds?.USD, 'USD') }}
                   </span>
                 </div>
                 <div class="flex justify-between">
                   <span class="text-content-secondary">Contado Físicamente:</span>
-                  <span class="font-mono font-semibold text-content-primary" data-testid="arqueo-counted-usd">
+                  <span
+                    class="font-mono font-semibold text-content-primary"
+                    data-testid="arqueo-counted-usd"
+                  >
                     {{ formatExplicitAmount(lastCloseResult.countedFunds?.USD, 'USD') }}
                   </span>
                 </div>
@@ -382,8 +466,8 @@
             class="mt-4 rounded-xl border border-border-subtle bg-surface-card p-3.5 text-xs"
             data-testid="arqueo-reason-box"
           >
-            <div class="flex items-center gap-2 mb-1">
-              <FileText class="h-3.5 w-3.5 text-content-tertiary" />
+            <div class="mb-1 flex items-center gap-2">
+              <FileText class="text-content-tertiary h-3.5 w-3.5" />
               <span class="font-semibold text-content-secondary">
                 Justificación y Observaciones de Cierre:
               </span>
@@ -397,13 +481,9 @@
     </div>
 
     <!-- ESTADO 3: SIN TURNOS ABIERTOS (ESTADO VACÍO) -->
-    <div
-      v-else
-      class="space-y-6"
-      data-testid="empty-shift-state"
-    >
+    <div v-else class="space-y-6" data-testid="empty-shift-state">
       <div
-        class="overflow-hidden rounded-xl border border-dashed border-border-subtle bg-surface-card/60 p-6 sm:p-10 text-center"
+        class="bg-surface-card/60 overflow-hidden rounded-xl border border-dashed border-border-subtle p-6 text-center sm:p-10"
       >
         <div
           class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-border-subtle bg-surface-sunken text-content-muted"
@@ -411,11 +491,10 @@
           <Coins class="h-7 w-7 text-primary" />
         </div>
 
-        <h2 class="text-lg font-bold text-content-primary">
-          No hay turnos abiertos
-        </h2>
+        <h2 class="text-lg font-bold text-content-primary">No hay turnos abiertos</h2>
         <p class="mx-auto mt-1.5 max-w-md text-xs text-content-secondary sm:text-sm">
-          Actualmente no existen turnos operativos abiertos en el sistema. Los turnos de caja son iniciados por los cajeros desde el Punto de Venta (POS).
+          Actualmente no existen turnos operativos abiertos en el sistema. Los turnos de caja son
+          iniciados por los cajeros desde el Punto de Venta (POS).
         </p>
       </div>
     </div>
@@ -444,6 +523,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   FileText,
+  ArrowUpRight,
 } from 'lucide-vue-next'
 import BaseButton from '@/shared/ui/BaseButton.vue'
 import BaseBadge from '@/shared/ui/BaseBadge.vue'
@@ -453,7 +533,9 @@ import type { CashShift, ShiftCloseResult } from '@/features/sales/types'
 import { formatDate } from '@/shared/utils/formatDate'
 import {
   addDecimals,
+  subtractDecimals,
   compareDecimals,
+  isPositiveDecimal,
 } from '@/shared/utils/decimal'
 
 const openShifts = ref<CashShift[]>([])
@@ -478,18 +560,19 @@ const loadOpenShifts = async () => {
 
 function getExpectedCUP(shift: CashShift): string {
   const base = addDecimals(shift.initialFunds.CUP, shift.salesTotals.cupCash)
-  return addDecimals(base, shift.exchangeAdjustments.CUP)
+  const withExchanges = addDecimals(base, shift.exchangeAdjustments.CUP)
+  const withdrawals = shift.withdrawalsTotals?.CUP || '0.00'
+  return subtractDecimals(withExchanges, withdrawals)
 }
 
 function getExpectedUSD(shift: CashShift): string {
   const base = addDecimals(shift.initialFunds.USD, shift.salesTotals.USD)
-  return addDecimals(base, shift.exchangeAdjustments.USD)
+  const withExchanges = addDecimals(base, shift.exchangeAdjustments.USD)
+  const withdrawals = shift.withdrawalsTotals?.USD || '0.00'
+  return subtractDecimals(withExchanges, withdrawals)
 }
 
-function formatExplicitAmount(
-  amount: string | undefined | null,
-  currency: string
-): string {
+function formatExplicitAmount(amount: string | undefined | null, currency: string): string {
   if (!amount) {
     return `0.00 ${currency}`
   }

@@ -235,7 +235,8 @@ export class HttpInventoryService implements InventoryService {
   async deductStock(
     _productCode: string,
     _quantity: string,
-    _warehouseCode?: string
+    _warehouseCode?: string,
+    _reason?: string
   ): Promise<void> {
     // Delegado de manera autoritativa al backend Symfony en POST /api/sales
   }

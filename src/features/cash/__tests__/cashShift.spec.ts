@@ -112,7 +112,9 @@ describe('Módulo Caja - Turno y Arqueo (/cash/shift)', () => {
     expect(wrapper.find('[data-testid="active-shift-code"]').text()).toBe('TURNO-2026-001')
 
     // Abierto por cajero, almacén y hora
-    expect(wrapper.find('[data-testid="active-shift-cashier"]').text()).toContain('Abierto por Yadira Reyes')
+    expect(wrapper.find('[data-testid="active-shift-cashier"]').text()).toContain(
+      'Abierto por Yadira Reyes'
+    )
     expect(wrapper.find('[data-testid="active-shift-warehouse"]').text()).toContain('ALM-TIENDA-01')
     expect(wrapper.find('[data-testid="active-shift-opened-at"]').text()).toContain('14/11/2026')
 
@@ -329,7 +331,9 @@ describe('Módulo Caja - Turno y Arqueo (/cash/shift)', () => {
     await flushPromises()
 
     // Comprobar que ve la tarjeta con el cajero asignado
-    expect(wrapper.find('[data-testid="active-shift-cashier"]').text()).toContain('Abierto por Carlos Valdés')
+    expect(wrapper.find('[data-testid="active-shift-cashier"]').text()).toContain(
+      'Abierto por Carlos Valdés'
+    )
 
     // Pulsar botón de cerrar turno
     const btnClose = wrapper.find('[data-testid="btn-close-shift"]')

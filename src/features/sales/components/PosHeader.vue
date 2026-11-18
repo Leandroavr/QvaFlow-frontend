@@ -115,6 +115,28 @@
         </kbd>
       </button>
 
+      <!-- Botón Salida de Caja / Inventario (F7) -->
+      <button
+        type="button"
+        class="shadow-xs hover:bg-surface-hover inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-surface-app px-2.5 py-1 text-xs font-semibold text-content-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
+        :disabled="!isShiftOpen"
+        :title="
+          isShiftOpen
+            ? 'Registrar salida de efectivo o producto (F7)'
+            : 'Abre un turno para registrar salidas'
+        "
+        data-testid="header-withdrawal-btn"
+        @click="emit('open-withdrawal')"
+      >
+        <ArrowUpRight class="size-3.5 text-primary" aria-hidden="true" />
+        <span class="hidden sm:inline">Salida</span>
+        <kbd
+          class="hidden rounded border border-border-strong bg-surface-card px-1 py-0.5 font-mono text-[9px] font-medium text-content-muted md:inline-block"
+        >
+          F7
+        </kbd>
+      </button>
+
       <button
         type="button"
         class="shadow-xs hover:bg-surface-hover inline-flex items-center justify-center rounded-lg border border-border-subtle bg-surface-app p-1.5 text-content-secondary transition-colors hover:text-content-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
@@ -132,7 +154,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, Maximize, Minimize, User, Store, ArrowLeftRight, Clock } from 'lucide-vue-next'
+import {
+  ArrowLeft,
+  Maximize,
+  Minimize,
+  User,
+  Store,
+  ArrowLeftRight,
+  ArrowUpRight,
+  Clock,
+} from 'lucide-vue-next'
 import { useAuthStore } from '@/features/auth/stores/authStore'
 import { usePosShift } from '../composables/usePosShift'
 
@@ -154,6 +185,7 @@ const emit = defineEmits<{
   (e: 'exit'): void
   (e: 'open-shift'): void
   (e: 'open-exchange'): void
+  (e: 'open-withdrawal'): void
   (e: 'open-held'): void
 }>()
 
