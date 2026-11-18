@@ -30,17 +30,16 @@ export const MOCK_USERS: Record<string, MockUserCredential> = {
     user: {
       id: 'usr_vendedor_02',
       username: 'vendedor',
-      fullName: 'Carlos Valdés (Cajero)',
-      role: 'Vendedor / Cajero',
+      fullName: 'Carlos Valdés (Vendedor)',
+      role: 'Vendedor',
       permissions: [
         'sales.create',
         'sales.cancel',
         'sales.view',
-        'cash.manage',
-        'cash.open_close',
         'products.view', // Puede buscar y agregar productos a la venta
         // OJO: NO tiene 'products.view_cost' (no puede ver márgenes ni costo de adquisición)
         // OJO: NO tiene 'inventory.adjust' ni administración
+        // OJO: NO tiene permisos de Caja (caja es solo administración)
       ],
       lastLoginAt: '2026-10-30T09:15:00Z',
     },

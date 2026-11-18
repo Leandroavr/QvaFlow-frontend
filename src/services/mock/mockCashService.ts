@@ -176,7 +176,7 @@ export class MockCashService implements CashService {
   }
 
   async getSettings(): Promise<CashSettings> {
-    if (!this.checkAnyPermission(['cash.manage', 'system.config'])) {
+    if (!this.checkAnyPermission(['cash.manage', 'system.config', 'sales.create'])) {
       throw new ApiError(
         { code: 'FORBIDDEN', message: 'No posee permisos para consultar configuración de caja.' },
         403
@@ -218,11 +218,11 @@ export class MockCashService implements CashService {
   }
 
   async openShift(dto: OpenShiftDto): Promise<CashShift> {
-    if (!this.checkHasPermission('cash.open_close')) {
+    if (!this.checkAnyPermission(['cash.open_close', 'sales.create'])) {
       throw new ApiError(
         {
           code: 'FORBIDDEN',
-          message: 'Requiere permiso cash.open_close para abrir un turno de caja.',
+          message: 'Requiere permiso cash.open_close o sales.create para abrir un turno de caja.',
         },
         403
       )
@@ -332,11 +332,11 @@ export class MockCashService implements CashService {
   }
 
   async createExchange(dto: CreateCurrencyExchangeDto): Promise<CurrencyExchange> {
-    if (!this.checkHasPermission('cash.exchange')) {
+    if (!this.checkAnyPermission(['cash.exchange', 'sales.create'])) {
       throw new ApiError(
         {
           code: 'FORBIDDEN',
-          message: 'Requiere permiso cash.exchange para registrar canje de divisas.',
+          message: 'Requiere permiso cash.exchange o sales.create para registrar canje de divisas.',
         },
         403
       )
@@ -388,12 +388,12 @@ export class MockCashService implements CashService {
   }
 
   async getShifts(query: CashShiftsQuery = {}): Promise<PaginatedResponse<CashShift>> {
-    if (!this.checkAnyPermission(['cash.view_history', 'sales.view'])) {
+    if (!this.checkAnyPermission(['cash.view_history', 'sales.view', 'cash.open_close'])) {
       throw new ApiError(
         {
           code: 'FORBIDDEN',
           message:
-            'Requiere permiso cash.view_history o sales.view para consultar el historial de turnos.',
+            'Requiere permiso cash.view_history, sales.view o cash.open_close para consultar el historial de turnos.',
         },
         403
       )

@@ -142,6 +142,10 @@ export class MockSalesService implements SalesService {
     return false
   }
 
+  private checkAnyPermission(permissions: string[]): boolean {
+    return permissions.some((p) => this.checkHasPermission(p))
+  }
+
   private getCurrentUsername(): string {
     try {
       const token = localStorage.getItem('qvaflow_token')
@@ -479,7 +483,11 @@ export class MockSalesService implements SalesService {
     if (query.shiftId) {
       filtered = filtered.filter((s) => s.shiftId === query.shiftId)
     }
-    if (query.cashierName) {
+    const canViewAll = this.checkAnyPermission(['sales.view_all', 'cash.manage'])
+    if (!canViewAll) {
+      const currentCashier = normalizeSearchText(this.getCurrentUsername())
+      filtered = filtered.filter((s) => normalizeSearchText(s.cashierName) === currentCashier)
+    } else if (query.cashierName) {
       const c = normalizeSearchText(query.cashierName)
       filtered = filtered.filter((s) => normalizeSearchText(s.cashierName) === c)
     }
@@ -542,6 +550,11 @@ export class MockSalesService implements SalesService {
         },
         403
       )
+    }
+
+    const canViewAll = this.checkAnyPermission(['sales.view_all', 'cash.manage'])
+    if (!canViewAll) {
+      return [this.getCurrentUsername()]
     }
 
     const set = new Set<string>()

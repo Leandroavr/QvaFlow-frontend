@@ -5,7 +5,6 @@
       :held-count="heldOrdersComposable.heldOrdersCount.value"
       @exit="handleExit"
       @open-shift="openModal"
-      @open-close-shift="isCloseShiftModalOpen = true"
       @open-exchange="handleOpenExchange"
       @open-held="isHeldModalOpen = true"
     />
@@ -50,15 +49,6 @@
       :default-rate-u-s-d="rates?.USD || '360.00'"
       @update:open="handleShiftModalUpdate"
       @success="handleShiftSuccess"
-    />
-
-    <!-- Modal de Cierre de Turno y Arqueo de Caja -->
-    <CloseShiftModal
-      :open="isCloseShiftModalOpen"
-      :shift="currentShift"
-      @update:open="isCloseShiftModalOpen = $event"
-      @close="handleCloseShiftClose"
-      @success="handleCloseShiftSuccess"
     />
 
     <!-- Modal de Canje de Divisas (F6) -->
@@ -115,7 +105,6 @@ import PosHeader from '../components/PosHeader.vue'
 import PosCatalog from '../components/PosCatalog.vue'
 import PosCart from '../components/PosCart.vue'
 import OpenShiftModal from '../components/OpenShiftModal.vue'
-import CloseShiftModal from '../components/CloseShiftModal.vue'
 import CurrencyExchangeModal from '../components/CurrencyExchangeModal.vue'
 import HeldOrdersModal from '../components/HeldOrdersModal.vue'
 import PosCheckoutDrawer from '../components/PosCheckoutDrawer.vue'
@@ -145,20 +134,8 @@ const {
 const isCheckoutDrawerOpen = ref<boolean>(false)
 const isExchangeModalOpen = ref<boolean>(false)
 const isHeldModalOpen = ref<boolean>(false)
-const isCloseShiftModalOpen = ref<boolean>(false)
 const completedSale = ref<Sale | null>(null)
 const isSummaryModalOpen = ref<boolean>(false)
-
-const handleCloseShiftSuccess = () => {
-  loadShiftData()
-  isCloseShiftModalOpen.value = false
-  catalogRef.value?.focusSearch()
-}
-
-const handleCloseShiftClose = () => {
-  isCloseShiftModalOpen.value = false
-  catalogRef.value?.focusSearch()
-}
 
 const handleRestoreHeld = (orderId: string) => {
   const res = heldOrdersComposable.restoreHeldOrder(

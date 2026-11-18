@@ -40,8 +40,8 @@
           />
         </div>
 
-        <!-- Selector de Cajero -->
-        <div class="w-full shrink-0 sm:w-52">
+        <!-- Selector de Cajero (solo visible si tiene permiso de ver todos los cajeros) -->
+        <div v-if="canViewAll" class="w-full shrink-0 sm:w-52">
           <BaseSelect
             :model-value="cashier || 'ALL'"
             :options="cashierOptions"
@@ -271,6 +271,7 @@ import type { PaymentMethod, Currency } from '../types'
 const router = useRouter()
 const route = useRoute()
 const { can } = usePermissions()
+const canViewAll = computed(() => can('sales.view_all') || can('cash.manage'))
 
 const {
   sales,
